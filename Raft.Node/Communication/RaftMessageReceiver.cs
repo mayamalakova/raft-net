@@ -3,20 +3,14 @@ using Shared;
 
 namespace Raft.Node.Communication;
 
-public class RaftMessageReceiver<TMessage, TReply>: IRaftMessageReceiver<TMessage, TReply>
+public class RaftMessageReceiver<TMessage, TReply>(int port) : IRaftMessageReceiver<TMessage, TReply>
 {
-    private Server _server;
-
-    public RaftMessageReceiver(int port)
+    private readonly Server _server = new()
     {
-        _server = new Server()
-        {
-            Services = { Svc.BindService(new MyService()) },
-            Ports = { new ServerPort("0.0.0.0", port, ServerCredentials.Insecure) }
-        };
-        
-    }
-    
+        Services = { Svc.BindService(new MessageProcessingService()) },
+        Ports = { new ServerPort("0.0.0.0", port, ServerCredentials.Insecure) }
+    };
+
     public TReply ReceiveMessage(TMessage message)
     {
         throw new NotImplementedException();
@@ -25,5 +19,6 @@ public class RaftMessageReceiver<TMessage, TReply>: IRaftMessageReceiver<TMessag
     public void Start()
     {
         _server.Start();
+        
     }
 }
