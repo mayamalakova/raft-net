@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <ToolCommandName>raft</ToolCommandName>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Raft.RpcClient\Raft.RpcClient.csproj" />
+      <ProjectReference Include="..\Raft.RpcServer\Raft.RpcServer.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="CommandLineParser" Version="2.9.1" />
+    </ItemGroup>
+
+</Project>
