@@ -14,6 +14,10 @@ public class AddOptions
     
     [Option('p', "port", Required = true, HelpText = "Port on which the node will communicate with the rest of the cluster.")]
     public string Port { get; set; }
+    
+    [Option('c', "cluster-address", Required = false, HelpText = "Host:port of any node already on the cluster. Required if the node is added as a follower.")]
+    public string ClusterHost { get; set; }
+
 }
 
 class Program
@@ -47,7 +51,18 @@ class Program
     private static int AddFollowerNode(AddOptions addOptions)
     {
         var port = int.Parse(addOptions.Port);
-        var follower = new RaftNode(NodeType.Follower, addOptions.Name, port, "localhost", 5001);
+        if (addOptions.ClusterHost == null)
+        {
+            throw new ArgumentException("ClusterHost is required for follower nodes.");
+        }
+
+        if (!addOptions.ClusterHost.Contains(":"))
+        {
+            throw new ArgumentException("ClusterHost option should be in the form of Host:port.");
+        }
+
+        var clusterHost = addOptions.ClusterHost.Split(":");
+        var follower = new RaftNode(NodeType.Follower, addOptions.Name, port, clusterHost[0], int.Parse(clusterHost[1]));
         
         follower.Start();
         Console.WriteLine($"Created follower node {addOptions.Name} listening on port {port}.");
