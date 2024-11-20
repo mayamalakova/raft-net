@@ -47,12 +47,11 @@ class Program
     private static int AddFollowerNode(AddOptions addOptions)
     {
         var port = int.Parse(addOptions.Port);
-        var follower = new RaftNode(NodeType.Follower, addOptions.Name, port);
+        var follower = new RaftNode(NodeType.Follower, addOptions.Name, port, "localhost", 5001);
         
         follower.Start();
         Console.WriteLine($"Created follower node {addOptions.Name} listening on port {port}.");
 
-        follower.SendMessage($"{addOptions.Name} says Hello!");
 
         return 0;
     }
@@ -60,7 +59,7 @@ class Program
     private static int AddLeaderNode(AddOptions addOptions)
     {
         var port = int.Parse(addOptions.Port);
-        var leader = new RaftNode(NodeType.Leader, addOptions.Name, port);
+        var leader = new RaftNode(NodeType.Leader, addOptions.Name, port, "localhost", 5001);
         
         leader.Start();
         Console.WriteLine($"Created leader node {addOptions.Name} listening on port {port}");

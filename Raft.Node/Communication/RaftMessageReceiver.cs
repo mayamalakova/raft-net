@@ -3,11 +3,11 @@ using Shared;
 
 namespace Raft.Node.Communication;
 
-public class RaftMessageReceiver<TMessage, TReply>(int port) : IRaftMessageReceiver<TMessage, TReply>
+public class RaftMessageReceiver<TMessage, TReply>(int port, string leaderHost, int leaderPort) : IRaftMessageReceiver<TMessage, TReply>
 {
     private readonly Server _server = new()
     {
-        Services = { Svc.BindService(new MessageProcessingService()) },
+        Services = { Svc.BindService(new MessageProcessingService(leaderHost, leaderPort)) },
         Ports = { new ServerPort("0.0.0.0", port, ServerCredentials.Insecure) }
     };
 

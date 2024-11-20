@@ -21,7 +21,16 @@ message MessageReply{
   string reply = 1;
 }
 
+message LeaderQueryRequest{
+}
+
+message LeaderQueryReply{
+  string host = 1;
+  int32 port = 2;
+}
+
 service Svc {
   rpc Calculate (CalculateRequest) returns (CalculateReply);
   rpc SendMessage (MessageRequest) returns (MessageReply);
+  rpc GetLeader (LeaderQueryRequest) returns (LeaderQueryReply);
 }
