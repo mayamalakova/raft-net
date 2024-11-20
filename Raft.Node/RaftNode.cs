@@ -1,35 +1,32 @@
-﻿using Raft.Node.Communication;
-using Raft.Node.Communication.Messages;
+﻿using Grpc.Core;
+using Raft.Node.Communication;
+using Shared;
 
 namespace Raft.Node;
 
-public class RaftNode
+public class RaftNode(NodeType nodeType, string nodeId, int port)
 {
-    private readonly NodeType _nodeType;
-    private readonly string _nodeId;
-    private readonly int _port;
-    
-    private readonly RaftMessageSender<IHelloMessage, IHelloReply> _messageSender;
-    private readonly RaftMessageReceiver<IHelloMessage, IHelloReply> _messageReceiver;
-
-    public RaftNode(NodeType nodeType, string nodeId, int port)
-    {
-        _nodeType = nodeType;
-        _nodeId = nodeId;
-        _port = port;
-        _messageSender = new RaftMessageSender<IHelloMessage, IHelloReply>();
-        _messageReceiver = new RaftMessageReceiver<IHelloMessage, IHelloReply>(port);
-    }
+    private readonly RaftMessageSender<IHelloMessage, IHelloReply> _messageSender = new();
+    private readonly RaftMessageReceiver<IHelloMessage, IHelloReply> _messageReceiver = new(port);
 
     public void Start()
     {
-        // _messageSender.Start();
-        _messageReceiver.Start();
+        if (nodeType == NodeType.Leader)
+        {
+            _messageReceiver.Start();
+        }
     }
 
     public void SendMessage(string message)
     {
-        _messageSender.Send(new HelloMessage(message));
+        //TODO: do not hardcode destination host and port
+        var channel = new Channel("localhost", 5001, ChannelCredentials.Insecure);  
+        var client = new Svc.SvcClient(channel);
+        var reply = client.SendMessage(new MessageRequest()
+        {
+            Message = message
+        });
+        Console.WriteLine($"Got reply: {reply.Reply}");
     }
     
 }
