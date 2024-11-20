@@ -1,8 +1,6 @@
 ﻿namespace Raft.Node.Communication;
 
-public interface IRaftMessageReceiver<in TMessage, out TReply>
+public interface IRaftMessageReceiver
 {
-    TReply ReceiveMessage(TMessage message);
-
     void Start();
 }
