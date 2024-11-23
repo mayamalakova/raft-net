@@ -5,10 +5,10 @@ namespace Raft.Cli;
 
 
 
-public class RaftClient
+public class RaftClient(string host, int port)
 {
     
-    public void Ping(string host, int port)
+    public void Ping()
     {
         var channel = new Channel(host, port, ChannelCredentials.Insecure);  
         var client = new PingSvc.PingSvcClient(channel);
