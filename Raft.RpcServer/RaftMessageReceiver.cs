@@ -3,18 +3,12 @@ using Raft.Communication.Contract;
 
 namespace Raft;
 
-public class RaftMessageReceiver : IRaftMessageReceiver
+public class RaftMessageReceiver(int port) : IRaftMessageReceiver
 {
-    private readonly Server _server;
-
-    public RaftMessageReceiver(int port)
+    private readonly Server _server = new()
     {
-        _server = new()
-        {
-            Ports = { new ServerPort("0.0.0.0", port, ServerCredentials.Insecure) }
-        };
-        
-    }
+        Ports = { new ServerPort("0.0.0.0", port, ServerCredentials.Insecure) }
+    };
 
     public void Start(IEnumerable<Svc.SvcBase> services)
     {
