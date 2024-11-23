@@ -67,7 +67,6 @@ class Program
         follower.Start();
         Console.WriteLine($"Created follower node {addOptions.Name} listening on port {port}.");
 
-
         return 0;
     }
 

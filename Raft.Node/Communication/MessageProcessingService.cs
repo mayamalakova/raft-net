@@ -14,12 +14,6 @@ public class MessageProcessingService: Svc.SvcBase
         _leaderPort = leaderPort;
     }
 
-    public override Task<MessageReply> SendMessage(MessageRequest request, ServerCallContext context)
-    {
-        Console.WriteLine($"Got message: {request.Message}");
-        return Task.FromResult(new MessageReply() { Reply = $"Message received! {request.Message}" });
-    }
-
     public override Task<LeaderQueryReply> GetLeader(LeaderQueryRequest request, ServerCallContext context)
     {
         return Task.FromResult(new LeaderQueryReply() {Host = _leaderHost, Port = _leaderPort});
