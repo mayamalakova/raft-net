@@ -9,7 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Raft.RpcClient\Raft.RpcClient.csproj" />
+      <ProjectReference Include="..\Raft.Communication.Contract\Raft.Communication.Contract.csproj" />
       <ProjectReference Include="..\Raft.RpcServer\Raft.RpcServer.csproj" />
     </ItemGroup>
 

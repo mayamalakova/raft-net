@@ -1,6 +1,6 @@
-﻿namespace Raft;
+﻿namespace Raft.Communication.Contract;
 
-class Program
+public abstract class Program
 {
     static void Main(string[] args)
     {

@@ -13,7 +13,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Shared\Shared.csproj" />
+      <ProjectReference Include="..\Raft.Communication.Contract\Raft.Communication.Contract.csproj" />
     </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 ﻿syntax = "proto3";
 
-option csharp_namespace = "Shared";
+option csharp_namespace = "Raft";
 
 message CalculateRequest{
   int64 x = 1;
