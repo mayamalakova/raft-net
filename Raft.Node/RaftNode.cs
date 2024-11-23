@@ -8,7 +8,7 @@ public class RaftNode(NodeType role, string nodeName, int port, string clusterHo
 {
     private readonly IRaftMessageReceiver _messageReceiver = new RaftMessageReceiver(port);
 
-    public void Start()
+    public void Start() 
     {
         var leaderAddress = role == NodeType.Follower 
             ? AskForLeader() 
