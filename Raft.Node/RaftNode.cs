@@ -4,25 +4,41 @@ using Raft.Node.Communication;
 
 namespace Raft.Node;
 
-public class RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort)
+public class RaftNode
 {
-    private readonly IRaftMessageReceiver _messageReceiver = new RaftMessageReceiver(port);
+    private readonly IRaftMessageReceiver _messageReceiver;
+    private readonly NodeType _role;
+    private readonly string _nodeName;
+    private readonly string _clusterHost;
+    private readonly int _clusterPort;
+
+    public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort)
+    {
+        _role = role;
+        _nodeName = nodeName;
+        _clusterHost = clusterHost;
+        _clusterPort = clusterPort;
+        _messageReceiver = new RaftMessageReceiver(port);
+    }
 
     public void Start() 
     {
-        var leaderAddress = role == NodeType.Follower 
+        var leaderAddress = _role == NodeType.Follower 
             ? AskForLeader() 
-            : (host: clusterHost, port: clusterPort);
-        _messageReceiver.Start([new LeaderDiscoveryService(leaderAddress.host, leaderAddress.port)]);
+            : (host: _clusterHost, port: _clusterPort);
+        _messageReceiver.Start([
+            LeaderDiscoveryService.GetServiceDefinition(leaderAddress.host, leaderAddress.port),
+            PingReplyService.GetServiceDefinition(_nodeName)
+        ]);
     }
 
     private (string host, int port) AskForLeader()
     {
-        var channel = new Channel(clusterHost, clusterPort, ChannelCredentials.Insecure);  
-        var client = new Svc.SvcClient(channel);
+        var channel = new Channel(_clusterHost, _clusterPort, ChannelCredentials.Insecure);  
+        var client = new LeaderDiscoverySvc.LeaderDiscoverySvcClient(channel);
         var reply = client.GetLeader(new LeaderQueryRequest());
         
-        Console.WriteLine($"{nodeName} found leader: {reply}");
+        Console.WriteLine($"{_nodeName} found leader: {reply}");
         
         return (reply.Host, reply.Port);
     }
