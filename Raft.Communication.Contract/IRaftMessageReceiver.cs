@@ -1,6 +1,4 @@
-﻿using Shared;
-
-namespace Raft.Communication.Contract;
+﻿namespace Raft.Communication.Contract;
 
 public interface IRaftMessageReceiver
 {
