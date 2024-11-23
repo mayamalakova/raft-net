@@ -10,19 +10,8 @@ message LeaderQueryReply{
   int32 port = 2;
 }
 
-message NodeInfoRequest{
-}
-
-message NodeInfoReply{
-  string name=1;
-  string role=2;
-  string address=3;
-  string leaderAddress=4;
-}
-
 service LeaderDiscoverySvc {
   rpc GetLeader (LeaderQueryRequest) returns (LeaderQueryReply);
-  rpc GetInfo (NodeInfoRequest) returns (NodeInfoReply);
 }
 
 message PingRequest{
@@ -34,4 +23,18 @@ message PingReply{
 
 service PingSvc {
   rpc Ping (PingRequest) returns (PingReply);
+}
+
+message NodeInfoRequest{
+}
+
+message NodeInfoReply{
+  string name=1;
+  string role=2;
+  string address=3;
+  string leaderAddress=4;
+}
+
+service NodeInfoSvc{
+  rpc GetInfo (NodeInfoRequest) returns (NodeInfoReply);
 }
