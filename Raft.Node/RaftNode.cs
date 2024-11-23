@@ -1,5 +1,4 @@
-﻿using Grpc.Core;
-using Raft.Communication.Contract;
+﻿using Raft.Communication.Contract;
 using Raft.Node.Communication;
 
 namespace Raft.Node;
@@ -7,6 +6,8 @@ namespace Raft.Node;
 public class RaftNode
 {
     private readonly IRaftMessageReceiver _messageReceiver;
+    private readonly NodeCommunicationClient _nodeClient;
+    
     private readonly NodeType _role;
     private readonly string _nodeName;
     private readonly string _clusterHost;
@@ -19,6 +20,7 @@ public class RaftNode
         _clusterHost = clusterHost;
         _clusterPort = clusterPort;
         _messageReceiver = new RaftMessageReceiver(port);
+        _nodeClient = new NodeCommunicationClient(_clusterHost, _clusterPort);
     }
 
     public void Start() 
@@ -34,13 +36,11 @@ public class RaftNode
 
     private (string host, int port) AskForLeader()
     {
-        var channel = new Channel(_clusterHost, _clusterPort, ChannelCredentials.Insecure);  
-        var client = new LeaderDiscoverySvc.LeaderDiscoverySvcClient(channel);
-        var reply = client.GetLeader(new LeaderQueryRequest());
+        var leader = _nodeClient.GetLeader();
+
+        Console.WriteLine($"{_nodeName} found leader: {leader}");
         
-        Console.WriteLine($"{_nodeName} found leader: {reply}");
-        
-        return (reply.Host, reply.Port);
+        return (leader.host, leader.port);
     }
     
 }
