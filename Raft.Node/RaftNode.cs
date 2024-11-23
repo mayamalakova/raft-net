@@ -13,7 +13,7 @@ public class RaftNode(NodeType role, string nodeName, int port, string clusterHo
         var leaderAddress = role == NodeType.Follower 
             ? AskForLeader() 
             : (host: clusterHost, port: clusterPort);
-        _messageReceiver.Start([new MessageProcessingService(leaderAddress.host, leaderAddress.port)]);
+        _messageReceiver.Start([new LeaderDiscoveryService(leaderAddress.host, leaderAddress.port)]);
     }
 
     private (string host, int port) AskForLeader()
