@@ -10,11 +10,11 @@ public class RaftMessageReceiver(int port) : IRaftMessageReceiver
         Ports = { new ServerPort("0.0.0.0", port, ServerCredentials.Insecure) }
     };
 
-    public void Start(IEnumerable<Svc.SvcBase> services)
+    public void Start(IEnumerable<ServerServiceDefinition> services)
     {
         foreach (var service in services)
         {
-            _server.Services.Add(Svc.BindService(service));
+            _server.Services.Add(service);
         }
         _server.Start();
     }
