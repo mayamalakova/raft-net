@@ -30,7 +30,8 @@ public class RaftNode
             : (host: _clusterHost, port: _clusterPort);
         _messageReceiver.Start([
             LeaderDiscoveryService.GetServiceDefinition(leaderAddress.host, leaderAddress.port),
-            PingReplyService.GetServiceDefinition(_nodeName)
+            PingReplyService.GetServiceDefinition(_nodeName),
+            NodeInfoService.GetServiceDefinition(_nodeName, _role),
         ]);
     }
 

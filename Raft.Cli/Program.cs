@@ -10,6 +10,11 @@ public class PingOptions
 {
 }
 
+[Verb("info", HelpText = "Get informatin about the current node.")]
+public class InfoOptions
+{
+}
+
 public class RaftClientOptions
 {
     [Option('a', "node-address", Required = true, HelpText = "Host:port of any node already on the cluster.")]
@@ -38,7 +43,7 @@ public class Program
             throw new ArgumentException("Invalid node address");
         }
 
-        var client = new RaftClient(parts[0], int.Parse(parts[1]));
+        var raftClient = new RaftClient(parts[0], int.Parse(parts[1]));
         Console.WriteLine($"Client is ready to send requests to node {opts.NodeAddress}. Enter a command line or type 'quit' to exit.");
 
         while (true)
@@ -50,22 +55,10 @@ public class Program
                 return 0;
             }
             
-            var result = Parser.Default.ParseArguments<PingOptions>(command.Split(' ').Select(x => x.Trim()))
-                .MapResult(
-                    _ => Ping(client),
-                    errs => 1);
-            if (result > 0)
-            {
-                Console.WriteLine("Please provide valid command line options.");
-                return result;
-            }
+            Parser.Default.ParseArguments<PingOptions, InfoOptions>(command.Split(' ').Select(x => x.Trim()))
+                .WithParsed<PingOptions>(_ => raftClient.Ping())
+                .WithParsed<InfoOptions>(_ => raftClient.Info())
+                .WithNotParsed(errors => { Console.WriteLine(errors.ToString()); });
         }
-    }
-
-
-    private static int Ping(RaftClient raftClient)
-    {
-        raftClient.Ping();
-        return 0;
     }
 }

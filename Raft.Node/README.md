@@ -1,17 +1,11 @@
 ﻿Example
-1) Run Program as cmd
-`raft add leader lead1 --port 5001`
-Will produce prompt "Listening for commands"
-2) Run Program as cmd
-`raft add follower foll1 --port 5002 --leader localhost:5001`
-Will produce prompt "Ready to send message"
-3) Run Program as cmd
-`raft add follower foll2 --port 5003 --leader localhost:5001`
-Will produce prompt "Ready to send message"
-4) Run Program as cmd
-`raft add follower foll3 --port 5004 --leader localhost:5001`
-Will produce prompt "Ready to send message"
-5) On foll1 run `raft "Hello"`
-6) foll1 will send the message to lead1
-7) lead1 will print `Received message "Hello"` and send the `ack "Hello"` message to all followers
-8) all followers will print `"Hello" confirmed by leader`
+1) To initialize the cluster add a leader by running 
+`raft.node add --role leader --name lead1 --port 5001`
+2) To add a follower run 
+`raft.node add --role follower --name fol1 --port 5002 -c localhost:5001`
+where the -c option is the address of any node already in the cluster
+3) To run commands on any node of the cluster:
+- run `raft.cli -a localhost:5002` to initialize the raft client 
+- when prompted run raft client commands:
+- `ping` get a response from the node
+- `info` get info about the node - role, name, address, leader address
