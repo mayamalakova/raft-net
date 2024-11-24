@@ -1,5 +1,7 @@
 ﻿using Raft.Communication.Contract;
 using Raft.Node.Communication;
+using Raft.Store.Domain;
+using Raft.Store.Memory;
 
 namespace Raft.Node;
 

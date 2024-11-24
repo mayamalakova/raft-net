@@ -1,10 +1,6 @@
-﻿namespace Raft.Node;
+﻿using Raft.Store.Domain;
 
-public interface INodeStateStore
-{
-    NodeType Role { get; set; }
-    NodeAddress LeaderAddress { get; set; }
-}
+namespace Raft.Store.Memory;
 
 public class NodeStateStore : INodeStateStore
 {

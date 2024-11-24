@@ -11,6 +11,8 @@
     <ItemGroup>
       <ProjectReference Include="..\Raft.Communication.Contract\Raft.Communication.Contract.csproj" />
       <ProjectReference Include="..\Raft.RpcServer\Raft.RpcServer.csproj" />
+      <ProjectReference Include="..\Raft.Store.Memory\Raft.Store.Memory.csproj" />
+      <ProjectReference Include="..\Raft.Store\Raft.Store.csproj" />
     </ItemGroup>
 
     <ItemGroup>

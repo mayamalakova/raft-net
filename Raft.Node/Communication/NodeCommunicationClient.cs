@@ -1,6 +1,7 @@
 ﻿using Grpc.Core;
+using Raft.Store.Domain;
 
-namespace Raft.Node;
+namespace Raft.Node.Communication;
 
 public class NodeCommunicationClient
 {

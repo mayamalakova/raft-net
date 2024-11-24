@@ -1,4 +1,5 @@
 ﻿using Grpc.Core;
+using Raft.Store;
 
 namespace Raft.Node.Communication;
 

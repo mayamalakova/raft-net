@@ -1,4 +1,4 @@
-﻿namespace Raft.Node;
+﻿namespace Raft.Store.Domain;
 
 public record NodeAddress(string Host, int Port)
 {

@@ -8,6 +8,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raft.Communication.Contract
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raft.Cli", "Raft.Cli\Raft.Cli.csproj", "{EBBE1CDB-8082-434D-ACC6-3D86C39BCB70}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raft.Store.Memory", "Raft.Store.Memory\Raft.Store.Memory.csproj", "{C2D03C53-C6A2-4EE5-8BEF-587283DE218E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raft.Store", "Raft.Store\Raft.Store.csproj", "{C3D4C8CC-6878-48B4-A45F-54EBF7D48361}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +34,13 @@ Global
 		{EBBE1CDB-8082-434D-ACC6-3D86C39BCB70}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EBBE1CDB-8082-434D-ACC6-3D86C39BCB70}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EBBE1CDB-8082-434D-ACC6-3D86C39BCB70}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2D03C53-C6A2-4EE5-8BEF-587283DE218E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2D03C53-C6A2-4EE5-8BEF-587283DE218E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2D03C53-C6A2-4EE5-8BEF-587283DE218E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2D03C53-C6A2-4EE5-8BEF-587283DE218E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3D4C8CC-6878-48B4-A45F-54EBF7D48361}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3D4C8CC-6878-48B4-A45F-54EBF7D48361}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3D4C8CC-6878-48B4-A45F-54EBF7D48361}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3D4C8CC-6878-48B4-A45F-54EBF7D48361}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
