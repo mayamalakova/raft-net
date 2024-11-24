@@ -10,6 +10,7 @@ public class RaftNode
     private readonly IRaftMessageReceiver _messageReceiver;
     private readonly NodeCommunicationClient _nodeClient;
     private readonly NodeStateStore _stateStore;
+    private readonly IEnumerable<INodeService> _nodeServices;
 
     private readonly string _nodeName;
     private readonly string _clusterHost;
@@ -23,6 +24,12 @@ public class RaftNode
         _messageReceiver = new RaftMessageReceiver(port);
         _nodeClient = new NodeCommunicationClient(_clusterHost, _clusterPort);
         _stateStore = new NodeStateStore {Role = role};
+        _nodeServices =
+        [
+            new LeaderDiscoveryService(_stateStore),
+            new PingReplyService(_nodeName),
+            new NodeInfoService(_nodeName, _stateStore),
+        ];
     }
 
     public void Start() 
@@ -30,11 +37,7 @@ public class RaftNode
         _stateStore.LeaderAddress = _stateStore.Role == NodeType.Follower 
             ? AskForLeader() 
             : new NodeAddress(_clusterHost, _clusterPort);
-        _messageReceiver.Start([
-            LeaderDiscoveryService.GetServiceDefinition(_stateStore),
-            PingReplyService.GetServiceDefinition(_nodeName),
-            NodeInfoService.GetServiceDefinition(_nodeName, _stateStore),
-        ]);
+        _messageReceiver.Start(_nodeServices.Select(x => x.GetServiceDefinition()));
     }
 
     private NodeAddress AskForLeader()

@@ -1,32 +1,24 @@
 ﻿using Grpc.Core;
+using Raft.Communication.Contract;
 using Raft.Store;
 
 namespace Raft.Node.Communication;
 
-public class NodeInfoService: NodeInfoSvc.NodeInfoSvcBase
+public class NodeInfoService(string name, INodeStateStore stateStore) : NodeInfoSvc.NodeInfoSvcBase, INodeService
 {
-    private readonly string _name;
-    private readonly INodeStateStore _stateStore;
-
-    private NodeInfoService(string name, INodeStateStore stateStore)
-    {
-        _name = name;
-        _stateStore = stateStore;
-    }
-    
     public override Task<NodeInfoReply> GetInfo(NodeInfoRequest request, ServerCallContext context)
     {
         return Task.FromResult(new NodeInfoReply()
         {
             Address = context.Host,
-            Name = _name,
-            Role = _stateStore.Role.ToString(), 
-            LeaderAddress = _stateStore.LeaderAddress.ToString() 
+            Name = name,
+            Role = stateStore.Role.ToString(), 
+            LeaderAddress = stateStore.LeaderAddress.ToString() 
         });
     }
     
-    public static ServerServiceDefinition GetServiceDefinition(string name, INodeStateStore stateStore)
+    public ServerServiceDefinition GetServiceDefinition()
     {
-        return NodeInfoSvc.BindService(new NodeInfoService(name, stateStore));
+        return NodeInfoSvc.BindService(this);
     }
 }

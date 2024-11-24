@@ -1,8 +1,9 @@
 ﻿using Grpc.Core;
+using Raft.Communication.Contract;
 
 namespace Raft.Node.Communication;
 
-public class PingReplyService(string nodeName) : PingSvc.PingSvcBase
+public class PingReplyService(string nodeName) : PingSvc.PingSvcBase, INodeService
 {
     public override Task<PingReply> Ping(PingRequest request, ServerCallContext context)
     {
@@ -12,8 +13,8 @@ public class PingReplyService(string nodeName) : PingSvc.PingSvcBase
         });
     }
 
-    public static ServerServiceDefinition GetServiceDefinition(string nodeName)
+    public ServerServiceDefinition GetServiceDefinition()
     {
-        return PingSvc.BindService(new PingReplyService(nodeName));
+        return PingSvc.BindService(this);
     }
 }
