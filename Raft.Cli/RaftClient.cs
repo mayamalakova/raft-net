@@ -14,17 +14,17 @@ public class RaftClient
         _infoClient = new NodeInfoSvc.NodeInfoSvcClient(channel);
     }
 
-    public void Ping()
+    public string Ping()
     {
         var reply = _pingClient.Ping(new PingRequest());
 
-        Console.WriteLine(reply);
+        return reply.ToString();
     }
 
-    public void Info()
+    public string Info()
     {
         var reply = _infoClient.GetInfo(new NodeInfoRequest());
 
-        Console.WriteLine(reply);
+        return reply.ToString();
     }
 }

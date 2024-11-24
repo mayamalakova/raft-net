@@ -18,4 +18,9 @@ public class RaftMessageReceiver(int port) : IRaftMessageReceiver
         }
         _server.Start();
     }
+
+    public void Stop()
+    {
+        _server.ShutdownAsync().Wait();
+    }
 }
