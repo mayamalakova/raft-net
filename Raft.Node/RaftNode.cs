@@ -25,10 +25,9 @@ public class RaftNode
 
     public void Start() 
     {
-        var leaderAddress = _stateStore.Role == NodeType.Follower 
+        _stateStore.LeaderAddress = _stateStore.Role == NodeType.Follower 
             ? AskForLeader() 
-            : (host: _clusterHost, port: _clusterPort);
-        _stateStore.LeaderAddress = new NodeAddress(leaderAddress.host, leaderAddress.port);
+            : new NodeAddress(_clusterHost, _clusterPort);
         _messageReceiver.Start([
             LeaderDiscoveryService.GetServiceDefinition(_stateStore),
             PingReplyService.GetServiceDefinition(_nodeName),
@@ -36,13 +35,11 @@ public class RaftNode
         ]);
     }
 
-    private (string host, int port) AskForLeader()
+    private NodeAddress AskForLeader()
     {
         var leader = _nodeClient.GetLeader();
-
         Console.WriteLine($"{_nodeName} found leader: {leader}");
-        
-        return (leader.host, leader.port);
+        return leader;
     }
     
 }

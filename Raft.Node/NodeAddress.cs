@@ -1,3 +1,9 @@
 ﻿namespace Raft.Node;
 
-public record NodeAddress(string Host, int Port);
+public record NodeAddress(string Host, int Port)
+{
+    public override string ToString()
+    {
+        return $"{Host}:{Port}";
+    }
+}

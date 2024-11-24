@@ -12,12 +12,12 @@ public class NodeCommunicationClient
         _targetNodeHost = targetNodeHost;
         _targetNodePort = targetNodePort;
     }
-    public (string host, int port) GetLeader()
+    public NodeAddress GetLeader()
     {
         var channel = new Channel(_targetNodeHost, _targetNodePort, ChannelCredentials.Insecure);  
         var client = new LeaderDiscoverySvc.LeaderDiscoverySvcClient(channel);
         var reply = client.GetLeader(new LeaderQueryRequest());
         
-        return (reply.Host, reply.Port);
+        return new NodeAddress(reply.Host, reply.Port);
     }
 }
