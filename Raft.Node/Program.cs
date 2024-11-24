@@ -1,4 +1,6 @@
 ﻿using CommandLine;
+using Raft.Store.Domain;
+
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
 namespace Raft.Node;
@@ -74,7 +76,7 @@ class Program
     private static int AddLeaderNode(AddOptions addOptions)
     {
         var port = int.Parse(addOptions.Port);
-        var leader = new RaftNode(NodeType.Leader, addOptions.Name, port, "localhost", 5001);
+        var leader = new RaftNode(NodeType.Leader, addOptions.Name, port, "localhost", port);
         
         leader.Start();
         Console.WriteLine($"Created leader node {addOptions.Name} listening on port {port}");

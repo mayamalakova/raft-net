@@ -1,8 +1,11 @@
 ﻿using Grpc.Core;
+using Raft.Communication.Contract;
+using Raft.Store;
+using Raft.Store.Memory;
 
 namespace Raft.Node.Communication;
 
-public class LeaderDiscoveryService(NodeStateStore stateStore) : LeaderDiscoverySvc.LeaderDiscoverySvcBase
+public class LeaderDiscoveryService(INodeStateStore stateStore) : LeaderDiscoverySvc.LeaderDiscoverySvcBase, INodeService
 {
     public override Task<LeaderQueryReply> GetLeader(LeaderQueryRequest request, ServerCallContext context)
     {
@@ -14,8 +17,8 @@ public class LeaderDiscoveryService(NodeStateStore stateStore) : LeaderDiscovery
         });
     }
 
-    public static ServerServiceDefinition GetServiceDefinition(NodeStateStore stateStore)
+    public ServerServiceDefinition GetServiceDefinition()
     {
-        return LeaderDiscoverySvc.BindService(new LeaderDiscoveryService(stateStore));
+        return LeaderDiscoverySvc.BindService(this);
     }
 }

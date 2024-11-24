@@ -1,23 +1,16 @@
 ﻿using Grpc.Core;
+using Raft.Store.Domain;
 
-namespace Raft.Node;
+namespace Raft.Node.Communication;
 
-public class NodeCommunicationClient
+public class NodeCommunicationClient(NodeAddress targetAddress)
 {
-    private readonly string _targetNodeHost;
-    private readonly int _targetNodePort;
-
-    public NodeCommunicationClient(string targetNodeHost, int targetNodePort)
+    public NodeAddress GetLeader()
     {
-        _targetNodeHost = targetNodeHost;
-        _targetNodePort = targetNodePort;
-    }
-    public (string host, int port) GetLeader()
-    {
-        var channel = new Channel(_targetNodeHost, _targetNodePort, ChannelCredentials.Insecure);  
+        var channel = new Channel(targetAddress.Host, targetAddress.Port, ChannelCredentials.Insecure);  
         var client = new LeaderDiscoverySvc.LeaderDiscoverySvcClient(channel);
         var reply = client.GetLeader(new LeaderQueryRequest());
         
-        return (reply.Host, reply.Port);
+        return new NodeAddress(reply.Host, reply.Port);
     }
 }
