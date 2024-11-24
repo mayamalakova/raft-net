@@ -9,21 +9,17 @@ namespace Raft.Node;
 public class RaftNode
 {
     private readonly IRaftMessageReceiver _messageReceiver;
-    private readonly NodeCommunicationClient _nodeClient;
     private readonly INodeStateStore _stateStore;
     private readonly IEnumerable<INodeService> _nodeServices;
 
     private readonly string _nodeName;
-    private readonly string _clusterHost;
-    private readonly int _clusterPort;
+    private readonly NodeAddress _peerAddress;
 
     public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort)
     {
         _nodeName = nodeName;
-        _clusterHost = clusterHost;
-        _clusterPort = clusterPort;
+        _peerAddress = new NodeAddress(clusterHost, clusterPort);
         _messageReceiver = new RaftMessageReceiver(port);
-        _nodeClient = new NodeCommunicationClient(_clusterHost, _clusterPort);
         _stateStore = new NodeStateStore {Role = role};
         _nodeServices =
         [
@@ -37,13 +33,13 @@ public class RaftNode
     {
         _stateStore.LeaderAddress = _stateStore.Role == NodeType.Follower 
             ? AskForLeader() 
-            : new NodeAddress(_clusterHost, _clusterPort);
+            : _peerAddress;
         _messageReceiver.Start(_nodeServices.Select(x => x.GetServiceDefinition()));
     }
 
     private NodeAddress AskForLeader()
     {
-        var leader = _nodeClient.GetLeader();
+        var leader = new NodeCommunicationClient(_peerAddress).GetLeader();
         Console.WriteLine($"{_nodeName} found leader: {leader}");
         return leader;
     }
