@@ -1,5 +1,6 @@
 ﻿using Raft.Communication.Contract;
 using Raft.Node.Communication;
+using Raft.Store;
 using Raft.Store.Domain;
 using Raft.Store.Memory;
 
@@ -9,7 +10,7 @@ public class RaftNode
 {
     private readonly IRaftMessageReceiver _messageReceiver;
     private readonly NodeCommunicationClient _nodeClient;
-    private readonly NodeStateStore _stateStore;
+    private readonly INodeStateStore _stateStore;
     private readonly IEnumerable<INodeService> _nodeServices;
 
     private readonly string _nodeName;
