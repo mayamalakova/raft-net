@@ -56,8 +56,8 @@ public class Program
             }
             
             Parser.Default.ParseArguments<PingOptions, InfoOptions>(command.Split(' ').Select(x => x.Trim()))
-                .WithParsed<PingOptions>(_ => raftClient.Ping())
-                .WithParsed<InfoOptions>(_ => raftClient.Info())
+                .WithParsed<PingOptions>(_ => Console.WriteLine(raftClient.Ping()))
+                .WithParsed<InfoOptions>(_ => Console.WriteLine(raftClient.Info()))
                 .WithNotParsed(errors => { Console.WriteLine(errors.ToString()); });
         }
     }

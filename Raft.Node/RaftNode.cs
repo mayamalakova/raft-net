@@ -39,9 +39,19 @@ public class RaftNode
 
     private NodeAddress AskForLeader()
     {
-        var leader = new NodeCommunicationClient(_peerAddress).GetLeader();
+        var client = new NodeCommunicationClient(_peerAddress);
+        
+        var leader = client.GetLeader();
         Console.WriteLine($"{_nodeName} found leader: {leader}");
         return leader;
     }
-    
+
+    public void Status()
+    {
+    }
+
+    public void Stop()
+    {
+        _messageReceiver.Stop();
+    }
 }

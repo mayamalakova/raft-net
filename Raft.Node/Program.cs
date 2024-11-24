@@ -25,12 +25,22 @@ public class AddOptions
 
 class Program
 {
+    private static RaftNode? _node;
+
     public static void Main(string[] args)
     {
         var result = CommandLine.Parser.Default.ParseArguments<AddOptions>(args)
             .MapResult(
-                opts => AddNode(opts),
-                errs => 1);
+                opts =>
+                {
+                    _node = AddNode(opts);
+                    return 0;
+                },
+                errs =>
+                {
+                    Console.WriteLine($"Error: {string.Join(Environment.NewLine, errs)}");
+                    return 1;
+                });
         if (result != 0)
         {
             Console.WriteLine("Please provide valid command line options.");
@@ -39,9 +49,11 @@ class Program
         
         Console.WriteLine("Press any key to terminate");
         Console.ReadKey();
+        
+        _node?.Stop();
     }
 
-    private static int AddNode(AddOptions addOptions)
+    private static RaftNode AddNode(AddOptions addOptions)
     {
         return addOptions.Role switch
         {
@@ -51,7 +63,7 @@ class Program
         };
     }
 
-    private static int AddFollowerNode(AddOptions addOptions)
+    private static RaftNode AddFollowerNode(AddOptions addOptions)
     {
         var port = int.Parse(addOptions.Port);
         if (addOptions.ClusterHost == null)
@@ -70,10 +82,10 @@ class Program
         follower.Start();
         Console.WriteLine($"Created follower node {addOptions.Name} listening on port {port}.");
 
-        return 0;
+        return follower;
     }
 
-    private static int AddLeaderNode(AddOptions addOptions)
+    private static RaftNode AddLeaderNode(AddOptions addOptions)
     {
         var port = int.Parse(addOptions.Port);
         var leader = new RaftNode(NodeType.Leader, addOptions.Name, port, "localhost", port);
@@ -81,6 +93,6 @@ class Program
         leader.Start();
         Console.WriteLine($"Created leader node {addOptions.Name} listening on port {port}");
         
-        return 0;
+        return leader;
     }
 }

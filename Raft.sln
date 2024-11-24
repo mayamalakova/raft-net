@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raft.Store.Memory", "Raft.S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raft.Store", "Raft.Store\Raft.Store.csproj", "{C3D4C8CC-6878-48B4-A45F-54EBF7D48361}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raft.IntegrationTests", "Raft.IntegrationTests\Raft.IntegrationTests.csproj", "{E21038F7-C2DA-4E11-8866-DB7505353E17}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +44,9 @@ Global
 		{C3D4C8CC-6878-48B4-A45F-54EBF7D48361}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C3D4C8CC-6878-48B4-A45F-54EBF7D48361}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C3D4C8CC-6878-48B4-A45F-54EBF7D48361}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E21038F7-C2DA-4E11-8866-DB7505353E17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E21038F7-C2DA-4E11-8866-DB7505353E17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E21038F7-C2DA-4E11-8866-DB7505353E17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E21038F7-C2DA-4E11-8866-DB7505353E17}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
