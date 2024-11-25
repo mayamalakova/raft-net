@@ -6,18 +6,15 @@ namespace Raft.Cli;
 // ReSharper disable ClassNeverInstantiated.Global
 
 [Verb("ping", HelpText = "Add file contents to the index.")]
-public class PingOptions
-{
-}
+public class PingOptions;
 
 [Verb("info", HelpText = "Get informatin about the current node.")]
-public class InfoOptions
-{
-}
+public class InfoOptions;
 
 public class RaftClientOptions
 {
     [Option('a', "node-address", Required = true, HelpText = "Host:port of any node already on the cluster.")]
+    // ReSharper disable once UnusedAutoPropertyAccessor.Global
     public string NodeAddress { get; set; }
 }
 
@@ -28,7 +25,7 @@ public class Program
         var result = Parser.Default.ParseArguments<RaftClientOptions>(args)
             .MapResult(
                 StartRaftClient,
-                errs => 1);
+                _ => 1);
         if (result != 0)
         {
             Console.WriteLine("Please provide valid command line options.");

@@ -5,31 +5,13 @@ using Raft.Store.Domain;
 
 namespace Raft.Node;
 
-[Verb("add", HelpText = "Add file contents to the index.")]
-// ReSharper disable once ClassNeverInstantiated.Global
-public class AddOptions
-{
-    [Option('r', "role", Required = true, HelpText = "Role of the node - leader or follower.")]
-    public string Role { get; set; }
-    
-    [Option('n', "name", Required = true, HelpText = "Name of the node. It needs to be unique within the cluster.")]
-    public string Name { get; set; }
-    
-    [Option('p', "port", Required = true, HelpText = "Port on which the node will communicate with the rest of the cluster.")]
-    public string Port { get; set; }
-    
-    [Option('c', "cluster-address", Required = false, HelpText = "Host:port of any node already on the cluster. Required if the node is added as a follower.")]
-    public string ClusterHost { get; set; }
-
-}
-
-class Program
+public static class Program
 {
     private static RaftNode? _node;
 
     public static void Main(string[] args)
     {
-        var result = CommandLine.Parser.Default.ParseArguments<AddOptions>(args)
+        var result = Parser.Default.ParseArguments<AddOptions>(args)
             .MapResult(
                 opts =>
                 {
@@ -71,7 +53,7 @@ class Program
             throw new ArgumentException("ClusterHost is required for follower nodes.");
         }
 
-        if (!addOptions.ClusterHost.Contains(":"))
+        if (!addOptions.ClusterHost.Contains(':'))
         {
             throw new ArgumentException("ClusterHost option should be in the form of Host:port.");
         }
