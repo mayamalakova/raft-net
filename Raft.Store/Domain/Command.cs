@@ -1,4 +1,6 @@
-﻿namespace Raft.Store.Domain;
+﻿using Raft.Store.Extensions;
+
+namespace Raft.Store.Domain;
 
 public enum CommandOperation
 {
@@ -7,16 +9,14 @@ public enum CommandOperation
     Minus
 }
 
-public class Command
+public record Command(string Variable, CommandOperation Operation, int Literal)
 {
-    public string Variable { get; set; }
-    public CommandOperation Operation { get; set; }
-    public int Literal { get; set; }
+    public string Variable { get; set; } = Variable;
+    public CommandOperation Operation { get; set; } = Operation;
+    public int Literal { get; set; } = Literal;
 
-    public Command(string variable, CommandOperation operation, int literal)
+    public override string ToString()
     {
-        Variable = variable;
-        Operation = operation;
-        Literal = literal;
+        return $"({Variable}{Operation.ToPrintable()}{Literal})";
     }
 }
