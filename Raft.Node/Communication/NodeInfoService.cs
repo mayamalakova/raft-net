@@ -8,12 +8,12 @@ public class NodeInfoService(string name, INodeStateStore stateStore) : NodeInfo
 {
     public override Task<NodeInfoReply> GetInfo(NodeInfoRequest request, ServerCallContext context)
     {
-        return Task.FromResult(new NodeInfoReply()
+        return Task.FromResult(new NodeInfoReply
         {
             Address = context.Host,
             Name = name,
             Role = stateStore.Role.ToString(), 
-            LeaderAddress = stateStore.LeaderAddress.ToString() 
+            LeaderAddress = stateStore.LeaderAddress?.ToString() 
         });
     }
     

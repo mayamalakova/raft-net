@@ -7,7 +7,7 @@ public class PingReplyService(string nodeName) : PingSvc.PingSvcBase, INodeServi
 {
     public override Task<PingReply> Ping(PingRequest request, ServerCallContext context)
     {
-        return Task.FromResult(new PingReply()
+        return Task.FromResult(new PingReply
         {
             Reply = $"Pong from {nodeName} at {context.Host}"
         });

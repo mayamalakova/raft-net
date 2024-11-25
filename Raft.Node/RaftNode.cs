@@ -25,7 +25,7 @@ public class RaftNode
         [
             new LeaderDiscoveryService(_stateStore),
             new PingReplyService(_nodeName),
-            new NodeInfoService(_nodeName, _stateStore),
+            new NodeInfoService(_nodeName, _stateStore)
         ];
     }
 
@@ -44,10 +44,6 @@ public class RaftNode
         var leader = client.GetLeader();
         Console.WriteLine($"{_nodeName} found leader: {leader}");
         return leader;
-    }
-
-    public void Status()
-    {
     }
 
     public void Stop()
