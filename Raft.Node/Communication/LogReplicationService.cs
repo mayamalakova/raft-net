@@ -1,4 +1,5 @@
-﻿using Grpc.Core;
+﻿using System.Collections.Concurrent;
+using Grpc.Core;
 using Raft.Communication.Contract;
 using Raft.Store;
 using Raft.Store.Domain;
@@ -7,14 +8,16 @@ namespace Raft.Node.Communication;
 
 public class LogReplicationService(INodeStateStore stateStore) : CommandSvc.CommandSvcBase, INodeService
 {
-    private readonly Dictionary<NodeAddress, Channel> _channels = new();
-    
+    private readonly ConcurrentDictionary<NodeAddress, Channel> _channels = new();
+
     public override Task<CommandReply> ApplyCommand(CommandRequest request, ServerCallContext context)
     {
         if (stateStore.Role == NodeType.Follower)
         {
             return ForwardCommand(request);
         }
+        
+        Console.WriteLine($"Command processed successfully {request}");
 
         return Task.FromResult(new CommandReply()
         {
@@ -31,14 +34,10 @@ public class LogReplicationService(INodeStateStore stateStore) : CommandSvc.Comm
                 Result = "Failed to forward to leader"
             });
         }
+        Console.WriteLine($"Forwarding command {request}");
+        var channel = _channels.GetOrAdd(stateStore.LeaderAddress,
+            (key) => new Channel(key.Host, key.Port, ChannelCredentials.Insecure));
 
-        // TODO does this need some thread safety ?
-        var channel = _channels.TryGetValue(stateStore.LeaderAddress, out var existingChannel)
-            ? existingChannel
-            : new Channel(stateStore.LeaderAddress.Host, stateStore.LeaderAddress.Port,
-                ChannelCredentials.Insecure);
-        _channels[stateStore.LeaderAddress] = channel;
-        
         var commandClient = new CommandSvc.CommandSvcClient(channel);
         return commandClient.ApplyCommandAsync(request).ResponseAsync;
     }
