@@ -29,12 +29,26 @@ message NodeInfoRequest{
 }
 
 message NodeInfoReply{
-  string name=1;
-  string role=2;
-  string address=3;
-  string leaderAddress=4;
+  string name = 1;
+  string role = 2;
+  string address = 3;
+  string leaderAddress = 4;
 }
 
 service NodeInfoSvc{
   rpc GetInfo (NodeInfoRequest) returns (NodeInfoReply);
+}
+
+message CommandRequest{
+  string variable = 1;
+  string operation = 2;
+  int32 literal = 3;
+}
+
+message CommandReply{
+  string result = 1;
+}
+
+service CommandSvc{
+  rpc ApplyCommand (CommandRequest) returns (CommandReply);
 }
