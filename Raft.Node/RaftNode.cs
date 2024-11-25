@@ -25,7 +25,8 @@ public class RaftNode
         [
             new LeaderDiscoveryService(_stateStore),
             new PingReplyService(_nodeName),
-            new NodeInfoService(_nodeName, _stateStore)
+            new NodeInfoService(_nodeName, _stateStore),
+            new LogReplicationService(_stateStore)
         ];
     }
 
