@@ -3,22 +3,8 @@
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
 namespace Raft.Cli;
-// ReSharper disable ClassNeverInstantiated.Global
 
-[Verb("ping", HelpText = "Add file contents to the index.")]
-public class PingOptions;
-
-[Verb("info", HelpText = "Get informatin about the current node.")]
-public class InfoOptions;
-
-public class RaftClientOptions
-{
-    [Option('a', "node-address", Required = true, HelpText = "Host:port of any node already on the cluster.")]
-    // ReSharper disable once UnusedAutoPropertyAccessor.Global
-    public string NodeAddress { get; set; }
-}
-
-public class Program
+public static class Program
 {
     public static void Main(string[] args)
     {
@@ -55,6 +41,7 @@ public class Program
             Parser.Default.ParseArguments<PingOptions, InfoOptions>(command.Split(' ').Select(x => x.Trim()))
                 .WithParsed<PingOptions>(_ => Console.WriteLine(raftClient.Ping()))
                 .WithParsed<InfoOptions>(_ => Console.WriteLine(raftClient.Info()))
+                .WithParsed<CommandOptions>(c => Console.WriteLine(raftClient.Command(c)))
                 .WithNotParsed(errors => { Console.WriteLine(errors.ToString()); });
         }
     }
