@@ -33,8 +33,7 @@ public class LogReplicationService(INodeStateStore stateStore) : CommandSvc.Comm
         var channel = new Channel(stateStore.LeaderAddress.Host, stateStore.LeaderAddress.Port,
             ChannelCredentials.Insecure);
         var commandClient = new CommandSvc.CommandSvcClient(channel);
-        var reply = commandClient.ApplyCommand(request);
-        return Task.FromResult(reply);
+        return commandClient.ApplyCommandAsync(request).ResponseAsync;
     }
 
     public ServerServiceDefinition GetServiceDefinition()
