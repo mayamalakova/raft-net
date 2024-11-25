@@ -1,7 +1,7 @@
-﻿namespace Raft.Store.Domain;
+﻿namespace Raft.Store.Domain.Replication;
 
-public class LogEntry
+public class LogEntry(Command command, int term)
 {
-    public Command Command { get; set; }
-    public int Term { get; set; }
+    public Command Command { get; } = command;
+    public int Term { get; } = term;
 }

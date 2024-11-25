@@ -3,6 +3,7 @@ using Grpc.Core;
 using Raft.Communication.Contract;
 using Raft.Store;
 using Raft.Store.Domain;
+using Raft.Store.Extensions;
 
 namespace Raft.Node.Communication;
 
@@ -16,8 +17,10 @@ public class LogReplicationService(INodeStateStore stateStore) : CommandSvc.Comm
         {
             return ForwardCommand(request);
         }
-        
-        Console.WriteLine($"Command processed successfully {request}");
+
+        var command = new Command(request.Variable, request.Operation.ToOperationType(), request.Literal);
+        stateStore.AppendLogEntry(command, stateStore.CurrentTerm);
+        Console.WriteLine($"{command} appended in term={stateStore.CurrentTerm }. log is {stateStore.PrintLog()}");
 
         return Task.FromResult(new CommandReply()
         {
@@ -34,11 +37,12 @@ public class LogReplicationService(INodeStateStore stateStore) : CommandSvc.Comm
                 Result = "Failed to forward to leader"
             });
         }
-        Console.WriteLine($"Forwarding command {request}");
+
         var channel = _channels.GetOrAdd(stateStore.LeaderAddress,
             (key) => new Channel(key.Host, key.Port, ChannelCredentials.Insecure));
 
         var commandClient = new CommandSvc.CommandSvcClient(channel);
+        Console.WriteLine($"Forwarding command {request}");
         return commandClient.ApplyCommandAsync(request).ResponseAsync;
     }
 
