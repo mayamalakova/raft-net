@@ -38,7 +38,7 @@ public static class Program
                 return 0;
             }
             
-            Parser.Default.ParseArguments<PingOptions, InfoOptions>(command.Split(' ').Select(x => x.Trim()))
+            Parser.Default.ParseArguments<PingOptions, InfoOptions, CommandOptions>(command.Split(' ').Select(x => x.Trim()))
                 .WithParsed<PingOptions>(_ => Console.WriteLine(raftClient.Ping()))
                 .WithParsed<InfoOptions>(_ => Console.WriteLine(raftClient.Info()))
                 .WithParsed<CommandOptions>(c => Console.WriteLine(raftClient.Command(c)))

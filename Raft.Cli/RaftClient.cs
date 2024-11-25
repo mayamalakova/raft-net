@@ -37,18 +37,13 @@ public class RaftClient
             return "Error: the command contained an invalid operation";
         }
 
-        if (int.TryParse(opts.Var, out var val))
+        var commandRequest = new CommandRequest()
         {
-            var commandRequest = new CommandRequest()
-            {
-                Variable = opts.Var,
-                Operation = opts.Operation,
-                Literal = val
-            };
-            var reply = _commandClient.ApplyCommand(commandRequest);
-            return reply.ToString();
-        }
-
-        return "Error: the command contained an invalid integer literal";
+            Variable = opts.Var,
+            Operation = opts.Operation,
+            Literal = opts.Literal
+        };
+        var reply = _commandClient.ApplyCommand(commandRequest);
+        return reply.ToString();
     }
 }
