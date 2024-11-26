@@ -10,6 +10,7 @@ namespace Raft.Node.Communication.Services;
 
 public class LogReplicationService(INodeStateStore stateStore, IClientPool clientPool, IClusterNodeStore nodesStore, string nodeName) : CommandSvc.CommandSvcBase, INodeService
 {
+    public IAppendEntriesRequestFactory EntriesRequestFactory { get; init; } = new AppendEntriesRequestFactory(nodesStore, stateStore, nodeName);
 
     public override Task<CommandReply> ApplyCommand(CommandRequest request, ServerCallContext context)
     {
@@ -35,16 +36,7 @@ public class LogReplicationService(INodeStateStore stateStore, IClientPool clien
         ConcurrentDictionary<string, AppendEntriesReply> results = new();
         Parallel.ForEach(nodesStore.GetNodes(), follower =>
         {
-            var lastLogIndex = nodesStore.GetLastLogIndex(follower.NodeName);
-            var appendEntriesRequest = new AppendEntriesRequest()
-            {
-                Term = stateStore.CurrentTerm,
-                LeaderCommit = stateStore.CommitIndex,
-                LeaderId = nodeName,
-                PrevLogIndex = lastLogIndex,
-                PrevLogTerm = stateStore.GetTermAtIndex(lastLogIndex),
-                EntryCommands = { entries }
-            };
+            var appendEntriesRequest = EntriesRequestFactory.CreateRequest(follower.NodeName, entries);
             var reply = clientPool.GetAppendEntriesClient(follower.NodeAddress).AppendEntries(appendEntriesRequest);
             results[follower.NodeName] = reply;
         });
@@ -72,5 +64,27 @@ public class LogReplicationService(INodeStateStore stateStore, IClientPool clien
     public ServerServiceDefinition GetServiceDefinition()
     {
         return CommandSvc.BindService(this);
+    }
+}
+
+public interface IAppendEntriesRequestFactory
+{
+    AppendEntriesRequest CreateRequest(string nodeName, IList<CommandRequest> entries);
+}
+
+public class AppendEntriesRequestFactory(IClusterNodeStore nodeStore, INodeStateStore stateStore, string leaderName) : IAppendEntriesRequestFactory
+{
+    public AppendEntriesRequest CreateRequest(string nodeName, IList<CommandRequest> entries)
+    {
+        var lastLogIndex = nodeStore.GetLastLogIndex(nodeName);
+        return new AppendEntriesRequest()
+        {
+            Term = stateStore.CurrentTerm,
+            LeaderCommit = stateStore.CommitIndex,
+            LeaderId = leaderName,
+            PrevLogIndex = lastLogIndex,
+            PrevLogTerm = stateStore.GetTermAtIndex(lastLogIndex),
+            EntryCommands = { entries }
+        };
     }
 }
