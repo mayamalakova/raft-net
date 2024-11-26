@@ -11,6 +11,7 @@ public class RaftNode
     private readonly IRaftMessageReceiver _messageReceiver;
     private readonly INodeStateStore _stateStore;
     private readonly IEnumerable<INodeService> _nodeServices;
+    private readonly IClientPool _channelPool;
 
     private readonly string _nodeName;
     private readonly NodeAddress _peerAddress;
@@ -20,31 +21,35 @@ public class RaftNode
         _nodeName = nodeName;
         _peerAddress = new NodeAddress(clusterHost, clusterPort);
         _messageReceiver = new RaftMessageReceiver(port);
-        _stateStore = new NodeStateStore {Role = role};
+        _stateStore = new NodeStateStore { Role = role };
+        _channelPool = new ClientPool();
         _nodeServices =
         [
             new LeaderDiscoveryService(_stateStore),
             new PingReplyService(_nodeName),
             new NodeInfoService(_nodeName, _stateStore),
-            new LogReplicationService(_stateStore)
+            new LogReplicationService(_stateStore, _channelPool)
         ];
     }
 
-    public void Start() 
+    public void Start()
     {
-        _stateStore.LeaderAddress = _stateStore.Role == NodeType.Follower 
-            ? AskForLeader() 
+        _stateStore.LeaderAddress = _stateStore.Role == NodeType.Follower
+            ? AskForLeader()
             : _peerAddress;
         _messageReceiver.Start(_nodeServices.Select(x => x.GetServiceDefinition()));
     }
 
     private NodeAddress AskForLeader()
     {
-        var client = new NodeCommunicationClient(_peerAddress);
+        var client = _channelPool.GetLeaderDiscoveryClient(_peerAddress);
         
-        var leader = client.GetLeader();
-        Console.WriteLine($"{_nodeName} found leader: {leader}");
-        return leader;
+        var reply = client.GetLeader(new LeaderQueryRequest());
+        
+        var leaderAddress = new NodeAddress(reply.Host, reply.Port);
+        Console.WriteLine($"{_nodeName} found leader: {leaderAddress}");
+        
+        return leaderAddress;
     }
 
     public void Stop()

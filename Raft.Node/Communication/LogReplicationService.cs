@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using Grpc.Core;
+﻿using Grpc.Core;
 using Raft.Communication.Contract;
 using Raft.Store;
 using Raft.Store.Domain;
@@ -7,9 +6,8 @@ using Raft.Store.Extensions;
 
 namespace Raft.Node.Communication;
 
-public class LogReplicationService(INodeStateStore stateStore) : CommandSvc.CommandSvcBase, INodeService
+public class LogReplicationService(INodeStateStore stateStore, IClientPool clientPool) : CommandSvc.CommandSvcBase, INodeService
 {
-    private readonly ConcurrentDictionary<NodeAddress, Channel> _channels = new();
 
     public override Task<CommandReply> ApplyCommand(CommandRequest request, ServerCallContext context)
     {
@@ -38,10 +36,7 @@ public class LogReplicationService(INodeStateStore stateStore) : CommandSvc.Comm
             });
         }
 
-        var channel = _channels.GetOrAdd(stateStore.LeaderAddress,
-            (key) => new Channel(key.Host, key.Port, ChannelCredentials.Insecure));
-
-        var commandClient = new CommandSvc.CommandSvcClient(channel);
+        var commandClient = clientPool.GetCommandServiceClient(stateStore.LeaderAddress);
         Console.WriteLine($"Forwarding command {request}");
         return commandClient.ApplyCommandAsync(request).ResponseAsync;
     }
