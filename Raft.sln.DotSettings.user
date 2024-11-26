@@ -18,6 +18,7 @@
 	<s:String x:Key="/Default/Environment/AssemblyExplorer/XmlDocument/@EntryValue">&lt;AssemblyExplorer&gt;&#xD;
   &lt;Assembly Path="C:\Users\Maya\.nuget\packages\grpc.core.api\2.66.0\lib\netstandard2.1\Grpc.Core.Api.dll" /&gt;&#xD;
 &lt;/AssemblyExplorer&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=86de0bb1_002D951c_002D4fa3_002D937a_002D4d6d0173f045/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="RaftNodesShouldFindLeader" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
-  &lt;Solution /&gt;&#xD;
-&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=c2e8742d_002De088_002D4896_002Dabfe_002Dea937b910c91/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from &amp;lt;Raft.IntegrationTests&amp;gt;" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;Project Location="C:\Users\Maya\RiderProjects\raft-net\Raft.IntegrationTests" Presentation="&amp;lt;Raft.IntegrationTests&amp;gt;" /&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	</wpf:ResourceDictionary>

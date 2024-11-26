@@ -32,7 +32,7 @@ public class RaftNode
             new LeaderDiscoveryService(_stateStore),
             new RegisterNodeService(nodeStore),
             new PingReplyService(_nodeName),
-            new NodeInfoService(_nodeName, _stateStore),
+            new NodeInfoService(_nodeName, _stateStore, nodeStore),
             new LogReplicationService(_stateStore, _clientPool),
             new AppendEntriesService()
         ];

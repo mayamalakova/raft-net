@@ -33,6 +33,7 @@ message NodeInfoReply{
   string role = 2;
   string address = 3;
   string leaderAddress = 4;
+  string knownNodes = 5;
 }
 
 service NodeInfoSvc{
