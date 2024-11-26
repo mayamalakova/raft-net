@@ -7,6 +7,7 @@ public class AppendEntriesService: AppendEntriesSvc.AppendEntriesSvcBase, INodeS
 {
     public override Task<AppendEntriesReply> AppendEntries(AppendEntriesRequest request, ServerCallContext context)
     {
+        Console.WriteLine($"Appending entries {request}");
         return Task.FromResult(new AppendEntriesReply
         {
             Term = request.Term,

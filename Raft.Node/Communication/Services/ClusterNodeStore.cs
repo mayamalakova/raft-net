@@ -6,6 +6,7 @@ namespace Raft.Node.Communication.Services;
 public class ClusterNodeStore: IClusterNodeStore
 {
     private readonly ConcurrentDictionary<string, NodeAddress> _nodes = new();
+    private readonly ConcurrentDictionary<string, int> _nextIndex = new();
     
     public string AddNode(string nodeName, NodeAddress nodeAddress)
     {
@@ -13,9 +14,14 @@ public class ClusterNodeStore: IClusterNodeStore
         return $"{nodeName} added at {nodeAddress}";
     }
 
-    public IEnumerable<NodeAddress> GetNodes()
+    public IEnumerable<NodeInfo> GetNodes()
     {
-        return _nodes.Values;
+        return _nodes.Keys.Select(k => new NodeInfo(k, _nodes[k]));
+    }
+
+    public int GetLastLogIndex(string nodeName)
+    {
+        return _nextIndex.GetValueOrDefault(nodeName, -1);
     }
 
     public override string ToString()

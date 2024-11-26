@@ -22,7 +22,7 @@ public class LogReplicationServiceTests
         _mockStateStore = Substitute.For<INodeStateStore>();
         _channelPool = Substitute.For<IClientPool>();
         var nodeStore = Substitute.For<IClusterNodeStore>();
-        _logReplicationService = new LogReplicationService(_mockStateStore, _channelPool, nodeStore);
+        _logReplicationService = new LogReplicationService(_mockStateStore, _channelPool, nodeStore, "lead1");
     }
 
     [Test]

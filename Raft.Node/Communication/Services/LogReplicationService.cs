@@ -8,7 +8,7 @@ using Raft.Store.Extensions;
 
 namespace Raft.Node.Communication.Services;
 
-public class LogReplicationService(INodeStateStore stateStore, IClientPool clientPool, IClusterNodeStore nodesStore) : CommandSvc.CommandSvcBase, INodeService
+public class LogReplicationService(INodeStateStore stateStore, IClientPool clientPool, IClusterNodeStore nodesStore, string nodeName) : CommandSvc.CommandSvcBase, INodeService
 {
 
     public override Task<CommandReply> ApplyCommand(CommandRequest request, ServerCallContext context)
@@ -22,7 +22,7 @@ public class LogReplicationService(INodeStateStore stateStore, IClientPool clien
         stateStore.AppendLogEntry(command, stateStore.CurrentTerm);
         Console.WriteLine($"{command} appended in term={stateStore.CurrentTerm }. log is {stateStore.PrintLog()}");
         
-        SendAppendEntriesRequestsAndWaitForResults();
+        SendAppendEntriesRequestsAndWaitForResults([request]);
 
         return Task.FromResult(new CommandReply()
         {
@@ -30,13 +30,23 @@ public class LogReplicationService(INodeStateStore stateStore, IClientPool clien
         });
     }
 
-    private void SendAppendEntriesRequestsAndWaitForResults()
+    private void SendAppendEntriesRequestsAndWaitForResults(IList<CommandRequest> entries)
     {
-        ConcurrentDictionary<NodeAddress, AppendEntriesReply> results = new();
-        Parallel.ForEach(nodesStore.GetNodes(), nodeAddress =>
+        ConcurrentDictionary<string, AppendEntriesReply> results = new();
+        Parallel.ForEach(nodesStore.GetNodes(), follower =>
         {
-            var reply = clientPool.GetAppendEntriesClient(nodeAddress).AppendEntries(new AppendEntriesRequest());
-            results[nodeAddress] = reply;
+            var lastLogIndex = nodesStore.GetLastLogIndex(follower.NodeName);
+            var appendEntriesRequest = new AppendEntriesRequest()
+            {
+                Term = stateStore.CurrentTerm,
+                LeaderCommit = stateStore.CommitIndex,
+                LeaderId = nodeName,
+                PrevLogIndex = lastLogIndex,
+                PrevLogTerm = stateStore.GetTermAtIndex(lastLogIndex),
+                EntryCommands = { entries }
+            };
+            var reply = clientPool.GetAppendEntriesClient(follower.NodeAddress).AppendEntries(appendEntriesRequest);
+            results[follower.NodeName] = reply;
         });
         foreach (var result in results)
         {
