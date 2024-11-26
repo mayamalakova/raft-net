@@ -70,3 +70,17 @@ message AppendEntriesReply{
 service AppendEntriesSvc{
   rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesReply);
 }
+
+message RegisterNodeRequest {
+  string name = 1;
+  string host = 2;
+  int32 port = 3;
+}
+
+message RegisterNodeRply {
+  string reply = 1;  
+}
+
+service RegisterNodeSvc{
+  rpc RegisterNode(RegisterNodeRequest) returns (RegisterNodeRply);
+}

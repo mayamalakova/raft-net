@@ -12,24 +12,28 @@ public class RaftNode
     private readonly IRaftMessageReceiver _messageReceiver;
     private readonly INodeStateStore _stateStore;
     private readonly IEnumerable<INodeService> _nodeServices;
-    private readonly IClientPool _channelPool;
+    private readonly IClientPool _clientPool;
 
     private readonly string _nodeName;
+    private readonly int _nodePort;
     private readonly NodeAddress _peerAddress;
 
     public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort)
     {
         _nodeName = nodeName;
+        _nodePort = port;
         _peerAddress = new NodeAddress(clusterHost, clusterPort);
         _messageReceiver = new RaftMessageReceiver(port);
         _stateStore = new NodeStateStore { Role = role };
-        _channelPool = new ClientPool();
+        _clientPool = new ClientPool();
+        IClusterNodeStore nodeStore = new ClusterNodeStore();
         _nodeServices =
         [
             new LeaderDiscoveryService(_stateStore),
+            new RegisterNodeService(nodeStore),
             new PingReplyService(_nodeName),
             new NodeInfoService(_nodeName, _stateStore),
-            new LogReplicationService(_stateStore, _channelPool),
+            new LogReplicationService(_stateStore, _clientPool),
             new AppendEntriesService()
         ];
     }
@@ -44,7 +48,7 @@ public class RaftNode
 
     private NodeAddress AskForLeader()
     {
-        var client = _channelPool.GetLeaderDiscoveryClient(_peerAddress);
+        var client = _clientPool.GetLeaderDiscoveryClient(_peerAddress);
         
         var reply = client.GetLeader(new LeaderQueryRequest());
         
