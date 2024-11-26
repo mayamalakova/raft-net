@@ -43,6 +43,17 @@ public class RaftNode
         _stateStore.LeaderAddress = _stateStore.Role == NodeType.Follower
             ? AskForLeader()
             : _peerAddress;
+        if (_stateStore.Role == NodeType.Follower)
+        {
+            var registerNodeClient = _clientPool.GetRegisterNodeClient(_stateStore.LeaderAddress);
+            var registerReply = registerNodeClient.RegisterNode(new RegisterNodeRequest
+            {
+                Name = _nodeName,
+                Host = "localhost", //TODO this should be externally visible IP address
+                Port = _nodePort
+            });
+            Console.WriteLine($"Registered with leader {registerReply}");
+        }
         _messageReceiver.Start(_nodeServices.Select(x => x.GetServiceDefinition()));
     }
 
