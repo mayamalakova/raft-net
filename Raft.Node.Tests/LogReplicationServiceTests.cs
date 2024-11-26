@@ -32,7 +32,9 @@ public class LogReplicationServiceTests
 
         var reply = _logReplicationService.ApplyCommand(
             new CommandRequest() { Variable = "A", Operation = "=", Literal = 5 }, mockCallContext);
+        
         reply.Result.ShouldBe(new CommandReply() { Result = "Success at localhost" });
+        _mockStateStore.Received().AppendLogEntry(new Command("A", CommandOperation.Assignment, 5), 0);
     }
 
     [Test]
@@ -49,6 +51,7 @@ public class LogReplicationServiceTests
         var reply = _logReplicationService.ApplyCommand(commandRequest, Substitute.For<ServerCallContext>());
 
         reply.Result.ShouldBe(new CommandReply() { Result = "Success at leader" });
+        _mockStateStore.DidNotReceive().AppendLogEntry(Arg.Any<Command>(), Arg.Any<int>());
     }
 
     private void CreateMockCommandClient(NodeAddress targetAddress, CommandRequest command,
