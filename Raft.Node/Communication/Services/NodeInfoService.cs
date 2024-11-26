@@ -2,7 +2,7 @@
 using Raft.Communication.Contract;
 using Raft.Store;
 
-namespace Raft.Node.Communication;
+namespace Raft.Node.Communication.Services;
 
 public class NodeInfoService(string name, INodeStateStore stateStore) : NodeInfoSvc.NodeInfoSvcBase, INodeService
 {

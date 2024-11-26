@@ -1,6 +1,6 @@
 ﻿using Raft.Store.Domain;
 
-namespace Raft.Node.Communication;
+namespace Raft.Node.Communication.Client;
 
 public interface IClientPool
 {

@@ -2,7 +2,7 @@
 using Grpc.Core;
 using Raft.Store.Domain;
 
-namespace Raft.Node.Communication;
+namespace Raft.Node.Communication.Client;
 
 public class ClientPool: IClientPool
 {
