@@ -33,6 +33,7 @@ message NodeInfoReply{
   string role = 2;
   string address = 3;
   string leaderAddress = 4;
+  string knownNodes = 5;
 }
 
 service NodeInfoSvc{
@@ -51,4 +52,36 @@ message CommandReply{
 
 service CommandSvc{
   rpc ApplyCommand (CommandRequest) returns (CommandReply);
+}
+
+message AppendEntriesRequest{
+  int32 term = 1;
+  string leaderId = 2;
+  int32 prevLogIndex = 3;
+  int32 prevLogTerm = 4;
+  repeated CommandRequest entryCommands = 5;
+  int32 leaderCommit = 6;
+}
+
+message AppendEntriesReply{
+  int32 term = 1;
+  bool success = 2;
+}
+
+service AppendEntriesSvc{
+  rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesReply);
+}
+
+message RegisterNodeRequest {
+  string name = 1;
+  string host = 2;
+  int32 port = 3;
+}
+
+message RegisterNodeRply {
+  string reply = 1;  
+}
+
+service RegisterNodeSvc{
+  rpc RegisterNode(RegisterNodeRequest) returns (RegisterNodeRply);
 }

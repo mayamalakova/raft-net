@@ -2,9 +2,9 @@
 using Raft.Communication.Contract;
 using Raft.Store;
 
-namespace Raft.Node.Communication;
+namespace Raft.Node.Communication.Services;
 
-public class NodeInfoService(string name, INodeStateStore stateStore) : NodeInfoSvc.NodeInfoSvcBase, INodeService
+public class NodeInfoService(string name, INodeStateStore stateStore, IClusterNodeStore _nodeStore) : NodeInfoSvc.NodeInfoSvcBase, INodeService
 {
     public override Task<NodeInfoReply> GetInfo(NodeInfoRequest request, ServerCallContext context)
     {
@@ -13,7 +13,8 @@ public class NodeInfoService(string name, INodeStateStore stateStore) : NodeInfo
             Address = context.Host,
             Name = name,
             Role = stateStore.Role.ToString(), 
-            LeaderAddress = stateStore.LeaderAddress?.ToString() 
+            LeaderAddress = stateStore.LeaderAddress?.ToString(),
+            KnownNodes = _nodeStore.ToString()
         });
     }
     

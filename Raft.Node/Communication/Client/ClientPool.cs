@@ -2,7 +2,7 @@
 using Grpc.Core;
 using Raft.Store.Domain;
 
-namespace Raft.Node.Communication;
+namespace Raft.Node.Communication.Client;
 
 public class ClientPool: IClientPool
 {
@@ -21,5 +21,15 @@ public class ClientPool: IClientPool
     public LeaderDiscoverySvc.LeaderDiscoverySvcClient GetLeaderDiscoveryClient(NodeAddress targetAddress)
     {
         return new LeaderDiscoverySvc.LeaderDiscoverySvcClient(GetChannel(targetAddress));
+    }
+
+    public RegisterNodeSvc.RegisterNodeSvcClient GetRegisterNodeClient(NodeAddress targetAddress)
+    {
+        return new RegisterNodeSvc.RegisterNodeSvcClient(GetChannel(targetAddress));
+    }
+
+    public AppendEntriesSvc.AppendEntriesSvcClient GetAppendEntriesClient(NodeAddress targetAddress)
+    {
+        return new AppendEntriesSvc.AppendEntriesSvcClient(GetChannel(targetAddress));
     }
 }

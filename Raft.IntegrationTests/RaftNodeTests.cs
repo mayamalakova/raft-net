@@ -26,12 +26,16 @@ public class RaftNodeTests
         CreateFollower("follower1", 5002, 5001);
         CreateFollower("follower2", 5003, 5002);
 
-        var raftClient = new RaftClient("localhost", 5002);
+        var followerRaftClient = new RaftClient("localhost", 5002);
 
-        var pingReply = raftClient.Ping();
+        var pingReply = followerRaftClient.Ping();
         pingReply.ShouldBe("{ \"reply\": \"Pong from follower1 at localhost:5002\" }");
-        var info = raftClient.Info();
-        info.ShouldBe("{ \"name\": \"follower1\", \"role\": \"Follower\", \"address\": \"localhost:5002\", \"leaderAddress\": \"localhost:5001\" }");
+        var followerInfo = followerRaftClient.Info();
+        followerInfo.ShouldBe("{ \"name\": \"follower1\", \"role\": \"Follower\", \"address\": \"localhost:5002\", \"leaderAddress\": \"localhost:5001\" }");
+
+        var leaderRaftClient = new RaftClient("localhost", 5001);
+        var leaderInfo = leaderRaftClient.Info();
+        leaderInfo.ShouldBe("{ \"name\": \"leader1\", \"role\": \"Leader\", \"address\": \"localhost:5001\", \"leaderAddress\": \"localhost:5001\", \"knownNodes\": \"(follower1=localhost:5002),(follower2=localhost:5003)\" }");
     }
 
     private void CreateLeader(string name, int port)
