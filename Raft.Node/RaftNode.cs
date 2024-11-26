@@ -1,5 +1,4 @@
 ﻿using Raft.Communication.Contract;
-using Raft.Node.Communication;
 using Raft.Node.Communication.Client;
 using Raft.Node.Communication.Services;
 using Raft.Store;
@@ -30,7 +29,8 @@ public class RaftNode
             new LeaderDiscoveryService(_stateStore),
             new PingReplyService(_nodeName),
             new NodeInfoService(_nodeName, _stateStore),
-            new LogReplicationService(_stateStore, _channelPool)
+            new LogReplicationService(_stateStore, _channelPool),
+            new AppendEntriesService()
         ];
     }
 
