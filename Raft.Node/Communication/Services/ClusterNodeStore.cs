@@ -13,6 +13,11 @@ public class ClusterNodeStore: IClusterNodeStore
         return $"{nodeName} added at {nodeAddress}";
     }
 
+    public IEnumerable<NodeAddress> GetNodes()
+    {
+        return _nodes.Values;
+    }
+
     public override string ToString()
     {
         return string.Join(",", _nodes.Select(n => $"({n.Key}={n.Value})"));
