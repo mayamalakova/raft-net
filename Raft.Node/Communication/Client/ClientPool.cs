@@ -22,4 +22,9 @@ public class ClientPool: IClientPool
     {
         return new LeaderDiscoverySvc.LeaderDiscoverySvcClient(GetChannel(targetAddress));
     }
+
+    public AppendEntriesSvc.AppendEntriesSvcClient GetAppendEntriesClient(NodeAddress targetAddress)
+    {
+        return new AppendEntriesSvc.AppendEntriesSvcClient(GetChannel(targetAddress));
+    }
 }
