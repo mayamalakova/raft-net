@@ -5,10 +5,11 @@ namespace Raft.Node.Communication;
 
 public class NodeCommunicationClient(NodeAddress targetAddress)
 {
+    private readonly Channel _channel = new(targetAddress.Host, targetAddress.Port, ChannelCredentials.Insecure);
+
     public NodeAddress GetLeader()
     {
-        var channel = new Channel(targetAddress.Host, targetAddress.Port, ChannelCredentials.Insecure);  
-        var client = new LeaderDiscoverySvc.LeaderDiscoverySvcClient(channel);
+        var client = new LeaderDiscoverySvc.LeaderDiscoverySvcClient(_channel);
         var reply = client.GetLeader(new LeaderQueryRequest());
         
         return new NodeAddress(reply.Host, reply.Port);
