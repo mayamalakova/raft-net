@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using Grpc.Core;
 using Raft.Store.Domain;
-using Channel = Grpc.Core.Channel;
 
 namespace Raft.Node.Communication;
 
@@ -18,9 +17,9 @@ public class ClientPool: IClientPool
     {
         return new CommandSvc.CommandSvcClient(GetChannel(targetAddress));
     }
-}
 
-public interface IClientPool
-{
-    CommandSvc.CommandSvcClient GetCommandServiceClient(NodeAddress targetAddress);
+    public LeaderDiscoverySvc.LeaderDiscoverySvcClient GetLeaderDiscoveryClient(NodeAddress targetAddress)
+    {
+        return new LeaderDiscoverySvc.LeaderDiscoverySvcClient(GetChannel(targetAddress));
+    }
 }
