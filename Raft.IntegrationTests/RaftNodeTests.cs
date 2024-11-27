@@ -38,6 +38,25 @@ public class RaftNodeTests
         leaderInfo.ShouldBe("{ \"name\": \"leader1\", \"role\": \"Leader\", \"address\": \"localhost:5001\", \"leaderAddress\": \"localhost:5001\", \"knownNodes\": \"(follower1=localhost:5002),(follower2=localhost:5003)\" }");
     }
 
+    [Test]
+    public void ShouldAppendLogEntriesAtLeader()
+    {
+        CreateLeader("leader1", 5001);
+        CreateFollower("follower1", 5002, 5001);
+        CreateFollower("follower2", 5003, 5002);
+
+        var leaderClient = new RaftClient("localhost", 5001);
+        var followerClient1 = new RaftClient("localhost", 5002);
+        var followerClient2 = new RaftClient("localhost", 5003);
+
+        leaderClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = 1 });
+        leaderClient.Command(new CommandOptions { Var = "A", Operation = "+", Literal = 5 });
+
+        leaderClient.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
+        followerClient1.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
+        followerClient2.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
+    }
+
     private void CreateLeader(string name, int port)
     {
         var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port);
