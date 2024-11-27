@@ -17,6 +17,7 @@ public class RaftNodeTests
         {
             node.Stop();
         }
+        _nodes.Clear();
     }
     
     [Test]
