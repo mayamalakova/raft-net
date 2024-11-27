@@ -7,6 +7,7 @@ public class RaftClient
     private readonly PingSvc.PingSvcClient _pingClient;
     private readonly NodeInfoSvc.NodeInfoSvcClient _infoClient;
     private readonly CommandSvc.CommandSvcClient _commandClient;
+    private readonly LogInfoSvc.LogInfoSvcClient _logInfoClient;
 
     public RaftClient(string host, int port)
     {
@@ -14,6 +15,7 @@ public class RaftClient
         _pingClient = new PingSvc.PingSvcClient(channel);
         _infoClient = new NodeInfoSvc.NodeInfoSvcClient(channel);
         _commandClient = new CommandSvc.CommandSvcClient(channel);
+        _logInfoClient = new LogInfoSvc.LogInfoSvcClient(channel);
     }
 
     public string Ping()
@@ -45,5 +47,11 @@ public class RaftClient
         };
         var reply = _commandClient.ApplyCommand(commandRequest);
         return reply.ToString();
+    }
+
+    public string LogInfo()
+    {
+        var logInfo = _logInfoClient.GetLogLInfo(new LogInfoRequest());
+        return logInfo.ToString();
     }
 }

@@ -79,9 +79,20 @@ message RegisterNodeRequest {
 }
 
 message RegisterNodeRply {
-  string reply = 1;  
+  string reply = 1;
 }
 
 service RegisterNodeSvc{
   rpc RegisterNode(RegisterNodeRequest) returns (RegisterNodeRply);
+}
+
+message LogInfoRequest{
+}
+
+message LogInfoReply{
+  string entries = 1;
+}
+
+service LogInfoSvc{
+  rpc GetLogLInfo(LogInfoRequest) returns (LogInfoReply);
 }
