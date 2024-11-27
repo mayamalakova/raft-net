@@ -1,5 +1,7 @@
 ﻿using Grpc.Core;
 using Raft.Communication.Contract;
+using Raft.Node.Extensions;
+using Raft.Store;
 
 namespace Raft.Node.Communication.Services;
 
