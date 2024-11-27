@@ -1,6 +1,6 @@
 ﻿using Raft.Store.Domain;
 
-namespace Raft.Node.Communication.Services;
+namespace Raft.Store;
 
 public interface IClusterNodeStore
 {
@@ -8,5 +8,3 @@ public interface IClusterNodeStore
     IEnumerable<NodeInfo> GetNodes();
     int GetLastLogIndex(string nodeName);
 }
-
-public record NodeInfo(string NodeName, NodeAddress NodeAddress);

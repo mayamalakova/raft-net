@@ -34,7 +34,8 @@ public class RaftNode
             new PingReplyService(_nodeName),
             new NodeInfoService(_nodeName, _stateStore, nodeStore),
             new LogReplicationService(_stateStore, _clientPool, nodeStore, nodeName),
-            new AppendEntriesService()
+            new AppendEntriesService(_stateStore),
+            new LogInfoService(_stateStore)
         ];
     }
 

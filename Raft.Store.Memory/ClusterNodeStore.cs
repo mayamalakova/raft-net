@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using Raft.Store.Domain;
 
-namespace Raft.Node.Communication.Services;
+namespace Raft.Store.Memory;
 
 public class ClusterNodeStore: IClusterNodeStore
 {
