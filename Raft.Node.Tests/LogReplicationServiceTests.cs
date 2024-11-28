@@ -75,6 +75,34 @@ public class LogReplicationServiceTests
         _mockStateStore.DidNotReceive().AppendLogEntry(Arg.Any<Command>(), Arg.Any<int>());
     }
 
+    [Test]
+    public void LeaderShouldUpdateNextLogIndexWhenAppendEntryReplySuccess()
+    {
+        var followerAddress = new NodeAddress("someHost", 666);
+        _nodeStore.GetNodes().Returns([new NodeInfo("someNode", followerAddress)]);
+        SetUpMockAppendEntriesClient(followerAddress);
+        var mockCallContext = CreateMockCallContext();
+
+        _logReplicationService.ApplyCommand(
+            new CommandRequest() { Variable = "A", Operation = "=", Literal = 5 }, mockCallContext);
+
+        _nodeStore.Received().IncreaseLastLogIndex(Arg.Any<string>(), Arg.Any<int>());
+    }
+    
+    [Theory]
+    public void LeaderShouldNotUpdateNextLogIndexWhenAppendEntryReplyFailure()
+    {
+        var followerAddress = new NodeAddress("someHost", 666);
+        _nodeStore.GetNodes().Returns([new NodeInfo("someNode", followerAddress)]);
+        SetUpMockAppendEntriesClient(followerAddress, false);
+        var mockCallContext = CreateMockCallContext();
+
+        _logReplicationService.ApplyCommand(
+            new CommandRequest() { Variable = "A", Operation = "=", Literal = 5 }, mockCallContext);
+
+        _nodeStore.DidNotReceive().IncreaseLastLogIndex("someNode", 1);
+    }
+
     private static ServerCallContext CreateMockCallContext()
     {
         var mockCallContext = Substitute.For<ServerCallContext>();
@@ -82,12 +110,12 @@ public class LogReplicationServiceTests
         return mockCallContext;
     }
 
-    private AppendEntriesSvc.AppendEntriesSvcClient SetUpMockAppendEntriesClient(NodeAddress followerAddress)
+    private AppendEntriesSvc.AppendEntriesSvcClient SetUpMockAppendEntriesClient(NodeAddress followerAddress, bool success = true)
     {
         var mockFollowerClient = Substitute.For<AppendEntriesSvc.AppendEntriesSvcClient>();
         mockFollowerClient.AppendEntries(Arg.Any<AppendEntriesRequest>()).Returns(new AppendEntriesReply()
         {
-            Success = true
+            Success = success
         });
         _channelPool.GetAppendEntriesClient(followerAddress).Returns(mockFollowerClient);
         return mockFollowerClient;
