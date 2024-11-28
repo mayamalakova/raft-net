@@ -76,7 +76,7 @@ public class LogReplicationServiceTests
     }
 
     [Test]
-    public void LeaderShouldUpdateNextLogIndexWhenAppendEntryReplySuccess()
+    public void LeaderShouldIncreaseNextLogIndexWhenAppendEntryReplySuccess()
     {
         var followerAddress = new NodeAddress("someHost", 666);
         _nodeStore.GetNodes().Returns([new NodeInfo("someNode", followerAddress)]);
@@ -86,11 +86,12 @@ public class LogReplicationServiceTests
         _logReplicationService.ApplyCommand(
             new CommandRequest() { Variable = "A", Operation = "=", Literal = 5 }, mockCallContext);
 
-        _nodeStore.Received().IncreaseLastLogIndex(Arg.Any<string>(), Arg.Any<int>());
+        _nodeStore.Received().IncreaseLastLogIndex("someNode", 1);
+        _nodeStore.DidNotReceive().DecreaseLastLogIndex(Arg.Any<string>());
     }
     
-    [Theory]
-    public void LeaderShouldNotUpdateNextLogIndexWhenAppendEntryReplyFailure()
+    [Test]
+    public void LeaderShouldDecreaseNextLogIndexWhenAppendEntryReplyFailure()
     {
         var followerAddress = new NodeAddress("someHost", 666);
         _nodeStore.GetNodes().Returns([new NodeInfo("someNode", followerAddress)]);
@@ -101,6 +102,7 @@ public class LogReplicationServiceTests
             new CommandRequest() { Variable = "A", Operation = "=", Literal = 5 }, mockCallContext);
 
         _nodeStore.DidNotReceive().IncreaseLastLogIndex("someNode", 1);
+        _nodeStore.Received().DecreaseLastLogIndex("someNode");
     }
 
     private static ServerCallContext CreateMockCallContext()

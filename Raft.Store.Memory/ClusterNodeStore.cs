@@ -30,6 +30,12 @@ public class ClusterNodeStore: IClusterNodeStore
         _nextIndex[nodeName] = GetLastLogIndex(nodeName) + entriesCount;
     }
 
+    public void DecreaseLastLogIndex(string nodeName)
+    {
+        var nextIndex = _nextIndex[nodeName];
+        _nextIndex[nodeName] = nextIndex - 1;
+    }
+
     public override string ToString()
     {
         return string.Join(",", _nodes.Select(n => $"({n.Key}={n.Value})"));

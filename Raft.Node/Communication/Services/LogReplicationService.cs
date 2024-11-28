@@ -23,7 +23,8 @@ public class LogReplicationService(INodeStateStore stateStore, IClientPool clien
         stateStore.AppendLogEntry(command, stateStore.CurrentTerm);
         Console.WriteLine($"{command} appended in term={stateStore.CurrentTerm }. log is {stateStore.PrintLog()}");
         
-        SendAppendEntriesRequestsAndWaitForResults([request]);
+        var replies = SendAppendEntriesRequestsAndWaitForResults([request]);
+        UpdateNextLogIndex(replies, 1);
 
         return Task.FromResult(new CommandReply()
         {
@@ -31,22 +32,32 @@ public class LogReplicationService(INodeStateStore stateStore, IClientPool clien
         });
     }
 
-    private void SendAppendEntriesRequestsAndWaitForResults(IList<CommandRequest> entries)
+    private IDictionary<string, AppendEntriesReply> SendAppendEntriesRequestsAndWaitForResults(IList<CommandRequest> entries)
     {
-        ConcurrentDictionary<string, AppendEntriesReply> results = new();
+        IDictionary<string, AppendEntriesReply> results = new ConcurrentDictionary<string, AppendEntriesReply>();
         Parallel.ForEach(nodesStore.GetNodes(), follower =>
         {
             var appendEntriesRequest = EntriesRequestFactory.CreateRequest(follower.NodeName, entries);
             var reply = clientPool.GetAppendEntriesClient(follower.NodeAddress).AppendEntries(appendEntriesRequest);
             results[follower.NodeName] = reply;
         });
-        foreach (var result in results)
+        return results;
+        
+    }
+
+    private void UpdateNextLogIndex(IDictionary<string, AppendEntriesReply> replies, int entriesCount)
+    {
+        foreach (var reply in replies)
         {
-            var nodeName = result.Key;
-            Console.WriteLine($"{nodeName}: {result.Value}");
-            if (result.Value.Success)
+            var nodeName = reply.Key;
+            Console.WriteLine($"{nodeName}: {reply.Value}");
+            if (reply.Value.Success)
             {
-                nodesStore.IncreaseLastLogIndex(nodeName, entries.Count);
+                nodesStore.IncreaseLastLogIndex(nodeName, entriesCount);
+            }
+            else
+            {
+                nodesStore.DecreaseLastLogIndex(nodeName);
             }
         }
     }
