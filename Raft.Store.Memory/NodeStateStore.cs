@@ -11,6 +11,7 @@ public class NodeStateStore : INodeStateStore
     public NodeAddress? LeaderAddress { get; set; }
     public int CurrentTerm { get; set; } = 0;
     public int CommitIndex { get; set; } = -1;
+    public int LogLength => _log.Entries.Count;
 
     public void AppendLogEntry(Command command, int term)
     {
@@ -25,5 +26,10 @@ public class NodeStateStore : INodeStateStore
     public int GetTermAtIndex(int lastLogIndex)
     {
         return _log.GetItemAt(lastLogIndex)?.Term ?? -1;
+    }
+
+    public LogEntry? EntryAtIndex(int index)
+    {
+        return _log.GetItemAt(index);
     }
 }

@@ -20,28 +20,8 @@
   &lt;Assembly Path="C:\Users\Maya\.nuget\packages\grpc.core.api\2.66.0\lib\netstandard2.1\Grpc.Core.Api.dll" /&gt;&#xD;
 &lt;/AssemblyExplorer&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=c2e8742d_002De088_002D4896_002Dabfe_002Dea937b910c91/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from &amp;lt;Raft.IntegrationTests&amp;gt;" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
-  &lt;And&gt;&#xD;
-    &lt;Or&gt;&#xD;
-      &lt;And&gt;&#xD;
-        &lt;Or&gt;&#xD;
-          &lt;Project Location="C:\Users\Maya\RiderProjects\raft-net\Raft.IntegrationTests" Presentation="&amp;lt;Raft.IntegrationTests&amp;gt;" /&gt;&#xD;
-          &lt;TestAncestor&gt;&#xD;
-            &lt;TestId&gt;NUnit3x::A655E214-3527-4BB8-8C19-0DAF27448E01::net8.0::Raft.Node.Tests.LogReplicationServiceTests&lt;/TestId&gt;&#xD;
-            &lt;TestId&gt;NUnit3x::A655E214-3527-4BB8-8C19-0DAF27448E01::net8.0::Raft.Node.Tests.AppendEntriesServiceTests&lt;/TestId&gt;&#xD;
-          &lt;/TestAncestor&gt;&#xD;
-        &lt;/Or&gt;&#xD;
-        &lt;Not&gt;&#xD;
-          &lt;Project Location="C:\Users\Maya\RiderProjects\raft-net\Raft.IntegrationTests" Presentation="&amp;lt;Raft.IntegrationTests&amp;gt;" /&gt;&#xD;
-        &lt;/Not&gt;&#xD;
-      &lt;/And&gt;&#xD;
-      &lt;TestAncestor&gt;&#xD;
-        &lt;TestId&gt;NUnit3x::E21038F7-C2DA-4E11-8866-DB7505353E17::net8.0::Raft.IntegrationTests.RaftNodeTests.ShouldAppendLogEntries&lt;/TestId&gt;&#xD;
-        &lt;TestId&gt;NUnit3x::E21038F7-C2DA-4E11-8866-DB7505353E17::net8.0::Raft.IntegrationTests.RaftNodeTests.ShouldAppendLogEntriesAtLeader&lt;/TestId&gt;&#xD;
-      &lt;/TestAncestor&gt;&#xD;
-    &lt;/Or&gt;&#xD;
-    &lt;Not&gt;&#xD;
-      &lt;Project Location="C:\Users\Maya\RiderProjects\raft-net\Raft.Node.Tests" Presentation="&amp;lt;Raft.Node.Tests&amp;gt;" /&gt;&#xD;
-    &lt;/Not&gt;&#xD;
-  &lt;/And&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::A655E214-3527-4BB8-8C19-0DAF27448E01::net8.0::Raft.Node.Tests.AppendEntriesServiceTests&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	</wpf:ResourceDictionary>

@@ -10,22 +10,28 @@ public class AppendEntriesService(INodeStateStore stateStore) : AppendEntriesSvc
     public override Task<AppendEntriesReply> AppendEntries(AppendEntriesRequest request, ServerCallContext context)
     {
         Console.WriteLine($"Appending entries {request}");
-        if (stateStore.GetTermAtIndex(request.PrevLogIndex) == request.PrevLogTerm)
+        if (stateStore.CurrentTerm > request.Term || stateStore.GetTermAtIndex(request.PrevLogIndex) != request.PrevLogTerm)
         {
-            foreach (var entry in request.EntryCommands)
-            {
-                stateStore.AppendLogEntry(entry.ToCommand(), request.Term);
-            }
             return Task.FromResult(new AppendEntriesReply
             {
                 Term = stateStore.CurrentTerm,
-                Success = true
+                Success = false
             });
+        }
+
+        foreach (var entry in request.EntryCommands)
+        {
+            stateStore.AppendLogEntry(entry.ToCommand(), request.Term);
+        }
+
+        if (request.LeaderCommit > stateStore.CommitIndex)
+        {
+            stateStore.CommitIndex = Math.Min(request.LeaderCommit, stateStore.LogLength - 1);
         }
         return Task.FromResult(new AppendEntriesReply
         {
             Term = stateStore.CurrentTerm,
-            Success = false
+            Success = true
         });
     }
 
