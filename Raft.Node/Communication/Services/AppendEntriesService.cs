@@ -10,18 +10,51 @@ public class AppendEntriesService(INodeStateStore stateStore) : AppendEntriesSvc
     public override Task<AppendEntriesReply> AppendEntries(AppendEntriesRequest request, ServerCallContext context)
     {
         Console.WriteLine($"Appending entries {request}");
-        if (stateStore.GetTermAtIndex(request.PrevLogIndex) == request.PrevLogTerm)
+        // 1. reply false if term < currentTerm
+        // 2. reply false if log doesn't contain an entry at prevLogIndex whose term matches prevLogTerm
+        if (stateStore.CurrentTerm > request.Term || stateStore.GetTermAtIndex(request.PrevLogIndex) != request.PrevLogTerm)
         {
-            foreach (var entry in request.EntryCommands)
-            {
-                stateStore.AppendLogEntry(entry.ToCommand(), request.Term);
-            }
-            return Task.FromResult(new AppendEntriesReply
-            {
-                Term = stateStore.CurrentTerm,
-                Success = true
-            });
+            return Fail();
         }
+        // 3. if there are entries already on the places where the new ones should be appended - remove them
+        RemoveConflictingEntries(request);
+        // 4. append all new entries
+        foreach (var entry in request.EntryCommands)
+        {
+            stateStore.AppendLogEntry(entry.ToCommand(), request.Term);
+        }
+        // 5. update commitIndex
+        if (request.LeaderCommit > stateStore.CommitIndex)
+        {
+            stateStore.CommitIndex = Math.Min(request.LeaderCommit, stateStore.LogLength - 1);
+        }
+        return Success();
+    }
+
+    /// <summary>
+    /// This deviates from the original raft definition - it says only to remove from an entry that has conflicting
+    /// term on and then add only new entries that aren't already in the log and then append new entries that are not
+    /// already in the log.
+    /// This removes all entries that are after prevLogIndex regardless of their term and adds all new ones.
+    /// The later approach may do more remove and add operations, but hopefully the state of the log at the end should
+    /// be the same
+    /// </summary>
+    private void RemoveConflictingEntries(AppendEntriesRequest request)
+    {
+        stateStore.RemoveLogEntriesFrom(request.PrevLogIndex + 1);
+    }
+
+    private Task<AppendEntriesReply> Success()
+    {
+        return Task.FromResult(new AppendEntriesReply
+        {
+            Term = stateStore.CurrentTerm,
+            Success = true
+        });
+    }
+
+    private Task<AppendEntriesReply> Fail()
+    {
         return Task.FromResult(new AppendEntriesReply
         {
             Term = stateStore.CurrentTerm,
