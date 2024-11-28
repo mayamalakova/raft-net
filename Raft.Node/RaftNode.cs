@@ -17,6 +17,7 @@ public class RaftNode
     private readonly string _nodeName;
     private readonly int _nodePort;
     private readonly NodeAddress _peerAddress;
+    private readonly IClusterNodeStore _nodeStore;
 
     public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort)
     {
@@ -26,14 +27,14 @@ public class RaftNode
         _messageReceiver = new RaftMessageReceiver(port);
         _stateStore = new NodeStateStore { Role = role };
         _clientPool = new ClientPool();
-        IClusterNodeStore nodeStore = new ClusterNodeStore();
+        _nodeStore = new ClusterNodeStore();
         _nodeServices =
         [
             new LeaderDiscoveryService(_stateStore),
-            new RegisterNodeService(nodeStore),
+            new RegisterNodeService(_nodeStore),
             new PingReplyService(_nodeName),
-            new NodeInfoService(_nodeName, _stateStore, nodeStore),
-            new LogReplicationService(_stateStore, _clientPool, nodeStore, nodeName),
+            new NodeInfoService(_nodeName, _stateStore, _nodeStore),
+            new LogReplicationService(_stateStore, _clientPool, _nodeStore, nodeName),
             new AppendEntriesService(_stateStore),
             new LogInfoService(_stateStore)
         ];
@@ -55,23 +56,31 @@ public class RaftNode
             });
             Console.WriteLine($"Registered with leader {registerReply}");
         }
+
         _messageReceiver.Start(_nodeServices.Select(x => x.GetServiceDefinition()));
     }
 
     private NodeAddress AskForLeader()
     {
         var client = _clientPool.GetLeaderDiscoveryClient(_peerAddress);
-        
+
         var reply = client.GetLeader(new LeaderQueryRequest());
-        
+
         var leaderAddress = new NodeAddress(reply.Host, reply.Port);
         Console.WriteLine($"{_nodeName} found leader: {leaderAddress}");
-        
+
         return leaderAddress;
     }
 
     public void Stop()
     {
         _messageReceiver.Stop();
+    }
+
+    public string GetClusterState()
+    {
+        var lastIndexes = _nodeStore.GetNodes().Select(x => (x.NodeName, _nodeStore.GetLastLogIndex(x.NodeName)))
+            .ToArray();
+        return string.Join(',', lastIndexes);
     }
 }

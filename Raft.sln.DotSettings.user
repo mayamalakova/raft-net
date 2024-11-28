@@ -13,6 +13,7 @@
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AServer_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E2_003Fresharper_002Dhost_003FSourcesCache_003F633e23c9546cde4bfdfb32135a0cff07e7288ba9b91d63df17f2ee6b42b01f_003FServer_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AServer_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F633e23c9546cde4bfdfb32135a0cff07e7288ba9b91d63df17f2ee6b42b01f_003FServer_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AStatus_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E2_003Fresharper_002Dhost_003FSourcesCache_003F80c4787a169abc2f4a419427bbefa43fb20db35ed2d859f5668a7abaaf4_003FStatus_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AStringShouldBeTestExtensions_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E2_003Fresharper_002Dhost_003FSourcesCache_003F3d63aedb9f1bada7a4f96753182b83f10678f195a1639571ca13c4d723c5bbf_003FStringShouldBeTestExtensions_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ATestServerCallContext_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E2_003Fresharper_002Dhost_003FSourcesCache_003Fce27db7a998665e59981125c3025d8625a8a112ac3ef76a9ccf51b73bdbf2585_003FTestServerCallContext_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AThrowHelper_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F2c8e7ca976f350cba9836d5565dac56b11e0b56656fa786460eb1395857a6fa_003FThrowHelper_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AWriteOptions_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E2_003Fresharper_002Dhost_003FSourcesCache_003Fa7bdab20be9257d56fd61da99441f2571d2df329efd47741f4413a7ec7ddc25_003FWriteOptions_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
@@ -20,8 +21,16 @@
   &lt;Assembly Path="C:\Users\Maya\.nuget\packages\grpc.core.api\2.66.0\lib\netstandard2.1\Grpc.Core.Api.dll" /&gt;&#xD;
 &lt;/AssemblyExplorer&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=c2e8742d_002De088_002D4896_002Dabfe_002Dea937b910c91/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from &amp;lt;Raft.IntegrationTests&amp;gt;" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
-  &lt;TestAncestor&gt;&#xD;
-    &lt;TestId&gt;NUnit3x::A655E214-3527-4BB8-8C19-0DAF27448E01::net8.0::Raft.Node.Tests.AppendEntriesServiceTests&lt;/TestId&gt;&#xD;
-  &lt;/TestAncestor&gt;&#xD;
+  &lt;And&gt;&#xD;
+    &lt;Or&gt;&#xD;
+      &lt;TestAncestor&gt;&#xD;
+        &lt;TestId&gt;NUnit3x::A655E214-3527-4BB8-8C19-0DAF27448E01::net8.0::Raft.Node.Tests.AppendEntriesServiceTests&lt;/TestId&gt;&#xD;
+      &lt;/TestAncestor&gt;&#xD;
+      &lt;Project Location="C:\Users\Maya\RiderProjects\raft-net\Raft.IntegrationTests" Presentation="&amp;lt;Raft.IntegrationTests&amp;gt;" /&gt;&#xD;
+    &lt;/Or&gt;&#xD;
+    &lt;Not&gt;&#xD;
+      &lt;Project Location="C:\Users\Maya\RiderProjects\raft-net\Raft.Node.Tests" Presentation="&amp;lt;Raft.Node.Tests&amp;gt;" /&gt;&#xD;
+    &lt;/Not&gt;&#xD;
+  &lt;/And&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	</wpf:ResourceDictionary>

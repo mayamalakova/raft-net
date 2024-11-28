@@ -42,7 +42,12 @@ public class LogReplicationService(INodeStateStore stateStore, IClientPool clien
         });
         foreach (var result in results)
         {
-            Console.WriteLine($"{result.Key}: {result.Value}");
+            var nodeName = result.Key;
+            Console.WriteLine($"{nodeName}: {result.Value}");
+            if (result.Value.Success)
+            {
+                nodesStore.IncreaseLastLogIndex(nodeName, entries.Count);
+            }
         }
     }
 

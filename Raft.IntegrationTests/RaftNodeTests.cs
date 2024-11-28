@@ -42,7 +42,7 @@ public class RaftNodeTests
     [Test]
     public void ShouldAppendLogEntriesAtLeader()
     {
-        CreateLeader("leader1", 5001);
+        var leader = CreateLeader("leader1", 5001);
         CreateFollower("follower1", 5002, 5001);
         CreateFollower("follower2", 5003, 5002);
 
@@ -51,18 +51,21 @@ public class RaftNodeTests
         var followerClient2 = new RaftClient("localhost", 5003);
 
         leaderClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = 1 });
+        leader.GetClusterState().ShouldBe("(follower1, 0),(follower2, 0)");
         leaderClient.Command(new CommandOptions { Var = "A", Operation = "+", Literal = 5 });
 
         leaderClient.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
+        leader.GetClusterState().ShouldBe("(follower1, 1),(follower2, 1)");
         followerClient1.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
         followerClient2.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
     }
 
-    private void CreateLeader(string name, int port)
+    private RaftNode CreateLeader(string name, int port)
     {
         var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port);
         leader.Start();
         _nodes.Add(leader);
+        return leader;
     }
     
     private void CreateFollower(string name, int port, int peerPort)
