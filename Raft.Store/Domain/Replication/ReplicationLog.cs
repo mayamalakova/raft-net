@@ -2,7 +2,7 @@
 
 public class ReplicationLog
 {
-    public IList<LogEntry> Entries { get; set; } = new List<LogEntry>();
+    public List<LogEntry> Entries { get; set; } = new List<LogEntry>();
 
     public void Append(LogEntry entry)
     {
@@ -17,5 +17,10 @@ public class ReplicationLog
     public LogEntry? GetItemAt(int index)
     {
         return index < 0 ? null : Entries[index];
+    }
+
+    public void RemoveFrom(int index)
+    {
+        Entries.RemoveRange(index, Entries.Count - index);
     }
 }

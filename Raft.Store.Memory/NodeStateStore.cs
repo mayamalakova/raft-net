@@ -32,4 +32,9 @@ public class NodeStateStore : INodeStateStore
     {
         return _log.GetItemAt(index);
     }
+
+    public void RemoveLogEntriesFrom(int index)
+    {
+        _log.RemoveFrom(index);
+    }
 }

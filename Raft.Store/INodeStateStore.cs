@@ -17,4 +17,5 @@ public interface INodeStateStore
     string PrintLog();
     int GetTermAtIndex(int lastLogIndex);
     LogEntry? EntryAtIndex(int index);
+    void RemoveLogEntriesFrom(int index);
 }

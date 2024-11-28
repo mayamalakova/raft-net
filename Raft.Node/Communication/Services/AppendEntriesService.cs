@@ -16,8 +16,9 @@ public class AppendEntriesService(INodeStateStore stateStore) : AppendEntriesSvc
         {
             return Fail();
         }
-        // TODO 3. if an existing entry conflicts with a new one (same index, different term) delete it and all that follow
-        // 4. append any new entries not already in the log
+        // 3. if there are entries already on the places where the new ones should be appended - remove them
+        RemoveConflictingEntries(request);
+        // 4. append all new entries
         foreach (var entry in request.EntryCommands)
         {
             stateStore.AppendLogEntry(entry.ToCommand(), request.Term);
@@ -28,6 +29,19 @@ public class AppendEntriesService(INodeStateStore stateStore) : AppendEntriesSvc
             stateStore.CommitIndex = Math.Min(request.LeaderCommit, stateStore.LogLength - 1);
         }
         return Success();
+    }
+
+    /// <summary>
+    /// This deviates from the original raft definition - it says only to remove from an entry that has conflicting
+    /// term on and then add only new entries that aren't already in the log and then append new entries that are not
+    /// already in the log.
+    /// This removes all entries that are after prevLogIndex regardless of their term and adds all new ones.
+    /// The later approach may do more remove and add operations, but hopefully the state of the log at the end should
+    /// be the same
+    /// </summary>
+    private void RemoveConflictingEntries(AppendEntriesRequest request)
+    {
+        stateStore.RemoveLogEntriesFrom(request.PrevLogIndex + 1);
     }
 
     private Task<AppendEntriesReply> Success()

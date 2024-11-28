@@ -40,6 +40,49 @@ public class AppendEntriesServiceTests
     }
 
     [Test]
+    public void FollowerShouldReplyFailIfCurrentTermHigherThanRequestTerm()
+    {
+        var entry = CreateLogEntryCommandRequest("A", "=", 1);
+
+        var appendEntriesRequest = new AppendEntriesRequest()
+        {
+            Term = 0,
+            PrevLogIndex = -1,
+            PrevLogTerm = -1,
+            EntryCommands = { new[] { entry } }
+        };
+        _nodeStateStore.CurrentTerm = 1;
+        
+        var reply = _service.AppendEntries(appendEntriesRequest, Substitute.For<ServerCallContext>());
+
+        reply.Result.Success.ShouldBeFalse();
+        _nodeStateStore.LogLength.ShouldBe(0);
+    }
+
+    [Test]
+    public void FollowerShouldRemoveConflictingEntries()
+    {
+        _nodeStateStore.AppendLogEntry(CreateLogEntryCommand("B", "=", 2), 1);
+        var entry = CreateLogEntryCommandRequest("A", "=", 1);
+
+        var appendEntriesRequest = new AppendEntriesRequest()
+        {
+            Term = 0,
+            PrevLogIndex = -1,
+            PrevLogTerm = -1,
+            EntryCommands = { new[] { entry } }
+        };
+        
+        _service.AppendEntries(appendEntriesRequest, Substitute.For<ServerCallContext>());
+
+        _nodeStateStore.LogLength.ShouldBe(1);
+        var lastLogEntry = _nodeStateStore.EntryAtIndex(0);
+        lastLogEntry.ShouldNotBeNull();
+        lastLogEntry.Term.ShouldBe(0);
+        lastLogEntry.Command.ShouldBe(new Command("A", CommandOperation.Assignment, 1));
+    }
+
+    [Test]
     public void FollowerShouldAppendEntriesIfSuccessful()
     {
         var entry = CreateLogEntryCommandRequest("A", "=", 1);
@@ -62,23 +105,26 @@ public class AppendEntriesServiceTests
     }
 
     [Test]
-    public void FollowerShouldReplyFailIfCurrentTermHigherThanRequestTerm()
+    public void FollowerShouldOverrideExistingEntriesThatTakeNewEntriesPlace()
     {
+        _nodeStateStore.AppendLogEntry(CreateLogEntryCommand("B", "=", 2), 1);
         var entry = CreateLogEntryCommandRequest("A", "=", 1);
 
         var appendEntriesRequest = new AppendEntriesRequest()
         {
-            Term = 0,
+            Term = 1,
             PrevLogIndex = -1,
             PrevLogTerm = -1,
             EntryCommands = { new[] { entry } }
         };
-        _nodeStateStore.CurrentTerm = 1;
         
-        var reply = _service.AppendEntries(appendEntriesRequest, Substitute.For<ServerCallContext>());
+        _service.AppendEntries(appendEntriesRequest, Substitute.For<ServerCallContext>());
 
-        reply.Result.Success.ShouldBeFalse();
-        _nodeStateStore.LogLength.ShouldBe(0);
+        _nodeStateStore.LogLength.ShouldBe(1);
+        var lastLogEntry = _nodeStateStore.EntryAtIndex(0);
+        lastLogEntry.ShouldNotBeNull();
+        lastLogEntry.Term.ShouldBe(1);
+        lastLogEntry.Command.ShouldBe(new Command("A", CommandOperation.Assignment, 1));
     }
 
     [Test]
