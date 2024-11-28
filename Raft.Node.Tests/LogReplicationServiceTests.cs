@@ -85,6 +85,10 @@ public class LogReplicationServiceTests
     private AppendEntriesSvc.AppendEntriesSvcClient SetUpMockAppendEntriesClient(NodeAddress followerAddress)
     {
         var mockFollowerClient = Substitute.For<AppendEntriesSvc.AppendEntriesSvcClient>();
+        mockFollowerClient.AppendEntries(Arg.Any<AppendEntriesRequest>()).Returns(new AppendEntriesReply()
+        {
+            Success = true
+        });
         _channelPool.GetAppendEntriesClient(followerAddress).Returns(mockFollowerClient);
         return mockFollowerClient;
     }
