@@ -47,11 +47,10 @@ public class LogReplicationService(INodeStateStore stateStore, IClientPool clien
 
     private void UpdateNextLogIndex(IDictionary<string, AppendEntriesReply> replies, int entriesCount)
     {
-        foreach (var reply in replies)
+        foreach (var (nodeName, reply) in replies)
         {
-            var nodeName = reply.Key;
-            Console.WriteLine($"{nodeName}: {reply.Value}");
-            if (reply.Value.Success)
+            Console.WriteLine($"{nodeName}: {reply}");
+            if (reply.Success)
             {
                 nodesStore.IncreaseLastLogIndex(nodeName, entriesCount);
             }
