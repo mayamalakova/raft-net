@@ -25,7 +25,7 @@ public class LogReplicationServiceTests
         _channelPool = Substitute.For<IClientPool>();
         _nodeStore = Substitute.For<IClusterNodeStore>();
         _appendEntriesRequestFactory = Substitute.For<IAppendEntriesRequestFactory>();
-        _logReplicationService = new LogReplicationService(_mockStateStore, _channelPool, _nodeStore, "lead1")
+        _logReplicationService = new LogReplicationService(_mockStateStore, _channelPool, _nodeStore, "lead1", 2)
         {
             EntriesRequestFactory = _appendEntriesRequestFactory
         };

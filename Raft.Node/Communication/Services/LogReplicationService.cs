@@ -11,7 +11,9 @@ public class LogReplicationService(
     INodeStateStore stateStore,
     IClientPool clientPool,
     IClusterNodeStore nodesStore,
-    string nodeName) : CommandSvc.CommandSvcBase, INodeService
+    string nodeName,
+    int timeoutInterval
+    ) : CommandSvc.CommandSvcBase, INodeService
 {
     public IAppendEntriesRequestFactory EntriesRequestFactory { get; init; } =
         new AppendEntriesRequestFactory(nodesStore, stateStore, nodeName);
@@ -27,7 +29,9 @@ public class LogReplicationService(
         stateStore.AppendLogEntry(command, stateStore.CurrentTerm);
         Console.WriteLine($"{command} appended in term={stateStore.CurrentTerm}. log is {stateStore.PrintLog()}");
 
-        var replies = SendAppendEntriesRequestsAndWaitForResults([request], TimeSpan.FromSeconds(5)).Result;
+        var replies = SendAppendEntriesRequestsAndWaitForResults(
+            [request], 
+            TimeSpan.FromSeconds(timeoutInterval)).Result;
         UpdateNextLogIndex(replies, 1);
 
         return Task.FromResult(new CommandReply()
