@@ -60,18 +60,41 @@ public class RaftNodeTests
         followerClient2.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
     }
 
+    [Test]
+    public void ShouldNotUpdateNextLogIndexWhenUnableToConnect()
+    {
+        var leader = CreateLeader("leader1", 5001);
+        CreateFollower("follower1", 5002, 5001);
+        var follower = CreateFollower("follower2", 5003, 5002);
+
+        var leaderClient = new RaftClient("localhost", 5001);
+        var followerClient1 = new RaftClient("localhost", 5002);
+
+        leaderClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = 1 });
+        leader.GetClusterState().ShouldBe("(follower1, 0),(follower2, 0)");
+        
+        follower.Stop();
+        _nodes.Remove(follower);
+        leaderClient.Command(new CommandOptions { Var = "A", Operation = "+", Literal = 5 });
+
+        leaderClient.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
+        leader.GetClusterState().ShouldBe("(follower1, 1),(follower2, 0)");
+        followerClient1.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
+    }
+
     private RaftNode CreateLeader(string name, int port)
     {
-        var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port);
+        var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port, 1);
         leader.Start();
         _nodes.Add(leader);
         return leader;
     }
     
-    private void CreateFollower(string name, int port, int peerPort)
+    private RaftNode CreateFollower(string name, int port, int peerPort)
     {
-        var leader = new RaftNode(NodeType.Follower, name, port, "localhost", peerPort);
-        leader.Start();
-        _nodes.Add(leader);
+        var node = new RaftNode(NodeType.Follower, name, port, "localhost", peerPort, 1);
+        node.Start();
+        _nodes.Add(node);
+        return node;
     }
 }

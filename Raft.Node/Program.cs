@@ -26,10 +26,10 @@ public static class Program
             Console.WriteLine("Please provide valid command line options.");
             return;
         }
-        
+
         Console.WriteLine("Press any key to terminate");
         Console.ReadKey();
-        
+
         _node?.Stop();
     }
 
@@ -57,8 +57,9 @@ public static class Program
         }
 
         var clusterHost = addOptions.ClusterHost.Split(":");
-        var follower = new RaftNode(NodeType.Follower, addOptions.Name, port, clusterHost[0], int.Parse(clusterHost[1]));
-        
+        var follower = new RaftNode(NodeType.Follower, addOptions.Name, port, clusterHost[0], int.Parse(clusterHost[1]),
+            addOptions.TimeoutSeconds);
+
         follower.Start();
         Console.WriteLine($"Created follower node {addOptions.Name} listening on port {port}.");
 
@@ -68,11 +69,11 @@ public static class Program
     private static RaftNode AddLeaderNode(AddOptions addOptions)
     {
         var port = int.Parse(addOptions.Port);
-        var leader = new RaftNode(NodeType.Leader, addOptions.Name, port, "localhost", port);
-        
+        var leader = new RaftNode(NodeType.Leader, addOptions.Name, port, "localhost", port, addOptions.TimeoutSeconds);
+
         leader.Start();
         Console.WriteLine($"Created leader node {addOptions.Name} listening on port {port}");
-        
+
         return leader;
     }
 }

@@ -19,7 +19,7 @@ public class RaftNode
     private readonly NodeAddress _peerAddress;
     private readonly IClusterNodeStore _nodeStore;
 
-    public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort)
+    public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort, int timeout)
     {
         _nodeName = nodeName;
         _nodePort = port;
@@ -34,7 +34,7 @@ public class RaftNode
             new RegisterNodeService(_nodeStore),
             new PingReplyService(_nodeName),
             new NodeInfoService(_nodeName, _stateStore, _nodeStore),
-            new LogReplicationService(_stateStore, _clientPool, _nodeStore, nodeName),
+            new LogReplicationService(_stateStore, _clientPool, _nodeStore, nodeName, timeout),
             new AppendEntriesService(_stateStore),
             new LogInfoService(_stateStore)
         ];

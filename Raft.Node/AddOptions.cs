@@ -19,5 +19,8 @@ public class AddOptions
     
     [Option('c', "cluster-address", Required = false, HelpText = "Host:port of any node already on the cluster. Required if the node is added as a follower.")]
     public string ClusterHost { get; set; }
+    
+    [Option('t', "timeout", Required = false, Default = 5, HelpText = "Number of seconds to wait for reply when sending requests to other nodes.")]
+    public int TimeoutSeconds { get; set; }
 
 }

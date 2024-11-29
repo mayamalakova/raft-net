@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using Grpc.Core;
+﻿using Grpc.Core;
 using Raft.Communication.Contract;
 using Raft.Node.Communication.Client;
 using Raft.Store;
@@ -8,9 +7,16 @@ using Raft.Store.Extensions;
 
 namespace Raft.Node.Communication.Services;
 
-public class LogReplicationService(INodeStateStore stateStore, IClientPool clientPool, IClusterNodeStore nodesStore, string nodeName) : CommandSvc.CommandSvcBase, INodeService
+public class LogReplicationService(
+    INodeStateStore stateStore,
+    IClientPool clientPool,
+    IClusterNodeStore nodesStore,
+    string nodeName,
+    int timeoutInterval
+    ) : CommandSvc.CommandSvcBase, INodeService
 {
-    public IAppendEntriesRequestFactory EntriesRequestFactory { get; init; } = new AppendEntriesRequestFactory(nodesStore, stateStore, nodeName);
+    public IAppendEntriesRequestFactory EntriesRequestFactory { get; init; } =
+        new AppendEntriesRequestFactory(nodesStore, stateStore, nodeName);
 
     public override Task<CommandReply> ApplyCommand(CommandRequest request, ServerCallContext context)
     {
@@ -21,9 +27,11 @@ public class LogReplicationService(INodeStateStore stateStore, IClientPool clien
 
         var command = new Command(request.Variable, request.Operation.ToOperationType(), request.Literal);
         stateStore.AppendLogEntry(command, stateStore.CurrentTerm);
-        Console.WriteLine($"{command} appended in term={stateStore.CurrentTerm }. log is {stateStore.PrintLog()}");
-        
-        var replies = SendAppendEntriesRequestsAndWaitForResults([request]);
+        Console.WriteLine($"{command} appended in term={stateStore.CurrentTerm}. log is {stateStore.PrintLog()}");
+
+        var replies = SendAppendEntriesRequestsAndWaitForResults(
+            [request], 
+            TimeSpan.FromSeconds(timeoutInterval)).Result;
         UpdateNextLogIndex(replies, 1);
 
         return Task.FromResult(new CommandReply()
@@ -32,24 +40,61 @@ public class LogReplicationService(INodeStateStore stateStore, IClientPool clien
         });
     }
 
-    private IDictionary<string, AppendEntriesReply> SendAppendEntriesRequestsAndWaitForResults(IList<CommandRequest> entries)
+    private async Task<IDictionary<string, AppendEntriesReply?>> SendAppendEntriesRequestsAndWaitForResults(
+        IList<CommandRequest> entries, TimeSpan timeout)
     {
-        IDictionary<string, AppendEntriesReply> results = new Dictionary<string, AppendEntriesReply>();
-        Parallel.ForEach(nodesStore.GetNodes(), follower =>
-        {
-            var appendEntriesRequest = EntriesRequestFactory.CreateRequest(follower.NodeName, entries);
-            var reply = clientPool.GetAppendEntriesClient(follower.NodeAddress).AppendEntries(appendEntriesRequest);
-            results[follower.NodeName] = reply;
-        });
-        return results;
-        
+        var tasks = nodesStore.GetNodes().ToDictionary(
+            node => node.NodeName,
+            node => TrySendAppendEntriesRequest(node, entries, timeout)
+        );
+
+        await Task.WhenAll(tasks.Values.ToArray<Task>());
+
+        return tasks.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value.IsCompletedSuccessfully ? kvp.Value.Result : null
+        );
     }
 
-    private void UpdateNextLogIndex(IDictionary<string, AppendEntriesReply> replies, int entriesCount)
+    private async Task<AppendEntriesReply?> TrySendAppendEntriesRequest(NodeInfo node, IList<CommandRequest> entries,
+        TimeSpan timeout)
+    {
+        try
+        {
+            return await SendAppendEntriesRequestAsync(node, entries, timeout);
+        }
+        catch (RpcException ex) when (ex.StatusCode == StatusCode.DeadlineExceeded)
+        {
+            Console.WriteLine($"Timeout occurred for node {node.NodeName}: {ex.GetType()} {ex.Message}");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error occurred for node {node.NodeName}: {ex.GetType()} {ex.Message}");
+            return null;
+        }
+    }
+
+    private async Task<AppendEntriesReply> SendAppendEntriesRequestAsync(NodeInfo follower,
+        IList<CommandRequest> entries, TimeSpan timeout)
+    {
+        var appendEntriesRequest = EntriesRequestFactory.CreateRequest(follower.NodeName, entries);
+        var deadline = DateTime.UtcNow.Add(timeout);
+        var reply = await clientPool.GetAppendEntriesClient(follower.NodeAddress)
+            .AppendEntriesAsync(appendEntriesRequest, new CallOptions(deadline: deadline));
+        return reply;
+    }
+
+    private void UpdateNextLogIndex(IDictionary<string, AppendEntriesReply?> replies, int entriesCount)
     {
         foreach (var (nodeName, reply) in replies)
         {
             Console.WriteLine($"{nodeName}: {reply}");
+            if (reply == null)
+            {
+                continue;
+            }
+
             if (reply.Success)
             {
                 nodesStore.IncreaseLastLogIndex(nodeName, entriesCount);
@@ -87,7 +132,8 @@ public interface IAppendEntriesRequestFactory
     AppendEntriesRequest CreateRequest(string nodeName, IList<CommandRequest> entries);
 }
 
-public class AppendEntriesRequestFactory(IClusterNodeStore nodeStore, INodeStateStore stateStore, string leaderName) : IAppendEntriesRequestFactory
+public class AppendEntriesRequestFactory(IClusterNodeStore nodeStore, INodeStateStore stateStore, string leaderName)
+    : IAppendEntriesRequestFactory
 {
     public AppendEntriesRequest CreateRequest(string nodeName, IList<CommandRequest> entries)
     {
