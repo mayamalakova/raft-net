@@ -8,4 +8,5 @@ public interface IClusterNodeStore
     IEnumerable<NodeInfo> GetNodes();
     int GetLastLogIndex(string nodeName);
     void IncreaseLastLogIndex(string nodeName, int entriesCount);
+    void DecreaseLastLogIndex(string nodeName);
 }
