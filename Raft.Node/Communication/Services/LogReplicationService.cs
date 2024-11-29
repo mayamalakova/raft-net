@@ -34,7 +34,7 @@ public class LogReplicationService(INodeStateStore stateStore, IClientPool clien
 
     private IDictionary<string, AppendEntriesReply> SendAppendEntriesRequestsAndWaitForResults(IList<CommandRequest> entries)
     {
-        IDictionary<string, AppendEntriesReply> results = new ConcurrentDictionary<string, AppendEntriesReply>();
+        IDictionary<string, AppendEntriesReply> results = new Dictionary<string, AppendEntriesReply>();
         Parallel.ForEach(nodesStore.GetNodes(), follower =>
         {
             var appendEntriesRequest = EntriesRequestFactory.CreateRequest(follower.NodeName, entries);
