@@ -14,7 +14,7 @@ public class LogReplicationServiceTests
 {
     private INodeStateStore _mockStateStore;
     private LogReplicationService _logReplicationService;
-    private IClientPool _channelPool;
+    private IClientPool _clientPool;
     private IClusterNodeStore _nodeStore;
     private IAppendEntriesRequestFactory _appendEntriesRequestFactory;
 
@@ -22,10 +22,10 @@ public class LogReplicationServiceTests
     public void SetUp()
     {
         _mockStateStore = Substitute.For<INodeStateStore>();
-        _channelPool = Substitute.For<IClientPool>();
+        _clientPool = Substitute.For<IClientPool>();
         _nodeStore = Substitute.For<IClusterNodeStore>();
         _appendEntriesRequestFactory = Substitute.For<IAppendEntriesRequestFactory>();
-        _logReplicationService = new LogReplicationService(_mockStateStore, _channelPool, _nodeStore, "lead1", 2)
+        _logReplicationService = new LogReplicationService(_mockStateStore, _clientPool, _nodeStore, "lead1", 2)
         {
             EntriesRequestFactory = _appendEntriesRequestFactory
         };
@@ -55,7 +55,7 @@ public class LogReplicationServiceTests
         _logReplicationService.ApplyCommand(
             new CommandRequest() { Variable = "A", Operation = "=", Literal = 5 }, mockCallContext);
 
-        mockFollowerClient.Received().AppendEntries(Arg.Any<AppendEntriesRequest>());
+        mockFollowerClient.Received().AppendEntriesAsync(Arg.Any<AppendEntriesRequest>(), Arg.Any<CallOptions>());
     }
 
     [Test]
@@ -76,7 +76,7 @@ public class LogReplicationServiceTests
     }
 
     [Test]
-    public void LeaderShouldIncreaseNextLogIndexWhenAppendEntryReplySuccess()
+    public void LeaderShouldIncreaseNextLogIndexWhenAppendEntryReturnsSuccess()
     {
         var followerAddress = new NodeAddress("someHost", 666);
         _nodeStore.GetNodes().Returns([new NodeInfo("someNode", followerAddress)]);
@@ -91,7 +91,7 @@ public class LogReplicationServiceTests
     }
     
     [Test]
-    public void LeaderShouldDecreaseNextLogIndexWhenAppendEntryReplyFailure()
+    public void LeaderShouldDecreaseNextLogIndexWhenAppendEntryReturnsFailure()
     {
         var followerAddress = new NodeAddress("someHost", 666);
         _nodeStore.GetNodes().Returns([new NodeInfo("someNode", followerAddress)]);
@@ -115,11 +115,13 @@ public class LogReplicationServiceTests
     private AppendEntriesSvc.AppendEntriesSvcClient SetUpMockAppendEntriesClient(NodeAddress followerAddress, bool success = true)
     {
         var mockFollowerClient = Substitute.For<AppendEntriesSvc.AppendEntriesSvcClient>();
-        mockFollowerClient.AppendEntries(Arg.Any<AppendEntriesRequest>()).Returns(new AppendEntriesReply()
+        var appendEntriesReply = new AppendEntriesReply()
         {
             Success = success
-        });
-        _channelPool.GetAppendEntriesClient(followerAddress).Returns(mockFollowerClient);
+        };
+        mockFollowerClient.AppendEntriesAsync(Arg.Any<AppendEntriesRequest>(), Arg.Any<CallOptions>())
+            .Returns(ClientMockHelpers.CreateAsyncUnaryCall(appendEntriesReply));
+        _clientPool.GetAppendEntriesClient(followerAddress).Returns(mockFollowerClient);
         return mockFollowerClient;
     }
 
@@ -129,6 +131,6 @@ public class LogReplicationServiceTests
         var mockCommandClient = Substitute.For<CommandSvc.CommandSvcClient>();
         mockCommandClient.ApplyCommandAsync(command)
             .Returns(ClientMockHelpers.CreateAsyncUnaryCall(reply));
-        _channelPool.GetCommandServiceClient(targetAddress).Returns(mockCommandClient);
+        _clientPool.GetCommandServiceClient(targetAddress).Returns(mockCommandClient);
     }
 }
