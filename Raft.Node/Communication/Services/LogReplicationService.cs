@@ -61,12 +61,12 @@ public class LogReplicationService(
         }
         catch (RpcException ex) when (ex.StatusCode == StatusCode.DeadlineExceeded)
         {
-            Console.WriteLine($"Timeout occurred for node {node}: {ex.Message}");
+            Console.WriteLine($"Timeout occurred for node {node.NodeName}: {ex.GetType()} {ex.Message}");
             return null;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error occurred for node {node}: {ex.Message}");
+            Console.WriteLine($"Error occurred for node {node.NodeName}: {ex.GetType()} {ex.Message}");
             return null;
         }
     }
