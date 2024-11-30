@@ -125,8 +125,6 @@ public class AppendEntriesServiceTests
         _nodeStateStore.LogLength.ShouldBe(1);
         var lastLogEntry = _nodeStateStore.EntryAtIndex(0);
         lastLogEntry.ShouldBe(newLogEntry.FromMessage());
-        // lastLogEntry.Term.ShouldBe(1);
-        // lastLogEntry.Command.ShouldBe(new Command("A", CommandOperation.Assignment, 1));
     }
 
     [Test]

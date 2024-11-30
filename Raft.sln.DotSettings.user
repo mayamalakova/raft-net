@@ -37,39 +37,10 @@
 	<s:String x:Key="/Default/Environment/AssemblyExplorer/XmlDocument/@EntryValue">&lt;AssemblyExplorer&gt;&#xD;
   &lt;Assembly Path="C:\Users\Maya\.nuget\packages\grpc.core.api\2.66.0\lib\netstandard2.1\Grpc.Core.Api.dll" /&gt;&#xD;
 &lt;/AssemblyExplorer&gt;</s:String>
+	<s:String x:Key="/Default/Environment/Highlighting/HighlightingSourceSnapshotLocation/@EntryValue">C:\Users\Maya\AppData\Local\JetBrains\Rider2024.2\resharper-host\temp\Rider\vAny\CoverageData\_Raft.-1447183695\Snapshot\snapshot.utdcvr</s:String>
 	
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=9ca7d4bc_002Ddc66_002D4948_002Dbd4f_002D2fd5e8d87063/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="Session #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
-  &lt;Or&gt;&#xD;
-    &lt;And&gt;&#xD;
-      &lt;Or&gt;&#xD;
-        &lt;And&gt;&#xD;
-          &lt;Or&gt;&#xD;
-            &lt;Project Location="C:\Users\Maya\RiderProjects\raft-net\Raft.Node.Tests" Presentation="&amp;lt;Raft.Node.Tests&amp;gt;" /&gt;&#xD;
-            &lt;Project Location="C:\Users\Maya\RiderProjects\raft-net\Raft.IntegrationTests" Presentation="&amp;lt;Raft.IntegrationTests&amp;gt;" /&gt;&#xD;
-          &lt;/Or&gt;&#xD;
-          &lt;Not&gt;&#xD;
-            &lt;Project Location="C:\Users\Maya\RiderProjects\raft-net\Raft.Node.Tests" Presentation="&amp;lt;Raft.Node.Tests&amp;gt;" /&gt;&#xD;
-          &lt;/Not&gt;&#xD;
-          &lt;TestAncestor&gt;&#xD;
-            &lt;TestId&gt;NUnit3x::E21038F7-C2DA-4E11-8866-DB7505353E17::net8.0::Raft.IntegrationTests.RaftNodeTests.ShouldAppendLogEntriesAtLeader&lt;/TestId&gt;&#xD;
-          &lt;/TestAncestor&gt;&#xD;
-        &lt;/And&gt;&#xD;
-        &lt;TestAncestor&gt;&#xD;
-          &lt;TestId&gt;NUnit3x::A655E214-3527-4BB8-8C19-0DAF27448E01::net8.0::Raft.Node.Tests.AppendEntriesServiceTests&lt;/TestId&gt;&#xD;
-        &lt;/TestAncestor&gt;&#xD;
-        &lt;Project Location="C:\Users\Maya\RiderProjects\raft-net\Raft.Node.Tests" Presentation="&amp;lt;Raft.Node.Tests&amp;gt;" /&gt;&#xD;
-        &lt;Project Location="C:\Users\Maya\RiderProjects\raft-net\Raft.Store.Tests" Presentation="&amp;lt;Raft.Store.Tests&amp;gt;" /&gt;&#xD;
-      &lt;/Or&gt;&#xD;
-      &lt;Not&gt;&#xD;
-        &lt;Or&gt;&#xD;
-          &lt;Project Location="C:\Users\Maya\RiderProjects\raft-net\Raft.Node.Tests" Presentation="&amp;lt;Raft.Node.Tests&amp;gt;" /&gt;&#xD;
-          &lt;Project Location="C:\Users\Maya\RiderProjects\raft-net\Raft.Store.Tests" Presentation="&amp;lt;Raft.Store.Tests&amp;gt;" /&gt;&#xD;
-        &lt;/Or&gt;&#xD;
-      &lt;/Not&gt;&#xD;
-    &lt;/And&gt;&#xD;
-    &lt;Project Location="C:\Users\Maya\RiderProjects\raft-net\Raft.Node.Tests" Presentation="&amp;lt;Raft.Node.Tests&amp;gt;" /&gt;&#xD;
-    &lt;Project Location="C:\Users\Maya\RiderProjects\raft-net\Raft.Store.Tests" Presentation="&amp;lt;Raft.Store.Tests&amp;gt;" /&gt;&#xD;
-  &lt;/Or&gt;&#xD;
+  &lt;Solution /&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	
 	</wpf:ResourceDictionary>
