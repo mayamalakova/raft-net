@@ -2,8 +2,10 @@
 using NSubstitute;
 using NUnit.Framework;
 using Raft.Node.Communication.Services;
+using Raft.Node.Extensions;
 using Raft.Store;
 using Raft.Store.Domain;
+using Raft.Store.Domain.Replication;
 using Raft.Store.Extensions;
 using Raft.Store.Memory;
 using Shouldly;
@@ -26,7 +28,7 @@ public class AppendEntriesServiceTests
     [TestCase(2, 1, false)]
     public void FollowerShouldReplySuccessOrFailBasedOnWhetherLastIndexMatchesLastTerm(int prevLogTerm, int termAtIndex, bool expectedResult)
     {
-        _nodeStateStore.AppendLogEntry(CreateLogEntryCommand("B", "=", 1), termAtIndex);
+        _nodeStateStore.AppendLogEntry(CreateLogEntry("B", "=", 1, termAtIndex));
         var appendEntriesRequest = new AppendEntriesRequest()
         {
             PrevLogIndex = 0,
@@ -42,14 +44,14 @@ public class AppendEntriesServiceTests
     [Test]
     public void FollowerShouldReplyFailIfCurrentTermHigherThanRequestTerm()
     {
-        var entry = CreateLogEntryCommandRequest("A", "=", 1);
+        var entry = CreateLogEntryMessage("A", "=", 1, 0);
 
         var appendEntriesRequest = new AppendEntriesRequest()
         {
             Term = 0,
             PrevLogIndex = -1,
             PrevLogTerm = -1,
-            EntryCommands = { new[] { entry } }
+            Entries = { new[] { entry } }
         };
         _nodeStateStore.CurrentTerm = 1;
         
@@ -62,37 +64,36 @@ public class AppendEntriesServiceTests
     [Test]
     public void FollowerShouldRemoveConflictingEntries()
     {
-        _nodeStateStore.AppendLogEntry(CreateLogEntryCommand("B", "=", 2), 1);
-        var entry = CreateLogEntryCommandRequest("A", "=", 1);
+        var oldEntry = CreateLogEntry("B", "=", 2, 1);
+        _nodeStateStore.AppendLogEntry(oldEntry);
+        var newEntry = CreateLogEntryMessage("A", "=", 1, 0);
 
         var appendEntriesRequest = new AppendEntriesRequest()
         {
             Term = 0,
             PrevLogIndex = -1,
             PrevLogTerm = -1,
-            EntryCommands = { new[] { entry } }
+            Entries = { new[] { newEntry } }
         };
         
         _service.AppendEntries(appendEntriesRequest, Substitute.For<ServerCallContext>());
 
         _nodeStateStore.LogLength.ShouldBe(1);
         var lastLogEntry = _nodeStateStore.EntryAtIndex(0);
-        lastLogEntry.ShouldNotBeNull();
-        lastLogEntry.Term.ShouldBe(0);
-        lastLogEntry.Command.ShouldBe(new Command("A", CommandOperation.Assignment, 1));
+        lastLogEntry.ShouldBe(newEntry.FromMessage());
     }
 
     [Test]
     public void FollowerShouldAppendEntriesIfSuccessful()
     {
-        var entry = CreateLogEntryCommandRequest("A", "=", 1);
+        var entry = CreateLogEntryMessage("A", "=", 1, 0);
 
         var appendEntriesRequest = new AppendEntriesRequest()
         {
             Term = 0,
             PrevLogIndex = -1,
             PrevLogTerm = -1,
-            EntryCommands = { new[] { entry } }
+            Entries = { new[] { entry } }
         };
         
         _service.AppendEntries(appendEntriesRequest, Substitute.For<ServerCallContext>());
@@ -107,30 +108,31 @@ public class AppendEntriesServiceTests
     [Test]
     public void FollowerShouldOverrideExistingEntriesThatTakeNewEntriesPlace()
     {
-        _nodeStateStore.AppendLogEntry(CreateLogEntryCommand("B", "=", 2), 1);
-        var entry = CreateLogEntryCommandRequest("A", "=", 1);
+        var oldEntry = CreateLogEntry("B", "=", 2, 1);
+        _nodeStateStore.AppendLogEntry(oldEntry);
+        var newLogEntry = CreateLogEntryMessage("A", "=", 1, 1);
 
         var appendEntriesRequest = new AppendEntriesRequest()
         {
             Term = 1,
             PrevLogIndex = -1,
             PrevLogTerm = -1,
-            EntryCommands = { new[] { entry } }
+            Entries = { new[] { newLogEntry } }
         };
         
         _service.AppendEntries(appendEntriesRequest, Substitute.For<ServerCallContext>());
 
         _nodeStateStore.LogLength.ShouldBe(1);
         var lastLogEntry = _nodeStateStore.EntryAtIndex(0);
-        lastLogEntry.ShouldNotBeNull();
-        lastLogEntry.Term.ShouldBe(1);
-        lastLogEntry.Command.ShouldBe(new Command("A", CommandOperation.Assignment, 1));
+        lastLogEntry.ShouldBe(newLogEntry.FromMessage());
+        // lastLogEntry.Term.ShouldBe(1);
+        // lastLogEntry.Command.ShouldBe(new Command("A", CommandOperation.Assignment, 1));
     }
 
     [Test]
     public void FollowerShouldUpdateCommitIndex()
     {
-        var entry = CreateLogEntryCommandRequest("A", "=", 1);
+        var entry = CreateLogEntryMessage("A", "=", 1, 0);
 
         var appendEntriesRequest = new AppendEntriesRequest()
         {
@@ -138,20 +140,27 @@ public class AppendEntriesServiceTests
             PrevLogIndex = -1,
             PrevLogTerm = -1,
             LeaderCommit = 0,
-            EntryCommands = { new[] { entry } }
+            Entries = { new[] { entry } }
         };
         _service.AppendEntries(appendEntriesRequest, Substitute.For<ServerCallContext>());
 
         _nodeStateStore.CommitIndex.ShouldBe(0);
     }
 
-    private static CommandRequest CreateLogEntryCommandRequest(string variable, string operation, int literal)
+    private static LogEntryMessage CreateLogEntryMessage(string variable, string operation, int literal, int term)
     {
-        return new CommandRequest() {Variable = variable, Operation = operation, Literal = literal };
+        
+        var command = new CommandRequest() {Variable = variable, Operation = operation, Literal = literal };
+        return new LogEntryMessage()
+        {
+            Command = command,
+            Term = term
+        };
     }
 
-    private Command CreateLogEntryCommand(string variable, string operation, int literal)
+    private LogEntry CreateLogEntry(string variable, string operation, int literal, int term)
     {
-        return new Command(variable, operation.ToOperationType(), literal);
+        var command = new Command(variable, operation.ToOperationType(), literal);
+        return new LogEntry(command, term);
     }
 }

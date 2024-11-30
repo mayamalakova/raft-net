@@ -19,9 +19,9 @@ public class AppendEntriesService(INodeStateStore stateStore) : AppendEntriesSvc
         // 3. if there are entries already on the places where the new ones should be appended - remove them
         RemoveConflictingEntries(request);
         // 4. append all new entries
-        foreach (var entry in request.EntryCommands)
+        foreach (var entryMessage in request.Entries)
         {
-            stateStore.AppendLogEntry(entry.ToCommand(), request.Term);
+            stateStore.AppendLogEntry(entryMessage.FromMessage());
         }
         // 5. update commitIndex
         if (request.LeaderCommit > stateStore.CommitIndex)
@@ -38,6 +38,7 @@ public class AppendEntriesService(INodeStateStore stateStore) : AppendEntriesSvc
     /// This removes all entries that are after prevLogIndex regardless of their term and adds all new ones.
     /// The later approach may do more remove and add operations, but hopefully the state of the log at the end should
     /// be the same
+    /// TODO This will not keep the log consistent if the node crashes after removing
     /// </summary>
     private void RemoveConflictingEntries(AppendEntriesRequest request)
     {

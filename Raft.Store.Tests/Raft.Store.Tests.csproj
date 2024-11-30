@@ -15,6 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Raft.Store.Memory\Raft.Store.Memory.csproj" />
       <ProjectReference Include="..\Raft.Store\Raft.Store.csproj" />
     </ItemGroup>
 

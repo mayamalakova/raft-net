@@ -13,9 +13,10 @@ public interface INodeStateStore
     int CommitIndex { get; set; }
     int LogLength { get; }
 
-    void AppendLogEntry(Command command, int term);
+    void AppendLogEntry(LogEntry entry);
     string PrintLog();
     int GetTermAtIndex(int lastLogIndex);
     LogEntry? EntryAtIndex(int index);
     void RemoveLogEntriesFrom(int index);
+    IList<LogEntry> GetEntriesFromIndex(int startIndex);
 }

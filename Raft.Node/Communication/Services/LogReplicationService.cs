@@ -1,9 +1,10 @@
 ﻿using Grpc.Core;
 using Raft.Communication.Contract;
 using Raft.Node.Communication.Client;
+using Raft.Node.Extensions;
 using Raft.Store;
 using Raft.Store.Domain;
-using Raft.Store.Extensions;
+using Raft.Store.Domain.Replication;
 
 namespace Raft.Node.Communication.Services;
 
@@ -25,12 +26,11 @@ public class LogReplicationService(
             return ForwardCommand(request);
         }
 
-        var command = new Command(request.Variable, request.Operation.ToOperationType(), request.Literal);
-        stateStore.AppendLogEntry(command, stateStore.CurrentTerm);
+        var command = request.FromMessage();
+        stateStore.AppendLogEntry(new LogEntry(command, stateStore.CurrentTerm));
         Console.WriteLine($"{command} appended in term={stateStore.CurrentTerm}. log is {stateStore.PrintLog()}");
 
         var replies = SendAppendEntriesRequestsAndWaitForResults(
-            [request], 
             TimeSpan.FromSeconds(timeoutInterval)).Result;
         UpdateNextLogIndex(replies, 1);
 
@@ -40,12 +40,11 @@ public class LogReplicationService(
         });
     }
 
-    private async Task<IDictionary<string, AppendEntriesReply?>> SendAppendEntriesRequestsAndWaitForResults(
-        IList<CommandRequest> entries, TimeSpan timeout)
+    private async Task<IDictionary<string, AppendEntriesReply?>> SendAppendEntriesRequestsAndWaitForResults(TimeSpan timeout)
     {
         var tasks = nodesStore.GetNodes().ToDictionary(
             node => node.NodeName,
-            node => TrySendAppendEntriesRequest(node, entries, timeout)
+            node => TrySendAppendEntriesRequest(node, GetEntriesToSendToNode(node), timeout)
         );
 
         await Task.WhenAll(tasks.Values.ToArray<Task>());
@@ -56,12 +55,19 @@ public class LogReplicationService(
         );
     }
 
-    private async Task<AppendEntriesReply?> TrySendAppendEntriesRequest(NodeInfo node, IList<CommandRequest> entries,
-        TimeSpan timeout)
+    private IList<LogEntry> GetEntriesToSendToNode(NodeInfo node)
+    {
+        var nextIndex = nodesStore.GetNextIndex(node.NodeName);
+        return stateStore.GetEntriesFromIndex(nextIndex)
+            .ToArray();
+    }
+
+    private async Task<AppendEntriesReply?> TrySendAppendEntriesRequest(NodeInfo node, IList<LogEntry> entries, TimeSpan timeout)
     {
         try
         {
-            return await SendAppendEntriesRequestAsync(node, entries, timeout);
+            return await SendAppendEntriesRequestAsync(node, entries.Select(e => e.ToMessage())
+                .ToArray(), timeout);
         }
         catch (RpcException ex) when (ex.StatusCode == StatusCode.DeadlineExceeded)
         {
@@ -76,7 +82,7 @@ public class LogReplicationService(
     }
 
     private async Task<AppendEntriesReply> SendAppendEntriesRequestAsync(NodeInfo follower,
-        IList<CommandRequest> entries, TimeSpan timeout)
+        IList<LogEntryMessage> entries, TimeSpan timeout)
     {
         var appendEntriesRequest = EntriesRequestFactory.CreateRequest(follower.NodeName, entries);
         var deadline = DateTime.UtcNow.Add(timeout);
@@ -129,15 +135,15 @@ public class LogReplicationService(
 
 public interface IAppendEntriesRequestFactory
 {
-    AppendEntriesRequest CreateRequest(string nodeName, IList<CommandRequest> entries);
+    AppendEntriesRequest CreateRequest(string nodeName, IList<LogEntryMessage> entries);
 }
 
 public class AppendEntriesRequestFactory(IClusterNodeStore nodeStore, INodeStateStore stateStore, string leaderName)
     : IAppendEntriesRequestFactory
 {
-    public AppendEntriesRequest CreateRequest(string nodeName, IList<CommandRequest> entries)
+    public AppendEntriesRequest CreateRequest(string nodeName, IList<LogEntryMessage> entries)
     {
-        var lastLogIndex = nodeStore.GetLastLogIndex(nodeName);
+        var lastLogIndex = nodeStore.GetNextIndex(nodeName) - 1;
         return new AppendEntriesRequest()
         {
             Term = stateStore.CurrentTerm,
@@ -145,7 +151,7 @@ public class AppendEntriesRequestFactory(IClusterNodeStore nodeStore, INodeState
             LeaderId = leaderName,
             PrevLogIndex = lastLogIndex,
             PrevLogTerm = stateStore.GetTermAtIndex(lastLogIndex),
-            EntryCommands = { entries }
+            Entries = { entries }
         };
     }
 }

@@ -6,6 +6,7 @@ using Raft.Node.Communication.Services;
 using Raft.Node.Tests.MockHelpers;
 using Raft.Store;
 using Raft.Store.Domain;
+using Raft.Store.Domain.Replication;
 using Shouldly;
 
 namespace Raft.Node.Tests;
@@ -41,7 +42,7 @@ public class LogReplicationServiceTests
             new CommandRequest() { Variable = "A", Operation = "=", Literal = 5 }, mockCallContext);
 
         reply.Result.ShouldBe(new CommandReply() { Result = "Success at localhost" });
-        _mockStateStore.Received().AppendLogEntry(new Command("A", CommandOperation.Assignment, 5), 0);
+        _mockStateStore.Received().AppendLogEntry(new LogEntry(new Command("A", CommandOperation.Assignment, 5), 0));
     }
 
     [Test]
@@ -72,7 +73,7 @@ public class LogReplicationServiceTests
         var reply = _logReplicationService.ApplyCommand(commandRequest, Substitute.For<ServerCallContext>());
 
         reply.Result.ShouldBe(new CommandReply() { Result = "Success at leader" });
-        _mockStateStore.DidNotReceive().AppendLogEntry(Arg.Any<Command>(), Arg.Any<int>());
+        _mockStateStore.DidNotReceive().AppendLogEntry(Arg.Any<LogEntry>());
     }
 
     [Test]

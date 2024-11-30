@@ -19,15 +19,15 @@ public class ClusterNodeStore: IClusterNodeStore
         return _nodes.Keys.Select(k => new NodeInfo(k, _nodes[k]));
     }
 
-    public int GetLastLogIndex(string nodeName)
+    public int GetNextIndex(string nodeName)
     {
-        return _nextIndex.GetValueOrDefault(nodeName, -1);
+        return _nextIndex.GetValueOrDefault(nodeName, 0);
     }
 
     public void IncreaseLastLogIndex(string nodeName, int entriesCount)
     {
 
-        _nextIndex[nodeName] = GetLastLogIndex(nodeName) + entriesCount;
+        _nextIndex[nodeName] = GetNextIndex(nodeName) + entriesCount;
     }
 
     public void DecreaseLastLogIndex(string nodeName)

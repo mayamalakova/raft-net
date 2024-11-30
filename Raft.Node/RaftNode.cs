@@ -13,11 +13,11 @@ public class RaftNode
     private readonly INodeStateStore _stateStore;
     private readonly IEnumerable<INodeService> _nodeServices;
     private readonly IClientPool _clientPool;
+    private readonly IClusterNodeStore _nodeStore;
 
     private readonly string _nodeName;
     private readonly int _nodePort;
     private readonly NodeAddress _peerAddress;
-    private readonly IClusterNodeStore _nodeStore;
 
     public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort, int timeout)
     {
@@ -79,7 +79,7 @@ public class RaftNode
 
     public string GetClusterState()
     {
-        var lastIndexes = _nodeStore.GetNodes().Select(x => (x.NodeName, _nodeStore.GetLastLogIndex(x.NodeName)))
+        var lastIndexes = _nodeStore.GetNodes().Select(x => (x.NodeName, _nodeStore.GetNextIndex(x.NodeName)))
             .ToArray();
         return string.Join(',', lastIndexes);
     }
