@@ -1,6 +1,7 @@
 ﻿using Raft.Communication.Contract;
 using Raft.Node.Communication.Client;
 using Raft.Node.Communication.Services;
+using Raft.Node.HeatBeat;
 using Raft.Store;
 using Raft.Store.Domain;
 using Raft.Store.Memory;
@@ -19,7 +20,7 @@ public class RaftNode
     private readonly int _nodePort;
     private readonly NodeAddress _peerAddress;
 
-    public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort, int timeout)
+    public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort, int timeoutSeconds)
     {
         _nodeName = nodeName;
         _nodePort = port;
@@ -28,13 +29,15 @@ public class RaftNode
         _stateStore = new NodeStateStore { Role = role };
         _clientPool = new ClientPool();
         _nodeStore = new ClusterNodeStore();
+        var logReplicator = new LogReplicator(_stateStore, _clientPool, _nodeStore, _nodeName, timeoutSeconds);
+        var heartBeatRunner = new HeartBeatRunner(1000, () => logReplicator.ReplicateToFollowers()); 
         _nodeServices =
         [
             new LeaderDiscoveryService(_stateStore),
             new RegisterNodeService(_nodeStore),
             new PingReplyService(_nodeName),
             new NodeInfoService(_nodeName, _stateStore, _nodeStore),
-            new LogReplicationService(_stateStore, _clientPool, _nodeStore, nodeName, timeout),
+            new LogReplicationService(_stateStore, _clientPool, logReplicator, heartBeatRunner),
             new AppendEntriesService(_stateStore),
             new LogInfoService(_stateStore)
         ];

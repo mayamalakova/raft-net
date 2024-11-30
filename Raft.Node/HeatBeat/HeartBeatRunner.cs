@@ -31,4 +31,10 @@ public class HeartBeatRunner
         Console.WriteLine($"Action executed at {DateTime.Now:HH:mm:ss.fff}");
         _action();
     }
+
+    public void ResetTimer()
+    {
+        _timer.Stop();
+        _timer.Start();
+    }
 }

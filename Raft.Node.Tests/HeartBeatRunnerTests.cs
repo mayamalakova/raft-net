@@ -43,4 +43,5 @@ public class HeartBeatRunnerTests
         await Task.Delay(50);
         _beatSink.BeatsCount.ShouldBe(oldBeatCount);
     }
+
 }
