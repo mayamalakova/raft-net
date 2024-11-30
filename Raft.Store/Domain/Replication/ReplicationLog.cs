@@ -2,7 +2,7 @@
 
 public class ReplicationLog
 {
-    public List<LogEntry> Entries { get; set; } = new List<LogEntry>();
+    public List<LogEntry> Entries { get; } = new();
 
     public void Append(LogEntry entry)
     {

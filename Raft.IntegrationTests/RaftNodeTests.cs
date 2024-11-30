@@ -72,14 +72,14 @@ public class RaftNodeTests
         var followerClient1 = new RaftClient("localhost", 5002);
 
         leaderClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = 1 });
-        leader.GetClusterState().ShouldBe("(follower1, 0),(follower2, 0)");
+        leader.GetClusterState().ShouldBe("(follower1, 1),(follower2, 1)");
         
         follower.Stop();
         _nodes.Remove(follower);
         leaderClient.Command(new CommandOptions { Var = "A", Operation = "+", Literal = 5 });
 
         leaderClient.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
-        leader.GetClusterState().ShouldBe("(follower1, 1),(follower2, 0)");
+        leader.GetClusterState().ShouldBe("(follower1, 2),(follower2, 1)");
         followerClient1.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
     }
 
