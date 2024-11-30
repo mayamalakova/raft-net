@@ -13,9 +13,9 @@ public class NodeStateStore : INodeStateStore
     public int CommitIndex { get; set; } = -1;
     public int LogLength => _log.Entries.Count;
 
-    public void AppendLogEntry(Command command, int term)
+    public void AppendLogEntry(LogEntry entry)
     {
-        _log.Append(new LogEntry(command, term));
+        _log.Append(entry);
     }
 
     public string PrintLog()
@@ -36,5 +36,10 @@ public class NodeStateStore : INodeStateStore
     public void RemoveLogEntriesFrom(int index)
     {
         _log.RemoveFrom(index);
+    }
+
+    public IList<LogEntry> GetEntriesFromIndex(int startIndex)
+    {
+        return _log.GetFrom(startIndex);
     }
 }

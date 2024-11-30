@@ -54,12 +54,17 @@ service CommandSvc{
   rpc ApplyCommand (CommandRequest) returns (CommandReply);
 }
 
+message LogEntryMessage {
+  CommandRequest command = 1;
+  int32 term = 2;
+}
+
 message AppendEntriesRequest{
   int32 term = 1;
   string leaderId = 2;
   int32 prevLogIndex = 3;
   int32 prevLogTerm = 4;
-  repeated CommandRequest entryCommands = 5;
+  repeated LogEntryMessage entries = 5;
   int32 leaderCommit = 6;
 }
 
