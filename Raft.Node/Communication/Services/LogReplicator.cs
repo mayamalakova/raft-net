@@ -25,10 +25,11 @@ public class LogReplicator(
 
     private async Task<IDictionary<string, AppendEntriesReply?>> SendAppendEntriesRequestsAndWaitForResults()
     {
-        var tasks = nodesStore.GetNodes().ToDictionary(
-            node => node.NodeName,
-            node => TrySendAppendEntriesRequest(node, GetEntriesToSendToNode(node))
-        );
+        var tasks = nodesStore.GetNodes()
+            .ToDictionary(
+                node => node.NodeName,
+                node => TrySendAppendEntriesRequest(node, GetEntriesToSendToNode(node))
+            );
 
         await Task.WhenAll(tasks.Values.ToArray<Task>());
 
@@ -37,7 +38,13 @@ public class LogReplicator(
             kvp => kvp.Value.IsCompletedSuccessfully ? kvp.Value.Result : null
         );
     }
-    
+
+    public bool IsReplicationComplete(string nodeName)
+    {
+        var nextIndex = nodesStore.GetNextIndex(nodeName);
+        return nextIndex == stateStore.LogLength;
+    }
+
     private void UpdateNextLogIndex(IDictionary<string, AppendEntriesReply?> replies, int entriesCount)
     {
         foreach (var (nodeName, reply) in replies)
@@ -50,7 +57,10 @@ public class LogReplicator(
 
             if (reply.Success)
             {
-                nodesStore.IncreaseLastLogIndex(nodeName, entriesCount);
+                if (nodesStore.GetNextIndex(nodeName) < stateStore.LogLength)
+                {
+                    nodesStore.IncreaseLastLogIndex(nodeName, entriesCount);
+                }
             }
             else
             {
@@ -71,9 +81,14 @@ public class LogReplicator(
             Console.WriteLine($"Timeout occurred for node {node.NodeName}: {ex.GetType()} {ex.Message}");
             return null;
         }
+        catch (RpcException ex)
+        {
+            Console.WriteLine($"Could not connect to {node.NodeName}: {ex.GetType()}");
+            return null;
+        }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error occurred for node {node.NodeName}: {ex.GetType()} {ex.Message}");
+            Console.WriteLine($"Error occurred for node {node.NodeName}: {ex.GetType()} {ex.StackTrace}");
             return null;
         }
     }
@@ -90,6 +105,10 @@ public class LogReplicator(
 
     private IList<LogEntry> GetEntriesToSendToNode(NodeInfo node)
     {
+        if (IsReplicationComplete(node.NodeName))
+        {
+            return [];
+        }
         var nextIndex = nodesStore.GetNextIndex(node.NodeName);
         return stateStore.GetEntriesFromIndex(nextIndex)
             .ToArray();

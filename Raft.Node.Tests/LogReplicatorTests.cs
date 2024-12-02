@@ -7,6 +7,7 @@ using Raft.Node.Tests.MockHelpers;
 using Raft.Store;
 using Raft.Store.Domain;
 using Raft.Store.Domain.Replication;
+using Shouldly;
 
 namespace Raft.Node.Tests;
 
@@ -64,7 +65,17 @@ public class LogReplicatorTests
         _nodeStore.DidNotReceive().IncreaseLastLogIndex(nodeName, 1);
         _nodeStore.Received().DecreaseLastLogIndex(nodeName);
     }
-    
+
+    [TestCase(0, 0, true)]
+    [TestCase(1, 0, false)]
+    [TestCase(1, 1, true)]
+    public void ShouldReplyIfReplicationToNodeIsComplete(int logLength, int nextIndex, bool expectedResult)
+    {
+        _mockStateStore.LogLength.Returns(logLength);
+        _nodeStore.GetNextIndex("someNode").Returns(nextIndex);
+        _logReplicator.IsReplicationComplete("someNode").ShouldBe(expectedResult);
+    }
+
     private void SetUpMockAppendEntriesClient(NodeAddress followerAddress,
         bool success = true)
     {
@@ -77,5 +88,4 @@ public class LogReplicatorTests
             .Returns(ClientMockHelpers.CreateAsyncUnaryCall(appendEntriesReply));
         _clientPool.GetAppendEntriesClient(followerAddress).Returns(mockFollowerClient);
     }
-    
 }
