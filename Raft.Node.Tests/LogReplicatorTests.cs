@@ -50,6 +50,22 @@ public class LogReplicatorTests
         _nodeStore.Received().IncreaseLastLogIndex(nodeName, 1);
         _nodeStore.DidNotReceive().DecreaseLastLogIndex(Arg.Any<string>());
     }
+    
+    [Test]
+    public void LeaderShouldNotDecreaseIndexWhenAppendEntryWithNoEntriesReturnsSuccess()
+    {
+        var followerAddress = new NodeAddress("someHost", 666);
+        var nodeName = "someNode";
+        _nodeStore.GetNodes().Returns([new NodeInfo(nodeName, followerAddress)]);
+        _nodeStore.GetNextIndex(nodeName).Returns(0);
+        _mockStateStore.LogLength.Returns(0);
+        SetUpMockAppendEntriesClient(followerAddress);
+
+        _logReplicator.ReplicateToFollowers();
+
+        _nodeStore.Received().IncreaseLastLogIndex(nodeName, 0);
+        _nodeStore.DidNotReceive().DecreaseLastLogIndex(Arg.Any<string>());
+    }
 
     [Test]
     public void LeaderShouldDecreaseNextLogIndexWhenAppendEntryReturnsFailure()

@@ -57,7 +57,7 @@ public class LogReplicator(
             }
 
             var entriesCount = GetNumberOfEntriesToReplicate(nodeName);
-            if (reply.Success && entriesCount > 0)
+            if (reply.Success)
             {
                 nodesStore.IncreaseLastLogIndex(nodeName, entriesCount);
             }
