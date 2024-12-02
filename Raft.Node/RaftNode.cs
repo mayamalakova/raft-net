@@ -30,7 +30,7 @@ public class RaftNode
         _clientPool = new ClientPool();
         _nodeStore = new ClusterNodeStore();
         var logReplicator = new LogReplicator(_stateStore, _clientPool, _nodeStore, _nodeName, timeoutSeconds);
-        var heartBeatRunner = new HeartBeatRunner(1000, () => logReplicator.ReplicateToFollowers()); 
+        var heartBeatRunner = new HeartBeatRunner(3000, () => logReplicator.ReplicateToFollowers()); 
         _nodeServices =
         [
             new LeaderDiscoveryService(_stateStore),
