@@ -19,6 +19,7 @@ public class RaftNode
     private readonly string _nodeName;
     private readonly int _nodePort;
     private readonly NodeAddress _peerAddress;
+    private HeartBeatRunner _heartBeatRunner;
 
     public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort, int timeoutSeconds)
     {
@@ -30,14 +31,14 @@ public class RaftNode
         _clientPool = new ClientPool();
         _nodeStore = new ClusterNodeStore();
         var logReplicator = new LogReplicator(_stateStore, _clientPool, _nodeStore, _nodeName, timeoutSeconds);
-        var heartBeatRunner = new HeartBeatRunner(3000, () => logReplicator.ReplicateToFollowers()); 
+        _heartBeatRunner = new HeartBeatRunner(3000, () => logReplicator.ReplicateToFollowers()); 
         _nodeServices =
         [
             new LeaderDiscoveryService(_stateStore),
             new RegisterNodeService(_nodeStore),
             new PingReplyService(_nodeName),
             new NodeInfoService(_nodeName, _stateStore, _nodeStore),
-            new LogReplicationService(_stateStore, _clientPool, logReplicator, heartBeatRunner),
+            new LogReplicationService(_stateStore, _clientPool, logReplicator, _heartBeatRunner),
             new AppendEntriesService(_stateStore),
             new LogInfoService(_stateStore)
         ];
@@ -61,6 +62,10 @@ public class RaftNode
         }
 
         _messageReceiver.Start(_nodeServices.Select(x => x.GetServiceDefinition()));
+        if (_stateStore.Role == NodeType.Leader)
+        {
+            _heartBeatRunner.StartBeating();
+        }
     }
 
     private NodeAddress AskForLeader()
