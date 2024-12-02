@@ -18,5 +18,5 @@ public interface INodeStateStore
     int GetTermAtIndex(int lastLogIndex);
     LogEntry? EntryAtIndex(int index);
     void RemoveLogEntriesFrom(int index);
-    IList<LogEntry> GetEntriesFromIndex(int startIndex);
+    IList<LogEntry> GetLastEntries(int entriesCount);
 }

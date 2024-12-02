@@ -20,7 +20,8 @@ public class LogReplicator(
     public void ReplicateToFollowers()
     {
         var replies = SendAppendEntriesRequestsAndWaitForResults().Result;
-        UpdateNextLogIndex(replies, 1);
+        UpdateNextLogIndex(replies);
+        Console.WriteLine($"Replicated to followers - nextIndex: {nodesStore.GetNextIndexesPrintable()}");
     }
 
     private async Task<IDictionary<string, AppendEntriesReply?>> SendAppendEntriesRequestsAndWaitForResults()
@@ -28,7 +29,7 @@ public class LogReplicator(
         var tasks = nodesStore.GetNodes()
             .ToDictionary(
                 node => node.NodeName,
-                node => TrySendAppendEntriesRequest(node, GetEntriesToSendToNode(node))
+                node => TrySendAppendEntriesRequest(node, GetEntriesToSendToNode(node.NodeName))
             );
 
         await Task.WhenAll(tasks.Values.ToArray<Task>());
@@ -45,7 +46,7 @@ public class LogReplicator(
         return nextIndex == stateStore.LogLength;
     }
 
-    private void UpdateNextLogIndex(IDictionary<string, AppendEntriesReply?> replies, int entriesCount)
+    private void UpdateNextLogIndex(IDictionary<string, AppendEntriesReply?> replies)
     {
         foreach (var (nodeName, reply) in replies)
         {
@@ -55,12 +56,10 @@ public class LogReplicator(
                 continue;
             }
 
-            if (reply.Success)
+            var entriesCount = GetNumberOfEntriesToReplicate(nodeName);
+            if (reply.Success && entriesCount > 0)
             {
-                if (nodesStore.GetNextIndex(nodeName) < stateStore.LogLength)
-                {
-                    nodesStore.IncreaseLastLogIndex(nodeName, entriesCount);
-                }
+                nodesStore.IncreaseLastLogIndex(nodeName, entriesCount);
             }
             else
             {
@@ -71,6 +70,7 @@ public class LogReplicator(
 
     private async Task<AppendEntriesReply?> TrySendAppendEntriesRequest(NodeInfo node, IList<LogEntry> entries)
     {
+        Console.WriteLine($"Sending append entries to node {node.NodeName} - {entries.Count} entries");
         try
         {
             return await SendAppendEntriesRequestAsync(node, entries.Select(e => e.ToMessage())
@@ -103,14 +103,17 @@ public class LogReplicator(
         return reply;
     }
 
-    private IList<LogEntry> GetEntriesToSendToNode(NodeInfo node)
+    private IList<LogEntry> GetEntriesToSendToNode(string nodeName)
     {
-        if (IsReplicationComplete(node.NodeName))
-        {
-            return [];
-        }
-        var nextIndex = nodesStore.GetNextIndex(node.NodeName);
-        return stateStore.GetEntriesFromIndex(nextIndex)
-            .ToArray();
+        var entriesCount = GetNumberOfEntriesToReplicate(nodeName);
+        return stateStore.GetLastEntries(entriesCount);
     }
+
+    private int GetNumberOfEntriesToReplicate(string nodeName)
+    {
+        var nextIndex = nodesStore.GetNextIndex(nodeName);
+        var logLength = stateStore.LogLength;
+        return logLength - nextIndex;
+    }
+    
 }

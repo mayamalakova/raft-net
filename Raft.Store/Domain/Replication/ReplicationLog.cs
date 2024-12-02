@@ -24,8 +24,8 @@ public class ReplicationLog
         Entries.RemoveRange(index, Entries.Count - index);
     }
 
-    public IList<LogEntry> GetFrom(int startIndex)
+    public IList<LogEntry> GetLastEntries(int count)
     {
-        return Entries.TakeLast(Entries.Count - startIndex).ToList();
+        return Entries.TakeLast(count).ToList();
     }
 }
