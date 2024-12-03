@@ -35,12 +35,13 @@ public class RaftNode
         [
             new LeaderDiscoveryService(_stateStore),
             new RegisterNodeService(_nodeStore),
-            new LogReplicationService(_stateStore, _clientPool, logReplicator, _heartBeatRunner),
+            new LogReplicationService(_stateStore, _clientPool, logReplicator, _heartBeatRunner), //listening for command forwarded by other nodes to leader
             new AppendEntriesService(_stateStore),
         ];
         _nodeMessageReceiver = new RaftMessageReceiver(port, nodeServices);
         IEnumerable<INodeService> controlServices =
         [
+            new LogReplicationService(_stateStore, _clientPool, logReplicator, _heartBeatRunner), // listening for command from the cli
             new PingReplyService(_nodeName),
             new NodeInfoService(_nodeName, _stateStore, _nodeStore),
             new LogInfoService(_stateStore),
