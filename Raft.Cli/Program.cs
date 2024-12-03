@@ -27,7 +27,8 @@ public static class Program
         }
 
         var raftClient = new RaftClient(parts[0], int.Parse(parts[1]));
-        Console.WriteLine($"Client is ready to send requests to node {opts.NodeAddress}. Enter a command line or type 'quit' to exit.");
+        Console.WriteLine(
+            $"Client is ready to send requests to node {opts.NodeAddress}. Enter a command line or type 'quit' to exit.");
 
         while (true)
         {
@@ -37,12 +38,16 @@ public static class Program
             {
                 return 0;
             }
-            
-            Parser.Default.ParseArguments<PingOptions, InfoOptions, CommandOptions, LogInfoOptions>(command.Split(' ').Select(x => x.Trim()))
+
+            Parser.Default
+                .ParseArguments<PingOptions, InfoOptions, CommandOptions, LogInfoOptions, DisconnectOptions,
+                    ReconnectOptions>(command.Split(' ').Select(x => x.Trim()))
                 .WithParsed<PingOptions>(_ => Console.WriteLine(raftClient.Ping()))
                 .WithParsed<InfoOptions>(_ => Console.WriteLine(raftClient.Info()))
                 .WithParsed<CommandOptions>(c => Console.WriteLine(raftClient.Command(c)))
                 .WithParsed<LogInfoOptions>(_ => Console.WriteLine(raftClient.LogInfo()))
+                .WithParsed<DisconnectOptions>(_ => Console.WriteLine(raftClient.Disconnect()))
+                .WithParsed<ReconnectOptions>(_ => Console.WriteLine(raftClient.Reconnect()))
                 .WithNotParsed(errors => { Console.WriteLine(errors.ToString()); });
         }
     }
