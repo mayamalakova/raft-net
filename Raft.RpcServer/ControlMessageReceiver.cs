@@ -3,7 +3,7 @@ using Raft.Communication.Contract;
 
 namespace Raft;
 
-public class ControlMessageReceiver(int port, INodeService controlService): IRaftMessageReceiver
+public class ControlMessageReceiver(int port, IEnumerable<INodeService> services): IMessageReceiver
 {
     private readonly Server _server = new()
     {
@@ -12,7 +12,10 @@ public class ControlMessageReceiver(int port, INodeService controlService): IRaf
 
     public void Start()
     {
-        _server.Services.Add(controlService.GetServiceDefinition());
+        foreach (var service in services)
+        {
+            _server.Services.Add(service.GetServiceDefinition());
+        }
         _server.Start();
     }
 
@@ -21,13 +24,4 @@ public class ControlMessageReceiver(int port, INodeService controlService): IRaf
         _server.ShutdownAsync().Wait();
     }
 
-    public void DisconnectFromCluster()
-    {
-        throw new NotImplementedException();
-    }
-
-    public void ReconnectToCluster()
-    {
-        throw new NotImplementedException();
-    }
 }

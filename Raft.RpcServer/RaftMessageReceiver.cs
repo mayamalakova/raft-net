@@ -21,7 +21,14 @@ public class RaftMessageReceiver(int port, IEnumerable<INodeService> services) :
 
     public void Stop()
     {
-        _server.ShutdownAsync().Wait();
+        try
+        {
+            _server.ShutdownAsync().Wait();
+        }
+        catch (RpcException e)
+        {
+            Console.WriteLine($"Error shutting down: {e}, maybe the server has already been stopped?");
+        }
     }
 
     public void DisconnectFromCluster()

@@ -35,15 +35,18 @@ public class RaftNode
         [
             new LeaderDiscoveryService(_stateStore),
             new RegisterNodeService(_nodeStore),
-            new PingReplyService(_nodeName),
-            new NodeInfoService(_nodeName, _stateStore, _nodeStore),
             new LogReplicationService(_stateStore, _clientPool, logReplicator, _heartBeatRunner),
             new AppendEntriesService(_stateStore),
-            new LogInfoService(_stateStore)
         ];
         _nodeMessageReceiver = new RaftMessageReceiver(port, nodeServices);
-        var controlService = new ControlService(_heartBeatRunner, _nodeMessageReceiver);
-        _controlMessageServer = new ControlMessageReceiver(port + 1000, controlService);
+        IEnumerable<INodeService> controlServices =
+        [
+            new PingReplyService(_nodeName),
+            new NodeInfoService(_nodeName, _stateStore, _nodeStore),
+            new LogInfoService(_stateStore),
+            new ControlService(_heartBeatRunner, _nodeMessageReceiver)
+        ];
+        _controlMessageServer = new ControlMessageReceiver(port + 1000, controlServices);
     }
 
     public void Start()

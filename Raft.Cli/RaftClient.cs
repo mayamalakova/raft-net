@@ -12,13 +12,12 @@ public class RaftClient
 
     public RaftClient(string host, int port)
     {
-        var channel = new Channel(host, port, ChannelCredentials.Insecure);
+        var channel = new Channel(host, port + 1000, ChannelCredentials.Insecure);
         _pingClient = new PingSvc.PingSvcClient(channel);
         _infoClient = new NodeInfoSvc.NodeInfoSvcClient(channel);
         _commandClient = new CommandSvc.CommandSvcClient(channel);
         _logInfoClient = new LogInfoSvc.LogInfoSvcClient(channel);
-        var controlChannel = new Channel(host, port + 1000, ChannelCredentials.Insecure);
-        _controlClient = new ControlSvc.ControlSvcClient(controlChannel);
+        _controlClient = new ControlSvc.ControlSvcClient(channel);
     }
 
     public string Ping()
