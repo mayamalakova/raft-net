@@ -10,12 +10,12 @@ namespace Raft.Node;
 
 public class RaftNode
 {
-    private readonly IRaftMessageReceiver _messageReceiver;
+    private readonly IRaftMessageReceiver _nodeMessageReceiver;
     private readonly INodeStateStore _stateStore;
     private readonly IClientPool _clientPool;
     private readonly IClusterNodeStore _nodeStore;
     private readonly HeartBeatRunner _heartBeatRunner;
-    private readonly IRaftMessageReceiver _controlServer;
+    private readonly IMessageReceiver _controlMessageServer;
 
     private readonly string _nodeName;
     private readonly int _nodePort;
@@ -41,9 +41,9 @@ public class RaftNode
             new AppendEntriesService(_stateStore),
             new LogInfoService(_stateStore)
         ];
-        _messageReceiver = new RaftMessageReceiver(port, nodeServices);
-        var controlService = new ControlService(_heartBeatRunner, _messageReceiver);
-        _controlServer = new ControlMessageReceiver(port + 1000, controlService);
+        _nodeMessageReceiver = new RaftMessageReceiver(port, nodeServices);
+        var controlService = new ControlService(_heartBeatRunner, _nodeMessageReceiver);
+        _controlMessageServer = new ControlMessageReceiver(port + 1000, controlService);
     }
 
     public void Start()
@@ -63,8 +63,8 @@ public class RaftNode
             Console.WriteLine($"Registered with leader {registerReply}");
         }
 
-        _messageReceiver.Start();
-        _controlServer.Start();
+        _nodeMessageReceiver.Start();
+        _controlMessageServer.Start();
         if (_stateStore.Role == NodeType.Leader)
         {
             _heartBeatRunner.StartBeating();
@@ -85,8 +85,8 @@ public class RaftNode
 
     public void Stop()
     {
-        _messageReceiver.Stop();
-        _controlServer.Stop();
+        _nodeMessageReceiver.Stop();
+        _controlMessageServer.Stop();
     }
 
     public string GetClusterState()
