@@ -13,7 +13,7 @@ public class RaftNode
     private readonly IRaftMessageReceiver _nodeMessageReceiver;
     private readonly INodeStateStore _stateStore;
     private readonly IClientPool _clientPool;
-    private readonly IClusterNodeStore _nodeStore;
+    private readonly IClusterNodeStore _clusterStore;
     private readonly HeartBeatRunner _heartBeatRunner;
     private readonly IMessageReceiver _controlMessageServer;
 
@@ -28,13 +28,13 @@ public class RaftNode
         _peerAddress = new NodeAddress(clusterHost, clusterPort);
         _stateStore = new NodeStateStore { Role = role };
         _clientPool = new ClientPool();
-        _nodeStore = new ClusterNodeStore();
-        var logReplicator = new LogReplicator(_stateStore, _clientPool, _nodeStore, _nodeName, timeoutSeconds);
+        _clusterStore = new ClusterNodeStore();
+        var logReplicator = new LogReplicator(_stateStore, _clientPool, _clusterStore, _nodeName, timeoutSeconds);
         _heartBeatRunner = new HeartBeatRunner(3000, () => logReplicator.ReplicateToFollowers());
         IEnumerable<INodeService> nodeServices =
         [
             new LeaderDiscoveryService(_stateStore),
-            new RegisterNodeService(_nodeStore),
+            new RegisterNodeService(_clusterStore),
             new LogReplicationService(_stateStore, _clientPool, logReplicator, _heartBeatRunner), //listening for command forwarded by other nodes to leader
             new AppendEntriesService(_stateStore),
         ];
@@ -43,9 +43,9 @@ public class RaftNode
         [
             new LogReplicationService(_stateStore, _clientPool, logReplicator, _heartBeatRunner), // listening for command from the cli
             new PingReplyService(_nodeName),
-            new NodeInfoService(_nodeName, _stateStore, _nodeStore),
+            new NodeInfoService(_nodeName, _stateStore, _clusterStore),
             new LogInfoService(_stateStore),
-            new ControlService(_heartBeatRunner, _nodeMessageReceiver)
+            new ControlService(_heartBeatRunner, _nodeMessageReceiver, _stateStore)
         ];
         _controlMessageServer = new ControlMessageReceiver(port + 1000, controlServices);
     }
@@ -95,8 +95,8 @@ public class RaftNode
 
     public string GetClusterState()
     {
-        var lastIndexes = _nodeStore.GetNodes()
-            .Select(x => (x.NodeName, _nodeStore.GetNextIndex(x.NodeName)))
+        var lastIndexes = _clusterStore.GetNodes()
+            .Select(x => (x.NodeName, _clusterStore.GetNextIndex(x.NodeName)))
             .ToArray();
         return string.Join(',', lastIndexes);
     }

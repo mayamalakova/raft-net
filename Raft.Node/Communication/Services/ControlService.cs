@@ -1,10 +1,12 @@
 ﻿using Grpc.Core;
 using Raft.Communication.Contract;
 using Raft.Node.HeatBeat;
+using Raft.Store;
+using Raft.Store.Domain;
 
 namespace Raft.Node.Communication.Services;
 
-public class ControlService(HeartBeatRunner? heartBeatRunner, IRaftMessageReceiver raftServer) : ControlSvc.ControlSvcBase, INodeService
+public class ControlService(HeartBeatRunner? heartBeatRunner, IRaftMessageReceiver raftServer, INodeStateStore stateStore) : ControlSvc.ControlSvcBase, INodeService
 {
     public override Task<DisconnectReply> DisconnectNode(DisconnectMessage request, ServerCallContext context)
     {
@@ -22,8 +24,11 @@ public class ControlService(HeartBeatRunner? heartBeatRunner, IRaftMessageReceiv
         Console.WriteLine("Reconnecting");
         raftServer.ReconnectToCluster();
 
-        Console.WriteLine("Starting heartbeat");
-        heartBeatRunner?.StartBeating();
+        if (stateStore.Role == NodeType.Leader)
+        {
+            Console.WriteLine("Starting heartbeat");
+            heartBeatRunner?.StartBeating();
+        }
 
         return Task.FromResult(new ReconnectReply {Reply = "Node reconnected."});
     }
