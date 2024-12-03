@@ -4,6 +4,9 @@ namespace Raft.Communication.Contract;
 
 public interface IRaftMessageReceiver
 {
-    void Start(IEnumerable<ServerServiceDefinition> services);
+    void Start();
     void Stop();
+    void DisconnectFromCluster();
+    void ReconnectToCluster();
+
 }

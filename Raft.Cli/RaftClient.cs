@@ -17,7 +17,8 @@ public class RaftClient
         _infoClient = new NodeInfoSvc.NodeInfoSvcClient(channel);
         _commandClient = new CommandSvc.CommandSvcClient(channel);
         _logInfoClient = new LogInfoSvc.LogInfoSvcClient(channel);
-        _controlClient = new ControlSvc.ControlSvcClient(channel);
+        var controlChannel = new Channel(host, port + 1000, ChannelCredentials.Insecure);
+        _controlClient = new ControlSvc.ControlSvcClient(controlChannel);
     }
 
     public string Ping()

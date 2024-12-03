@@ -12,27 +12,26 @@ public class RaftNode
 {
     private readonly IRaftMessageReceiver _messageReceiver;
     private readonly INodeStateStore _stateStore;
-    private readonly IEnumerable<INodeService> _nodeServices;
     private readonly IClientPool _clientPool;
     private readonly IClusterNodeStore _nodeStore;
+    private readonly HeartBeatRunner _heartBeatRunner;
+    private readonly IRaftMessageReceiver _controlServer;
 
     private readonly string _nodeName;
     private readonly int _nodePort;
     private readonly NodeAddress _peerAddress;
-    private HeartBeatRunner _heartBeatRunner;
 
     public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort, int timeoutSeconds)
     {
         _nodeName = nodeName;
         _nodePort = port;
         _peerAddress = new NodeAddress(clusterHost, clusterPort);
-        _messageReceiver = new RaftMessageReceiver(port);
         _stateStore = new NodeStateStore { Role = role };
         _clientPool = new ClientPool();
         _nodeStore = new ClusterNodeStore();
         var logReplicator = new LogReplicator(_stateStore, _clientPool, _nodeStore, _nodeName, timeoutSeconds);
-        _heartBeatRunner = new HeartBeatRunner(3000, () => logReplicator.ReplicateToFollowers()); 
-        _nodeServices =
+        _heartBeatRunner = new HeartBeatRunner(3000, () => logReplicator.ReplicateToFollowers());
+        IEnumerable<INodeService> nodeServices =
         [
             new LeaderDiscoveryService(_stateStore),
             new RegisterNodeService(_nodeStore),
@@ -42,6 +41,9 @@ public class RaftNode
             new AppendEntriesService(_stateStore),
             new LogInfoService(_stateStore)
         ];
+        _messageReceiver = new RaftMessageReceiver(port, nodeServices);
+        var controlService = new ControlService(_heartBeatRunner, _messageReceiver);
+        _controlServer = new ControlMessageReceiver(port + 1000, controlService);
     }
 
     public void Start()
@@ -61,7 +63,8 @@ public class RaftNode
             Console.WriteLine($"Registered with leader {registerReply}");
         }
 
-        _messageReceiver.Start(_nodeServices.Select(x => x.GetServiceDefinition()));
+        _messageReceiver.Start();
+        _controlServer.Start();
         if (_stateStore.Role == NodeType.Leader)
         {
             _heartBeatRunner.StartBeating();
@@ -83,11 +86,13 @@ public class RaftNode
     public void Stop()
     {
         _messageReceiver.Stop();
+        _controlServer.Stop();
     }
 
     public string GetClusterState()
     {
-        var lastIndexes = _nodeStore.GetNodes().Select(x => (x.NodeName, _nodeStore.GetNextIndex(x.NodeName)))
+        var lastIndexes = _nodeStore.GetNodes()
+            .Select(x => (x.NodeName, _nodeStore.GetNextIndex(x.NodeName)))
             .ToArray();
         return string.Join(',', lastIndexes);
     }
