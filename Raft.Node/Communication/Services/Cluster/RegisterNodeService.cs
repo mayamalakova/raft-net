@@ -3,7 +3,7 @@ using Raft.Communication.Contract;
 using Raft.Store;
 using Raft.Store.Domain;
 
-namespace Raft.Node.Communication.Services;
+namespace Raft.Node.Communication.Services.Cluster;
 
 public class RegisterNodeService(IClusterNodeStore nodeStore) : RegisterNodeSvc.RegisterNodeSvcBase, INodeService
 {

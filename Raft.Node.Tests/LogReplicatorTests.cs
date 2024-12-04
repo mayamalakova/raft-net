@@ -2,7 +2,7 @@
 using NSubstitute;
 using NUnit.Framework;
 using Raft.Node.Communication.Client;
-using Raft.Node.Communication.Services;
+using Raft.Node.Communication.Services.Cluster;
 using Raft.Node.Tests.MockHelpers;
 using Raft.Store;
 using Raft.Store.Domain;
@@ -40,6 +40,7 @@ public class LogReplicatorTests
         var nodeName = "someNode";
         _nodeStore.GetNodes().Returns([new NodeInfo(nodeName, followerAddress)]);
         _nodeStore.GetNextIndex(nodeName).Returns(0);
+        _nodeStore.IncreaseNextLogIndex(nodeName, 1).Returns(1);
         _mockStateStore.GetLastEntries(1)
             .Returns([new LogEntry(new Command("A", CommandOperation.Assignment, 1), 0)]);
         _mockStateStore.LogLength.Returns(1);
@@ -47,8 +48,9 @@ public class LogReplicatorTests
 
         _logReplicator.ReplicateToFollowers();
 
-        _nodeStore.Received().IncreaseLastLogIndex(nodeName, 1);
-        _nodeStore.DidNotReceive().DecreaseLastLogIndex(Arg.Any<string>());
+        _nodeStore.Received().IncreaseNextLogIndex(nodeName, 1);
+        _nodeStore.Received().SetMatchingIndex(nodeName, 0);
+        _nodeStore.DidNotReceive().DecreaseNextLogIndex(Arg.Any<string>());
     }
     
     [Test]
@@ -58,13 +60,15 @@ public class LogReplicatorTests
         var nodeName = "someNode";
         _nodeStore.GetNodes().Returns([new NodeInfo(nodeName, followerAddress)]);
         _nodeStore.GetNextIndex(nodeName).Returns(0);
+        _nodeStore.IncreaseNextLogIndex(nodeName, 0).Returns(0);
         _mockStateStore.LogLength.Returns(0);
         SetUpMockAppendEntriesClient(followerAddress);
 
         _logReplicator.ReplicateToFollowers();
 
-        _nodeStore.Received().IncreaseLastLogIndex(nodeName, 0);
-        _nodeStore.DidNotReceive().DecreaseLastLogIndex(Arg.Any<string>());
+        _nodeStore.Received().IncreaseNextLogIndex(nodeName, 0);
+        _nodeStore.Received().SetMatchingIndex(nodeName, -1);
+        _nodeStore.DidNotReceive().DecreaseNextLogIndex(Arg.Any<string>());
     }
 
     [Test]
@@ -79,8 +83,9 @@ public class LogReplicatorTests
 
         _logReplicator.ReplicateToFollowers();
 
-        _nodeStore.DidNotReceive().IncreaseLastLogIndex(nodeName, 1);
-        _nodeStore.Received().DecreaseLastLogIndex(nodeName);
+        _nodeStore.DidNotReceive().IncreaseNextLogIndex(nodeName, Arg.Any<int>());
+        _nodeStore.DidNotReceive().SetMatchingIndex(nodeName, Arg.Any<int>());
+        _nodeStore.Received().DecreaseNextLogIndex(nodeName);
     }
 
     [TestCase(0, 0, true)]

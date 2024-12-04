@@ -3,7 +3,7 @@ using Raft.Communication.Contract;
 using Raft.Store;
 using Raft.Store.Domain;
 
-namespace Raft.Node.Communication.Services;
+namespace Raft.Node.Communication.Services.Control;
 
 public class NodeInfoService(string name, NodeAddress nodeAddress, INodeStateStore stateStore, IClusterNodeStore nodeStore) : NodeInfoSvc.NodeInfoSvcBase, INodeService
 {

@@ -5,7 +5,7 @@ using Raft.Store;
 using Raft.Store.Domain;
 using Raft.Store.Domain.Replication;
 
-namespace Raft.Node.Communication.Services;
+namespace Raft.Node.Communication.Services.Cluster;
 
 public class LogReplicator(
     INodeStateStore stateStore,
@@ -59,11 +59,12 @@ public class LogReplicator(
             var entriesCount = GetNumberOfEntriesToReplicate(nodeName);
             if (reply.Success)
             {
-                nodesStore.IncreaseLastLogIndex(nodeName, entriesCount);
+                var nextIndex = nodesStore.IncreaseNextLogIndex(nodeName, entriesCount);
+                nodesStore.SetMatchingIndex(nodeName, nextIndex - 1);
             }
             else
             {
-                nodesStore.DecreaseLastLogIndex(nodeName);
+                nodesStore.DecreaseNextLogIndex(nodeName);
             }
         }
     }

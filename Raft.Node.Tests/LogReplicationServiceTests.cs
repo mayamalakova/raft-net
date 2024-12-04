@@ -2,7 +2,7 @@
 using NSubstitute;
 using NUnit.Framework;
 using Raft.Node.Communication.Client;
-using Raft.Node.Communication.Services;
+using Raft.Node.Communication.Services.Cluster;
 using Raft.Node.HeartBeat;
 using Raft.Node.Tests.MockHelpers;
 using Raft.Store;
@@ -77,39 +77,6 @@ public class LogReplicationServiceTests
 
         reply.Result.ShouldBe(new CommandReply() { Result = "Success at leader" });
         _mockStateStore.DidNotReceive().AppendLogEntry(Arg.Any<LogEntry>());
-    }
-
-    [Test]
-    public void LeaderShouldIncreaseNextLogIndexWhenAppendEntryReturnsSuccess()
-    {
-        var followerName = "someNode";
-        var followerAddress = new NodeAddress("someHost", 666);
-        _nodeStore.GetNodes().Returns([new NodeInfo(followerName, followerAddress)]);
-        _nodeStore.GetNextIndex(followerName).Returns(0);
-        _mockStateStore.LogLength.Returns(1);
-        SetUpMockAppendEntriesClient(followerAddress);
-        var mockCallContext = CreateMockCallContext();
-
-        _logReplicationService.ApplyCommand(
-            new CommandRequest() { Variable = "A", Operation = "=", Literal = 5 }, mockCallContext);
-
-        _nodeStore.Received().IncreaseLastLogIndex(followerName, 1);
-        _nodeStore.DidNotReceive().DecreaseLastLogIndex(Arg.Any<string>());
-    }
-
-    [Test]
-    public void LeaderShouldDecreaseNextLogIndexWhenAppendEntryReturnsFailure()
-    {
-        var followerAddress = new NodeAddress("someHost", 666);
-        _nodeStore.GetNodes().Returns([new NodeInfo("someNode", followerAddress)]);
-        SetUpMockAppendEntriesClient(followerAddress, false);
-        var mockCallContext = CreateMockCallContext();
-
-        _logReplicationService.ApplyCommand(
-            new CommandRequest() { Variable = "A", Operation = "=", Literal = 5 }, mockCallContext);
-
-        _nodeStore.DidNotReceive().IncreaseLastLogIndex("someNode", 1);
-        _nodeStore.Received().DecreaseLastLogIndex("someNode");
     }
 
     private static ServerCallContext CreateMockCallContext()

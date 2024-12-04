@@ -2,7 +2,7 @@
 using Raft.Communication.Contract;
 using Raft.Store;
 
-namespace Raft.Node.Communication.Services;
+namespace Raft.Node.Communication.Services.Control;
 
 public class LogInfoService(INodeStateStore stateStore) : LogInfoSvc.LogInfoSvcBase, INodeService
 {
@@ -10,7 +10,7 @@ public class LogInfoService(INodeStateStore stateStore) : LogInfoSvc.LogInfoSvcB
     {
         return Task.FromResult(new LogInfoReply()
         {
-            Entries = stateStore.PrintLog()
+            Entries = stateStore.PrintLog(),
         });
     }
 
