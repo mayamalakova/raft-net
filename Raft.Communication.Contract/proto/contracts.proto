@@ -101,3 +101,22 @@ message LogInfoReply{
 service LogInfoSvc{
   rpc GetLogLInfo(LogInfoRequest) returns (LogInfoReply);
 }
+
+message DisconnectMessage{
+}
+
+message DisconnectReply{
+  string reply=1;
+}
+
+message ReconnectMessage{
+}
+
+message ReconnectReply{
+  string reply=1;
+}
+
+service ControlSvc{
+  rpc DisconnectNode(DisconnectMessage) returns  (DisconnectReply);
+  rpc ReconnectNode(ReconnectMessage) returns (ReconnectReply);
+}

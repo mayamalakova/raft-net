@@ -9,4 +9,5 @@ public interface IClusterNodeStore
     int GetNextIndex(string nodeName);
     void IncreaseLastLogIndex(string nodeName, int entriesCount);
     void DecreaseLastLogIndex(string nodeName);
+    string GetNextIndexesPrintable();
 }

@@ -1,9 +1,13 @@
-﻿using Grpc.Core;
+﻿namespace Raft.Communication.Contract;
 
-namespace Raft.Communication.Contract;
-
-public interface IRaftMessageReceiver
+public interface IRaftMessageReceiver: IMessageReceiver
 {
-    void Start(IEnumerable<ServerServiceDefinition> services);
-    void Stop();
+    /// <summary>
+    /// Stop accepting communication from the cluster
+    /// </summary>
+    void DisconnectFromCluster();
+    /// <summary>
+    /// Start accepting communication from the cluster again
+    /// </summary>
+    void ReconnectToCluster();
 }

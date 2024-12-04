@@ -3,6 +3,7 @@ using NSubstitute;
 using NUnit.Framework;
 using Raft.Node.Communication.Client;
 using Raft.Node.Communication.Services;
+using Raft.Node.HeartBeat;
 using Raft.Node.Tests.MockHelpers;
 using Raft.Store;
 using Raft.Store.Domain;
@@ -26,10 +27,12 @@ public class LogReplicationServiceTests
         _clientPool = Substitute.For<IClientPool>();
         _nodeStore = Substitute.For<IClusterNodeStore>();
         _appendEntriesRequestFactory = Substitute.For<IAppendEntriesRequestFactory>();
-        _logReplicationService = new LogReplicationService(_mockStateStore, _clientPool, _nodeStore, "lead1", 2)
+        var logReplicator = new LogReplicator(_mockStateStore, _clientPool, _nodeStore, "lead1", 2)
         {
             EntriesRequestFactory = _appendEntriesRequestFactory
         };
+        _logReplicationService = new LogReplicationService(_mockStateStore, _clientPool, logReplicator,
+            new HeartBeatRunner(50, () => { }));
     }
 
     [Test]
@@ -79,18 +82,21 @@ public class LogReplicationServiceTests
     [Test]
     public void LeaderShouldIncreaseNextLogIndexWhenAppendEntryReturnsSuccess()
     {
+        var followerName = "someNode";
         var followerAddress = new NodeAddress("someHost", 666);
-        _nodeStore.GetNodes().Returns([new NodeInfo("someNode", followerAddress)]);
+        _nodeStore.GetNodes().Returns([new NodeInfo(followerName, followerAddress)]);
+        _nodeStore.GetNextIndex(followerName).Returns(0);
+        _mockStateStore.LogLength.Returns(1);
         SetUpMockAppendEntriesClient(followerAddress);
         var mockCallContext = CreateMockCallContext();
 
         _logReplicationService.ApplyCommand(
             new CommandRequest() { Variable = "A", Operation = "=", Literal = 5 }, mockCallContext);
 
-        _nodeStore.Received().IncreaseLastLogIndex("someNode", 1);
+        _nodeStore.Received().IncreaseLastLogIndex(followerName, 1);
         _nodeStore.DidNotReceive().DecreaseLastLogIndex(Arg.Any<string>());
     }
-    
+
     [Test]
     public void LeaderShouldDecreaseNextLogIndexWhenAppendEntryReturnsFailure()
     {
@@ -113,7 +119,8 @@ public class LogReplicationServiceTests
         return mockCallContext;
     }
 
-    private AppendEntriesSvc.AppendEntriesSvcClient SetUpMockAppendEntriesClient(NodeAddress followerAddress, bool success = true)
+    private AppendEntriesSvc.AppendEntriesSvcClient SetUpMockAppendEntriesClient(NodeAddress followerAddress,
+        bool success = true)
     {
         var mockFollowerClient = Substitute.For<AppendEntriesSvc.AppendEntriesSvcClient>();
         var appendEntriesReply = new AppendEntriesReply()

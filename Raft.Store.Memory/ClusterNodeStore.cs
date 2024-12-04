@@ -36,6 +36,13 @@ public class ClusterNodeStore: IClusterNodeStore
         _nextIndex[nodeName] = nextIndex - 1;
     }
 
+    public string GetNextIndexesPrintable()
+    {
+        var items = _nextIndex.Select(k => $"{k.Key}: {k.Value}");
+        return string.Join(',', items);
+    }
+    
+
     public override string ToString()
     {
         return string.Join(",", _nodes.Select(n => $"({n.Key}={n.Value})"));

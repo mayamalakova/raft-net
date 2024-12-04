@@ -9,7 +9,7 @@ namespace Raft.Store.Tests;
 public class NodeStateStoreTests
 {
     [Test]
-    public void ShouldGetEntriesFromIndex()
+    public void ShouldGetLastEntries()
     {
         var nodeStateStore = new NodeStateStore();
         var entry1 = new LogEntry(new Command("a", CommandOperation.Assignment, 1), 0);
@@ -17,7 +17,7 @@ public class NodeStateStoreTests
         nodeStateStore.AppendLogEntry(entry1);
         nodeStateStore.AppendLogEntry(entry2);
         
-        nodeStateStore.GetEntriesFromIndex(0).ShouldBe([entry1, entry2]);
-        nodeStateStore.GetEntriesFromIndex(1).ShouldBe([entry2]);
+        nodeStateStore.GetLastEntries(2).ShouldBe([entry1, entry2]);
+        nodeStateStore.GetLastEntries(1).ShouldBe([entry2]);
     }
 }

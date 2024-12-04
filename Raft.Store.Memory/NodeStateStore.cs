@@ -38,8 +38,8 @@ public class NodeStateStore : INodeStateStore
         _log.RemoveFrom(index);
     }
 
-    public IList<LogEntry> GetEntriesFromIndex(int startIndex)
+    public IList<LogEntry> GetLastEntries(int entriesCount)
     {
-        return _log.GetFrom(startIndex);
+        return _log.GetLastEntries(entriesCount);
     }
 }
