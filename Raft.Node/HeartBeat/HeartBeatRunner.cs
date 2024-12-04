@@ -1,7 +1,7 @@
 ﻿using System.Timers;
 using Timer = System.Timers.Timer;
 
-namespace Raft.Node.HeatBeat;
+namespace Raft.Node.HeartBeat;
 
 public class HeartBeatRunner
 {

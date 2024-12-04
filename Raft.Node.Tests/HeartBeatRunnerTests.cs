@@ -1,12 +1,12 @@
 ﻿using NUnit.Framework;
-using Raft.Node.HeatBeat;
+using Raft.Node.HeartBeat;
 using Shouldly;
 
 namespace Raft.Node.Tests;
 
 class BeatSink
 {
-    public int BeatsCount { get; set; } = 0;
+    public int BeatsCount { get; private set; } = 0;
 
     public void SendBeat()
     {

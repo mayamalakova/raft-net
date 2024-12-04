@@ -3,7 +3,7 @@ using NSubstitute;
 using NUnit.Framework;
 using Raft.Node.Communication.Client;
 using Raft.Node.Communication.Services;
-using Raft.Node.HeatBeat;
+using Raft.Node.HeartBeat;
 using Raft.Node.Tests.MockHelpers;
 using Raft.Store;
 using Raft.Store.Domain;
