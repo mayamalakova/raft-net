@@ -2,7 +2,7 @@
 using Raft.Communication.Contract;
 using Raft.Store;
 
-namespace Raft.Node.Communication.Services;
+namespace Raft.Node.Communication.Services.Cluster;
 
 public class LeaderDiscoveryService(INodeStateStore stateStore) : LeaderDiscoverySvc.LeaderDiscoverySvcBase, INodeService
 {

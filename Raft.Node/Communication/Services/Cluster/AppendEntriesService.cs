@@ -3,7 +3,7 @@ using Raft.Communication.Contract;
 using Raft.Node.Extensions;
 using Raft.Store;
 
-namespace Raft.Node.Communication.Services;
+namespace Raft.Node.Communication.Services.Cluster;
 
 public class AppendEntriesService(INodeStateStore stateStore) : AppendEntriesSvc.AppendEntriesSvcBase, INodeService
 {

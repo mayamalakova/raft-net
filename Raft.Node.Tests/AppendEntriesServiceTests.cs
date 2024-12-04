@@ -1,7 +1,7 @@
 ﻿using Grpc.Core;
 using NSubstitute;
 using NUnit.Framework;
-using Raft.Node.Communication.Services;
+using Raft.Node.Communication.Services.Cluster;
 using Raft.Node.Extensions;
 using Raft.Store;
 using Raft.Store.Domain;

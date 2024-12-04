@@ -7,7 +7,7 @@ using Raft.Store;
 using Raft.Store.Domain;
 using Raft.Store.Domain.Replication;
 
-namespace Raft.Node.Communication.Services;
+namespace Raft.Node.Communication.Services.Cluster;
 
 public class LogReplicationService(
     INodeStateStore stateStore,

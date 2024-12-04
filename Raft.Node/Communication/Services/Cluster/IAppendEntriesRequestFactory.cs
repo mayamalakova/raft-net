@@ -1,4 +1,4 @@
-﻿namespace Raft.Node.Communication.Services;
+﻿namespace Raft.Node.Communication.Services.Cluster;
 
 public interface IAppendEntriesRequestFactory
 {
