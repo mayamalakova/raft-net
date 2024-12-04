@@ -10,7 +10,7 @@ public class LogInfoService(INodeStateStore stateStore) : LogInfoSvc.LogInfoSvcB
     {
         return Task.FromResult(new LogInfoReply()
         {
-            Entries = stateStore.PrintLog()
+            Entries = stateStore.PrintLog(),
         });
     }
 

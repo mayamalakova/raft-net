@@ -59,11 +59,11 @@ public class LogReplicator(
             var entriesCount = GetNumberOfEntriesToReplicate(nodeName);
             if (reply.Success)
             {
-                nodesStore.IncreaseLastLogIndex(nodeName, entriesCount);
+                nodesStore.IncreaseNextLogIndex(nodeName, entriesCount);
             }
             else
             {
-                nodesStore.DecreaseLastLogIndex(nodeName);
+                nodesStore.DecreaseNextLogIndex(nodeName);
             }
         }
     }

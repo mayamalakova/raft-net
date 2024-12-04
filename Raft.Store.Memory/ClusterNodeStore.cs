@@ -7,6 +7,7 @@ public class ClusterNodeStore: IClusterNodeStore
 {
     private readonly ConcurrentDictionary<string, NodeAddress> _nodes = new();
     private readonly ConcurrentDictionary<string, int> _nextIndex = new();
+    private readonly ConcurrentDictionary<string, int> _matchingIndex = new();
     
     public string AddNode(string nodeName, NodeAddress nodeAddress)
     {
@@ -24,16 +25,28 @@ public class ClusterNodeStore: IClusterNodeStore
         return _nextIndex.GetValueOrDefault(nodeName, 0);
     }
 
-    public void IncreaseLastLogIndex(string nodeName, int entriesCount)
+    public void IncreaseNextLogIndex(string nodeName, int entriesCount)
     {
 
         _nextIndex[nodeName] = GetNextIndex(nodeName) + entriesCount;
     }
+    
+    public void IncreaseMatchingIndex(string nodeName, int entriesCount)
+    {
 
-    public void DecreaseLastLogIndex(string nodeName)
+        _matchingIndex[nodeName] = _matchingIndex.GetValueOrDefault(nodeName, 0) + entriesCount;
+    }
+
+    public void DecreaseNextLogIndex(string nodeName)
     {
         var nextIndex = _nextIndex[nodeName];
         _nextIndex[nodeName] = nextIndex - 1;
+    }
+
+    public void DecreaseMatchingIndex(string nodeName)
+    {
+        var matchingIndex = _matchingIndex[nodeName];
+        _matchingIndex[nodeName] = matchingIndex - 1;
     }
 
     public string GetNextIndexesPrintable()
