@@ -18,11 +18,13 @@ public class RaftNode
     private readonly IMessageReceiver _controlMessageServer;
 
     private readonly string _nodeName;
+    private readonly string _nodeHost;
     private readonly int _nodePort;
     private readonly NodeAddress _peerAddress;
 
     public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort, int timeoutSeconds)
     {
+        _nodeHost = "localhost"; //TODO this should be externally visible IP address
         _nodeName = nodeName;
         _nodePort = port;
         _peerAddress = new NodeAddress(clusterHost, clusterPort);
@@ -43,7 +45,7 @@ public class RaftNode
         [
             new LogReplicationService(_stateStore, _clientPool, logReplicator, _heartBeatRunner), // listening for command from the cli
             new PingReplyService(_nodeName),
-            new NodeInfoService(_nodeName, _stateStore, _clusterStore),
+            new NodeInfoService(_nodeName, new NodeAddress(_nodeHost, _nodePort), _stateStore, _clusterStore),
             new LogInfoService(_stateStore),
             new ControlService(_heartBeatRunner, _nodeMessageReceiver, _stateStore)
         ];
@@ -61,7 +63,7 @@ public class RaftNode
             var registerReply = registerNodeClient.RegisterNode(new RegisterNodeRequest
             {
                 Name = _nodeName,
-                Host = "localhost", //TODO this should be externally visible IP address
+                Host = _nodeHost, 
                 Port = _nodePort
             });
             Console.WriteLine($"Registered with leader {registerReply}");

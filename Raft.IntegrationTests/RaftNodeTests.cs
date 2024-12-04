@@ -30,7 +30,7 @@ public class RaftNodeTests
         var followerRaftClient = new RaftClient("localhost", 5002);
 
         var pingReply = followerRaftClient.Ping();
-        pingReply.ShouldBe("{ \"reply\": \"Pong from follower1 at localhost:5002\" }");
+        pingReply.ShouldBe("{ \"reply\": \"Pong from follower1 at localhost:6002\" }");
         var followerInfo = followerRaftClient.Info();
         followerInfo.ShouldBe("{ \"name\": \"follower1\", \"role\": \"Follower\", \"address\": \"localhost:5002\", \"leaderAddress\": \"localhost:5001\" }");
 
