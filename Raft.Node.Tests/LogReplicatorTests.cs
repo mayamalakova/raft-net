@@ -40,6 +40,7 @@ public class LogReplicatorTests
         var nodeName = "someNode";
         _nodeStore.GetNodes().Returns([new NodeInfo(nodeName, followerAddress)]);
         _nodeStore.GetNextIndex(nodeName).Returns(0);
+        _nodeStore.IncreaseNextLogIndex(nodeName, 1).Returns(1);
         _mockStateStore.GetLastEntries(1)
             .Returns([new LogEntry(new Command("A", CommandOperation.Assignment, 1), 0)]);
         _mockStateStore.LogLength.Returns(1);
@@ -59,6 +60,7 @@ public class LogReplicatorTests
         var nodeName = "someNode";
         _nodeStore.GetNodes().Returns([new NodeInfo(nodeName, followerAddress)]);
         _nodeStore.GetNextIndex(nodeName).Returns(0);
+        _nodeStore.IncreaseNextLogIndex(nodeName, 0).Returns(0);
         _mockStateStore.LogLength.Returns(0);
         SetUpMockAppendEntriesClient(followerAddress);
 

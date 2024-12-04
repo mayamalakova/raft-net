@@ -59,8 +59,8 @@ public class LogReplicator(
             var entriesCount = GetNumberOfEntriesToReplicate(nodeName);
             if (reply.Success)
             {
-                nodesStore.IncreaseNextLogIndex(nodeName, entriesCount);
-                nodesStore.SetMatchingIndex(nodeName, nodesStore.GetNextIndex(nodeName) - 1);
+                var nextIndex = nodesStore.IncreaseNextLogIndex(nodeName, entriesCount);
+                nodesStore.SetMatchingIndex(nodeName, nextIndex - 1);
             }
             else
             {

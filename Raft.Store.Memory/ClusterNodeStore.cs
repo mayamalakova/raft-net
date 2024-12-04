@@ -25,10 +25,11 @@ public class ClusterNodeStore: IClusterNodeStore
         return _nextIndex.GetValueOrDefault(nodeName, 0);
     }
 
-    public void IncreaseNextLogIndex(string nodeName, int entriesCount)
+    public int IncreaseNextLogIndex(string nodeName, int entriesCount)
     {
-
-        _nextIndex[nodeName] = GetNextIndex(nodeName) + entriesCount;
+        var newValue = GetNextIndex(nodeName) + entriesCount;
+        _nextIndex[nodeName] = newValue;
+        return newValue;
     }
     
     public void SetMatchingIndex(string nodeName, int newMatchingIndex)

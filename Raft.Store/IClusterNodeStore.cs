@@ -7,7 +7,7 @@ public interface IClusterNodeStore
     string AddNode(string nodeName, NodeAddress nodeAddress);
     IEnumerable<NodeInfo> GetNodes();
     int GetNextIndex(string nodeName);
-    void IncreaseNextLogIndex(string nodeName, int entriesCount);
+    int IncreaseNextLogIndex(string nodeName, int entriesCount);
     void DecreaseNextLogIndex(string nodeName);
     void SetMatchingIndex(string nodeName, int newMatchingIndex);
     string GetNextIndexesPrintable();
