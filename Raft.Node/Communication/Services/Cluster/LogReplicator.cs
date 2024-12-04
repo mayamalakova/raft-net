@@ -60,12 +60,11 @@ public class LogReplicator(
             if (reply.Success)
             {
                 nodesStore.IncreaseNextLogIndex(nodeName, entriesCount);
-                nodesStore.IncreaseMatchingIndex(nodeName, entriesCount);
+                nodesStore.SetMatchingIndex(nodeName, nodesStore.GetNextIndex(nodeName) - 1);
             }
             else
             {
                 nodesStore.DecreaseNextLogIndex(nodeName);
-                nodesStore.DecreaseMatchingIndex(nodeName);
             }
         }
     }

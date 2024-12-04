@@ -48,9 +48,8 @@ public class LogReplicatorTests
         _logReplicator.ReplicateToFollowers();
 
         _nodeStore.Received().IncreaseNextLogIndex(nodeName, 1);
-        _nodeStore.Received().IncreaseMatchingIndex(nodeName, 1);
+        _nodeStore.Received().SetMatchingIndex(nodeName, 0);
         _nodeStore.DidNotReceive().DecreaseNextLogIndex(Arg.Any<string>());
-        _nodeStore.DidNotReceive().DecreaseMatchingIndex(Arg.Any<string>());
     }
     
     [Test]
@@ -66,9 +65,8 @@ public class LogReplicatorTests
         _logReplicator.ReplicateToFollowers();
 
         _nodeStore.Received().IncreaseNextLogIndex(nodeName, 0);
-        _nodeStore.Received().IncreaseMatchingIndex(nodeName, 0);
+        _nodeStore.Received().SetMatchingIndex(nodeName, -1);
         _nodeStore.DidNotReceive().DecreaseNextLogIndex(Arg.Any<string>());
-        _nodeStore.DidNotReceive().DecreaseMatchingIndex(Arg.Any<string>());
     }
 
     [Test]
@@ -84,9 +82,8 @@ public class LogReplicatorTests
         _logReplicator.ReplicateToFollowers();
 
         _nodeStore.DidNotReceive().IncreaseNextLogIndex(nodeName, Arg.Any<int>());
-        _nodeStore.DidNotReceive().IncreaseMatchingIndex(nodeName, Arg.Any<int>());
+        _nodeStore.DidNotReceive().SetMatchingIndex(nodeName, Arg.Any<int>());
         _nodeStore.Received().DecreaseNextLogIndex(nodeName);
-        _nodeStore.Received().DecreaseMatchingIndex(nodeName);
     }
 
     [TestCase(0, 0, true)]

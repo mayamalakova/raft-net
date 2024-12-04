@@ -31,10 +31,10 @@ public class ClusterNodeStore: IClusterNodeStore
         _nextIndex[nodeName] = GetNextIndex(nodeName) + entriesCount;
     }
     
-    public void IncreaseMatchingIndex(string nodeName, int entriesCount)
+    public void SetMatchingIndex(string nodeName, int newMatchingIndex)
     {
 
-        _matchingIndex[nodeName] = _matchingIndex.GetValueOrDefault(nodeName, 0) + entriesCount;
+        _matchingIndex[nodeName] = newMatchingIndex;
     }
 
     public void DecreaseNextLogIndex(string nodeName)
@@ -43,21 +43,19 @@ public class ClusterNodeStore: IClusterNodeStore
         _nextIndex[nodeName] = nextIndex - 1;
     }
 
-    public void DecreaseMatchingIndex(string nodeName)
-    {
-        var matchingIndex = _matchingIndex[nodeName];
-        _matchingIndex[nodeName] = matchingIndex - 1;
-    }
-
     public string GetNextIndexesPrintable()
     {
         var items = _nextIndex.Select(k => $"{k.Key}: {k.Value}");
         return string.Join(',', items);
     }
-    
 
     public override string ToString()
     {
         return string.Join(",", _nodes.Select(n => $"({n.Key}={n.Value})"));
+    }
+
+    public int GetMatchingIndex(string nodeName)
+    {
+        return _matchingIndex.GetValueOrDefault(nodeName, -1);
     }
 }
