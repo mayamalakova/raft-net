@@ -60,8 +60,8 @@ public class LogReplicator(
             var entriesCount = GetNumberOfEntriesToReplicate(nodeName);
             if (reply.Success)
             {
-                var nextIndex = clusterStore.IncreaseNextLogIndex(nodeName, entriesCount);
-                clusterStore.SetMatchingIndex(nodeName, nextIndex - 1);
+                clusterStore.IncreaseNextLogIndex(nodeName, entriesCount);
+                clusterStore.IncreaseMatchingIndex(nodeName, entriesCount);
             }
             else
             {

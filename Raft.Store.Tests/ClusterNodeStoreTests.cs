@@ -65,10 +65,10 @@ public class ClusterNodeStoreTests
     }
 
     [Test]
-    public void ShouldSetMatchingIndex()
+    public void ShouldIncreaseMatchingIndex()
     {
         _clusterNodeStore.AddNode("someNode", new NodeAddress("someHost", 666));
-        _clusterNodeStore.SetMatchingIndex("someNode", 1);
-        _clusterNodeStore.GetMatchingIndex("someNode").ShouldBe(1);
+        _clusterNodeStore.IncreaseMatchingIndex("someNode", 1);
+        _clusterNodeStore.GetMatchingIndex("someNode").ShouldBe(0);
     }
 }

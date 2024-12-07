@@ -32,9 +32,10 @@ public class ClusterNodeStore: IClusterNodeStore
         return newValue;
     }
     
-    public void SetMatchingIndex(string nodeName, int newMatchingIndex)
+    public void IncreaseMatchingIndex(string nodeName, int entriesCount)
     {
-        _matchingIndex[nodeName] = newMatchingIndex;
+        var newValue = GetMatchingIndex(nodeName) + entriesCount;
+        _matchingIndex[nodeName] = newValue;
     }
 
     public void DecreaseNextLogIndex(string nodeName)

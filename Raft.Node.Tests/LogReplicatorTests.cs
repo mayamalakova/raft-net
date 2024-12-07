@@ -50,7 +50,7 @@ public class LogReplicatorTests
         _logReplicator.ReplicateToFollowers();
 
         _clusterStore.Received().IncreaseNextLogIndex(nodeName, 1);
-        _clusterStore.Received().SetMatchingIndex(nodeName, 0);
+        _clusterStore.Received().IncreaseMatchingIndex(nodeName, 1);
         _clusterStore.DidNotReceive().DecreaseNextLogIndex(Arg.Any<string>());
     }
 
@@ -115,7 +115,7 @@ public class LogReplicatorTests
         _logReplicator.ReplicateToFollowers();
 
         _clusterStore.Received().IncreaseNextLogIndex(nodeName, 0);
-        _clusterStore.Received().SetMatchingIndex(nodeName, -1);
+        _clusterStore.Received().IncreaseMatchingIndex(nodeName, 0);
         _clusterStore.DidNotReceive().DecreaseNextLogIndex(Arg.Any<string>());
     }
 
@@ -132,7 +132,7 @@ public class LogReplicatorTests
         _logReplicator.ReplicateToFollowers();
 
         _clusterStore.DidNotReceive().IncreaseNextLogIndex(nodeName, Arg.Any<int>());
-        _clusterStore.DidNotReceive().SetMatchingIndex(nodeName, Arg.Any<int>());
+        _clusterStore.DidNotReceive().IncreaseMatchingIndex(nodeName, Arg.Any<int>());
         _clusterStore.Received().DecreaseNextLogIndex(nodeName);
     }
 
