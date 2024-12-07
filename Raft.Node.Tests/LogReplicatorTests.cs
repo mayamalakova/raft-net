@@ -7,6 +7,7 @@ using Raft.Node.Tests.MockHelpers;
 using Raft.Store;
 using Raft.Store.Domain;
 using Raft.Store.Domain.Replication;
+using Raft.Store.Memory;
 using Shouldly;
 
 namespace Raft.Node.Tests;
@@ -52,7 +53,29 @@ public class LogReplicatorTests
         _clusterStore.Received().SetMatchingIndex(nodeName, 0);
         _clusterStore.DidNotReceive().DecreaseNextLogIndex(Arg.Any<string>());
     }
-    
+
+    [Test]
+    public void ShouldUpdateCommitIndexAfterMajoritySuccess()
+    {
+        var nodeStore = new NodeStateStore
+        {
+            Role = NodeType.Leader, CommitIndex = -1, CurrentTerm = 0
+        };
+        nodeStore.AppendLogEntry(new LogEntry(new Command("A", CommandOperation.Assignment, 1), 0));
+        var clusterStore = new ClusterNodeStore();
+        var followerAddress = new NodeAddress("host", 199);
+        clusterStore.AddNode("fol1", followerAddress);
+        var replicator = new LogReplicator(nodeStore, _clientPool, clusterStore, "lead1", 2)
+        {
+            EntriesRequestFactory = _appendEntriesRequestFactory
+        };
+        SetUpMockAppendEntriesClient(followerAddress);
+        
+        replicator.ReplicateToFollowers();
+        
+        nodeStore.CommitIndex.ShouldBe(0);
+    }
+
     [Test]
     public void LeaderShouldNotDecreaseIndexWhenAppendEntryWithNoEntriesReturnsSuccess()
     {
