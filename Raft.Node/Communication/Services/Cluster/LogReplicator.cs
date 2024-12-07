@@ -10,23 +10,24 @@ namespace Raft.Node.Communication.Services.Cluster;
 public class LogReplicator(
     INodeStateStore stateStore,
     IClientPool clientPool,
-    IClusterNodeStore nodesStore,
+    IClusterNodeStore clusterStore,
     string nodeName,
     int timeoutSeconds)
 {
     public IAppendEntriesRequestFactory EntriesRequestFactory { get; init; } =
-        new AppendEntriesRequestFactory(nodesStore, stateStore, nodeName);
+        new AppendEntriesRequestFactory(clusterStore, stateStore, nodeName);
 
     public void ReplicateToFollowers()
     {
         var replies = SendAppendEntriesRequestsAndWaitForResults().Result;
-        UpdateNextLogIndex(replies);
-        Console.WriteLine($"Replicated to followers - nextIndex: {nodesStore.GetNextIndexesPrintable()}");
+        UpdateClusterState(replies);
+        UpdateCommitIndex();
+        Console.WriteLine($"Replicated to followers - nextIndex: {clusterStore.GetNextIndexesPrintable()}");
     }
 
     private async Task<IDictionary<string, AppendEntriesReply?>> SendAppendEntriesRequestsAndWaitForResults()
     {
-        var tasks = nodesStore.GetNodes()
+        var tasks = clusterStore.GetNodes()
             .ToDictionary(
                 node => node.NodeName,
                 node => TrySendAppendEntriesRequest(node, GetEntriesToSendToNode(node.NodeName))
@@ -42,11 +43,11 @@ public class LogReplicator(
 
     public bool IsReplicationComplete(string nodeName)
     {
-        var nextIndex = nodesStore.GetNextIndex(nodeName);
+        var nextIndex = clusterStore.GetNextIndex(nodeName);
         return nextIndex == stateStore.LogLength;
     }
 
-    private void UpdateNextLogIndex(IDictionary<string, AppendEntriesReply?> replies)
+    private void UpdateClusterState(IDictionary<string, AppendEntriesReply?> replies)
     {
         foreach (var (nodeName, reply) in replies)
         {
@@ -59,13 +60,27 @@ public class LogReplicator(
             var entriesCount = GetNumberOfEntriesToReplicate(nodeName);
             if (reply.Success)
             {
-                var nextIndex = nodesStore.IncreaseNextLogIndex(nodeName, entriesCount);
-                nodesStore.SetMatchingIndex(nodeName, nextIndex - 1);
+                clusterStore.IncreaseNextLogIndex(nodeName, entriesCount);
+                clusterStore.IncreaseMatchingIndex(nodeName, entriesCount);
             }
             else
             {
-                nodesStore.DecreaseNextLogIndex(nodeName);
+                clusterStore.DecreaseNextLogIndex(nodeName);
             }
+        }
+    }
+
+    private void UpdateCommitIndex()
+    {
+        var nodes = clusterStore.GetNodes().ToArray();
+        var nodesCount = nodes.Count();
+        var matchingIndexes = nodes.Select(x => clusterStore.GetMatchingIndex(x.NodeName)).ToArray();
+        var current = stateStore.CommitIndex;
+        while (matchingIndexes.Count(x => x >= current) > nodesCount / 2) current++;
+        current--;
+        if (current > stateStore.CommitIndex)
+        {
+            stateStore.CommitIndex = current;
         }
     }
 
@@ -112,7 +127,7 @@ public class LogReplicator(
 
     private int GetNumberOfEntriesToReplicate(string nodeName)
     {
-        var nextIndex = nodesStore.GetNextIndex(nodeName);
+        var nextIndex = clusterStore.GetNextIndex(nodeName);
         var logLength = stateStore.LogLength;
         return logLength - nextIndex;
     }

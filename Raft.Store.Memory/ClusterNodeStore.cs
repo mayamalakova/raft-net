@@ -32,16 +32,16 @@ public class ClusterNodeStore: IClusterNodeStore
         return newValue;
     }
     
-    public void SetMatchingIndex(string nodeName, int newMatchingIndex)
+    public void IncreaseMatchingIndex(string nodeName, int entriesCount)
     {
-
-        _matchingIndex[nodeName] = newMatchingIndex;
+        var newValue = GetMatchingIndex(nodeName) + entriesCount;
+        _matchingIndex[nodeName] = newValue;
     }
 
     public void DecreaseNextLogIndex(string nodeName)
     {
-        var nextIndex = _nextIndex[nodeName];
-        _nextIndex[nodeName] = nextIndex - 1;
+        var nextIndex = GetNextIndex(nodeName);
+        _nextIndex[nodeName] = Math.Max(0, nextIndex - 1);
     }
 
     public string GetNextIndexesPrintable()
