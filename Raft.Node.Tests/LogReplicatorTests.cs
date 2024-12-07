@@ -14,20 +14,20 @@ namespace Raft.Node.Tests;
 [TestFixture]
 public class LogReplicatorTests
 {
-    private INodeStateStore _mockStateStore;
+    private INodeStateStore _nodeStore;
     private IClientPool _clientPool;
-    private IClusterNodeStore _nodeStore;
+    private IClusterNodeStore _clusterStore;
     private IAppendEntriesRequestFactory _appendEntriesRequestFactory;
     private LogReplicator _logReplicator;
 
     [SetUp]
     public void SetUp()
     {
-        _mockStateStore = Substitute.For<INodeStateStore>();
+        _nodeStore = Substitute.For<INodeStateStore>();
         _clientPool = Substitute.For<IClientPool>();
-        _nodeStore = Substitute.For<IClusterNodeStore>();
+        _clusterStore = Substitute.For<IClusterNodeStore>();
         _appendEntriesRequestFactory = Substitute.For<IAppendEntriesRequestFactory>();
-        _logReplicator = new LogReplicator(_mockStateStore, _clientPool, _nodeStore, "lead1", 2)
+        _logReplicator = new LogReplicator(_nodeStore, _clientPool, _clusterStore, "lead1", 2)
         {
             EntriesRequestFactory = _appendEntriesRequestFactory
         };
@@ -38,19 +38,19 @@ public class LogReplicatorTests
     {
         var followerAddress = new NodeAddress("someHost", 666);
         var nodeName = "someNode";
-        _nodeStore.GetNodes().Returns([new NodeInfo(nodeName, followerAddress)]);
-        _nodeStore.GetNextIndex(nodeName).Returns(0);
-        _nodeStore.IncreaseNextLogIndex(nodeName, 1).Returns(1);
-        _mockStateStore.GetLastEntries(1)
+        _clusterStore.GetNodes().Returns([new NodeInfo(nodeName, followerAddress)]);
+        _clusterStore.GetNextIndex(nodeName).Returns(0);
+        _clusterStore.IncreaseNextLogIndex(nodeName, 1).Returns(1);
+        _nodeStore.GetLastEntries(1)
             .Returns([new LogEntry(new Command("A", CommandOperation.Assignment, 1), 0)]);
-        _mockStateStore.LogLength.Returns(1);
+        _nodeStore.LogLength.Returns(1);
         SetUpMockAppendEntriesClient(followerAddress);
 
         _logReplicator.ReplicateToFollowers();
 
-        _nodeStore.Received().IncreaseNextLogIndex(nodeName, 1);
-        _nodeStore.Received().SetMatchingIndex(nodeName, 0);
-        _nodeStore.DidNotReceive().DecreaseNextLogIndex(Arg.Any<string>());
+        _clusterStore.Received().IncreaseNextLogIndex(nodeName, 1);
+        _clusterStore.Received().SetMatchingIndex(nodeName, 0);
+        _clusterStore.DidNotReceive().DecreaseNextLogIndex(Arg.Any<string>());
     }
     
     [Test]
@@ -58,17 +58,17 @@ public class LogReplicatorTests
     {
         var followerAddress = new NodeAddress("someHost", 666);
         var nodeName = "someNode";
-        _nodeStore.GetNodes().Returns([new NodeInfo(nodeName, followerAddress)]);
-        _nodeStore.GetNextIndex(nodeName).Returns(0);
-        _nodeStore.IncreaseNextLogIndex(nodeName, 0).Returns(0);
-        _mockStateStore.LogLength.Returns(0);
+        _clusterStore.GetNodes().Returns([new NodeInfo(nodeName, followerAddress)]);
+        _clusterStore.GetNextIndex(nodeName).Returns(0);
+        _clusterStore.IncreaseNextLogIndex(nodeName, 0).Returns(0);
+        _nodeStore.LogLength.Returns(0);
         SetUpMockAppendEntriesClient(followerAddress);
 
         _logReplicator.ReplicateToFollowers();
 
-        _nodeStore.Received().IncreaseNextLogIndex(nodeName, 0);
-        _nodeStore.Received().SetMatchingIndex(nodeName, -1);
-        _nodeStore.DidNotReceive().DecreaseNextLogIndex(Arg.Any<string>());
+        _clusterStore.Received().IncreaseNextLogIndex(nodeName, 0);
+        _clusterStore.Received().SetMatchingIndex(nodeName, -1);
+        _clusterStore.DidNotReceive().DecreaseNextLogIndex(Arg.Any<string>());
     }
 
     [Test]
@@ -76,16 +76,16 @@ public class LogReplicatorTests
     {
         var followerAddress = new NodeAddress("someHost", 666);
         var nodeName = "someNode";
-        _nodeStore.GetNodes().Returns([new NodeInfo(nodeName, followerAddress)]);
+        _clusterStore.GetNodes().Returns([new NodeInfo(nodeName, followerAddress)]);
         SetUpMockAppendEntriesClient(followerAddress, false);
-        _mockStateStore.GetLastEntries(1)
+        _nodeStore.GetLastEntries(1)
             .Returns([new LogEntry(new Command("A", CommandOperation.Assignment, 5), 0)]);
 
         _logReplicator.ReplicateToFollowers();
 
-        _nodeStore.DidNotReceive().IncreaseNextLogIndex(nodeName, Arg.Any<int>());
-        _nodeStore.DidNotReceive().SetMatchingIndex(nodeName, Arg.Any<int>());
-        _nodeStore.Received().DecreaseNextLogIndex(nodeName);
+        _clusterStore.DidNotReceive().IncreaseNextLogIndex(nodeName, Arg.Any<int>());
+        _clusterStore.DidNotReceive().SetMatchingIndex(nodeName, Arg.Any<int>());
+        _clusterStore.Received().DecreaseNextLogIndex(nodeName);
     }
 
     [TestCase(0, 0, true)]
@@ -93,8 +93,8 @@ public class LogReplicatorTests
     [TestCase(1, 1, true)]
     public void ShouldReplyIfReplicationToNodeIsComplete(int logLength, int nextIndex, bool expectedResult)
     {
-        _mockStateStore.LogLength.Returns(logLength);
-        _nodeStore.GetNextIndex("someNode").Returns(nextIndex);
+        _nodeStore.LogLength.Returns(logLength);
+        _clusterStore.GetNextIndex("someNode").Returns(nextIndex);
         _logReplicator.IsReplicationComplete("someNode").ShouldBe(expectedResult);
     }
 
