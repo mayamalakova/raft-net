@@ -103,4 +103,9 @@ public class RaftNode
             .ToArray();
         return string.Join(',', lastIndexes);
     }
+
+    public string GetNodeState()
+    {
+        return $"commitIndex={_stateStore.CommitIndex}, term={_stateStore.CurrentTerm}";
+    }
 }
