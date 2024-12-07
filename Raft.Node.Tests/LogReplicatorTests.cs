@@ -77,6 +77,31 @@ public class LogReplicatorTests
     }
 
     [Test]
+    public void ShouldNotUpdateCommitIndexWithoutMajoritySuccess()
+    {
+        var nodeStore = new NodeStateStore
+        {
+            Role = NodeType.Leader, CommitIndex = -1, CurrentTerm = 0
+        };
+        nodeStore.AppendLogEntry(new LogEntry(new Command("A", CommandOperation.Assignment, 1), 0));
+        var clusterStore = new ClusterNodeStore();
+        var follower1 = new NodeAddress("host", 199);
+        var follower2 = new NodeAddress("host", 299);
+        clusterStore.AddNode("fol1", follower1);
+        clusterStore.AddNode("fol2", follower2);
+        SetUpMockAppendEntriesClient(follower1);
+        SetUpMockAppendEntriesClient(follower2, false);
+        var replicator = new LogReplicator(nodeStore, _clientPool, clusterStore, "lead1", 2)
+        {
+            EntriesRequestFactory = _appendEntriesRequestFactory
+        };
+
+        replicator.ReplicateToFollowers();
+        
+        nodeStore.CommitIndex.ShouldBe(-1);
+    }
+
+    [Test]
     public void LeaderShouldNotDecreaseIndexWhenAppendEntryWithNoEntriesReturnsSuccess()
     {
         var followerAddress = new NodeAddress("someHost", 666);

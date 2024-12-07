@@ -34,14 +34,13 @@ public class ClusterNodeStore: IClusterNodeStore
     
     public void SetMatchingIndex(string nodeName, int newMatchingIndex)
     {
-
         _matchingIndex[nodeName] = newMatchingIndex;
     }
 
     public void DecreaseNextLogIndex(string nodeName)
     {
-        var nextIndex = _nextIndex[nodeName];
-        _nextIndex[nodeName] = nextIndex - 1;
+        var nextIndex = GetNextIndex(nodeName);
+        _nextIndex[nodeName] = Math.Max(0, nextIndex - 1);
     }
 
     public string GetNextIndexesPrintable()

@@ -55,6 +55,16 @@ public class ClusterNodeStoreTests
     }
 
     [Test]
+    public void ShouldNotDecreaseNextIndexPastZero()
+    {
+        _clusterNodeStore.AddNode("someNode", new NodeAddress("someHost", 666));
+        
+        _clusterNodeStore.DecreaseNextLogIndex("someNode");
+        
+        _clusterNodeStore.GetNextIndex("someNode").ShouldBe(0);
+    }
+
+    [Test]
     public void ShouldSetMatchingIndex()
     {
         _clusterNodeStore.AddNode("someNode", new NodeAddress("someHost", 666));
