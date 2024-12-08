@@ -12,6 +12,8 @@ public class NodeStateStore : INodeStateStore
     public int CurrentTerm { get; set; } = 0;
     public int CommitIndex { get; set; } = -1;
     public int LastApplied { get; set; } = -1;
+
+    public StateMachine StateMachine { get; init; } = new StateMachine();
     public int LogLength => _log.Entries.Count;
 
     public void AppendLogEntry(LogEntry entry)
