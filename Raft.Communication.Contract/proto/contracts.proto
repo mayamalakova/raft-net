@@ -106,17 +106,29 @@ message DisconnectMessage{
 }
 
 message DisconnectReply{
-  string reply=1;
+  string reply = 1;
 }
 
 message ReconnectMessage{
 }
 
 message ReconnectReply{
-  string reply=1;
+  string reply = 1;
 }
 
 service ControlSvc{
   rpc DisconnectNode(DisconnectMessage) returns  (DisconnectReply);
   rpc ReconnectNode(ReconnectMessage) returns (ReconnectReply);
+}
+
+message GetStateMassage {
+}
+
+message GetStateReply {
+  string value = 1;
+  repeated string errors = 2;
+}
+
+service GetStateSvc {
+  rpc GetState(GetStateMassage) returns (GetStateReply);
 }

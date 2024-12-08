@@ -34,23 +34,24 @@ public class RaftNode
         _clusterStore = new ClusterNodeStore();
         var logReplicator = new LogReplicator(_stateStore, _clientPool, _clusterStore, _nodeName, timeoutSeconds);
         _heartBeatRunner = new HeartBeatRunner(3000, () => logReplicator.ReplicateToFollowers());
-        IEnumerable<INodeService> nodeServices =
+        IEnumerable<INodeService> clusterServices =
         [
             new LeaderDiscoveryService(_stateStore),
             new RegisterNodeService(_clusterStore),
             new LogReplicationService(_stateStore, _clientPool, logReplicator, _heartBeatRunner), //listening for command forwarded by other nodes to leader
             new AppendEntriesService(_stateStore),
         ];
-        _nodeMessageReceiver = new RaftMessageReceiver(port, nodeServices);
-        IEnumerable<INodeService> controlServices =
+        _nodeMessageReceiver = new RaftMessageReceiver(port, clusterServices);
+        IEnumerable<INodeService> adminServices =
         [
             new LogReplicationService(_stateStore, _clientPool, logReplicator, _heartBeatRunner), // listening for command from the cli
             new PingReplyService(_nodeName),
             new NodeInfoService(_nodeName, new NodeAddress(_nodeHost, _nodePort), _stateStore, _clusterStore),
             new LogInfoService(_stateStore),
-            new ControlService(_heartBeatRunner, _nodeMessageReceiver, _stateStore)
+            new ControlService(_heartBeatRunner, _nodeMessageReceiver, _stateStore),
+            new GetStateService(_stateStore)
         ];
-        _controlMessageServer = new ControlMessageReceiver(port + 1000, controlServices);
+        _controlMessageServer = new ControlMessageReceiver(port + 1000, adminServices);
     }
 
     public void Start()

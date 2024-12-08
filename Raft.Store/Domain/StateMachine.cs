@@ -63,4 +63,9 @@ public class StateMachine
         }
         return _currentState;
     }
+
+    public State GetCurrent()
+    {
+        return _currentState;
+    }
 }
