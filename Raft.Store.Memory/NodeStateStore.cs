@@ -11,6 +11,7 @@ public class NodeStateStore : INodeStateStore
     public NodeAddress? LeaderAddress { get; set; }
     public int CurrentTerm { get; set; } = 0;
     public int CommitIndex { get; set; } = -1;
+    public int LastApplied { get; set; } = -1;
     public int LogLength => _log.Entries.Count;
 
     public void AppendLogEntry(LogEntry entry)

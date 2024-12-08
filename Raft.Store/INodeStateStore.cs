@@ -19,4 +19,5 @@ public interface INodeStateStore
     LogEntry? EntryAtIndex(int index);
     void RemoveLogEntriesFrom(int index);
     IList<LogEntry> GetLastEntries(int entriesCount);
+    public int LastApplied { get; set; }
 }
