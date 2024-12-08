@@ -74,14 +74,24 @@ public class LogReplicator(
     {
         var nodes = clusterStore.GetNodes().ToArray();
         var nodesCount = nodes.Count();
-        var matchingIndexes = nodes.Select(x => clusterStore.GetMatchingIndex(x.NodeName)).ToArray();
-        var current = stateStore.CommitIndex;
-        while (matchingIndexes.Count(x => x >= current) > nodesCount / 2) current++;
-        current--;
-        if (current > stateStore.CommitIndex)
+        var matchingIndexes = nodes.Select(x => clusterStore.GetMatchingIndex((x.NodeName))).ToArray();
+        var current = stateStore.LogLength;
+        while (current > stateStore.CurrentTerm)
         {
-            stateStore.CommitIndex = current;
+            var next = current - 1;
+            if (MatchingCountAtIndex(matchingIndexes, next) > nodesCount / 2)
+            {
+                stateStore.CommitIndex = next;
+                return;
+            }
+            current = next;
         }
+    }
+
+    private int MatchingCountAtIndex(int[] matchingIndexes, int current)
+    {
+        return matchingIndexes.Count(x =>
+            x >= current && stateStore.GetTermAtIndex(current) == stateStore.CurrentTerm);
     }
 
     private async Task<AppendEntriesReply?> TrySendAppendEntriesRequest(NodeInfo node, IList<LogEntry> entries)
