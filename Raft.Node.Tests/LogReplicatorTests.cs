@@ -124,7 +124,7 @@ public class LogReplicatorTests
     }
     
     [Test]
-    public void LeaderShouldNotIncreaseCommitIndexWhenLastMatchingMajorityForSameTerm()
+    public void LeaderShouldIncreaseCommitIndexWhenLastMatchingMajorityForSameTerm()
     {
         var nodeStore = new NodeStateStore
         {
