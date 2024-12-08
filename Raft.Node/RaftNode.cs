@@ -1,7 +1,7 @@
 ﻿using Raft.Communication.Contract;
 using Raft.Node.Communication.Client;
+using Raft.Node.Communication.Services.Admin;
 using Raft.Node.Communication.Services.Cluster;
-using Raft.Node.Communication.Services.Control;
 using Raft.Node.HeartBeat;
 using Raft.Store;
 using Raft.Store.Domain;

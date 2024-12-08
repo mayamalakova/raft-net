@@ -4,7 +4,7 @@ using Raft.Node.HeartBeat;
 using Raft.Store;
 using Raft.Store.Domain;
 
-namespace Raft.Node.Communication.Services.Control;
+namespace Raft.Node.Communication.Services.Admin;
 
 public class ControlService(HeartBeatRunner? heartBeatRunner, IRaftMessageReceiver raftServer, INodeStateStore stateStore) : ControlSvc.ControlSvcBase, INodeService
 {

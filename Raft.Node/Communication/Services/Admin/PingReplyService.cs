@@ -1,7 +1,7 @@
 ﻿using Grpc.Core;
 using Raft.Communication.Contract;
 
-namespace Raft.Node.Communication.Services.Control;
+namespace Raft.Node.Communication.Services.Admin;
 
 public class PingReplyService(string nodeName) : PingSvc.PingSvcBase, INodeService
 {
