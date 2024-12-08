@@ -21,4 +21,6 @@ public interface INodeStateStore
     IList<LogEntry> GetLastEntries(int entriesCount);
     public int LastApplied { get; set; }
     public StateMachine StateMachine { get; init; }
+    State ApplyCommands(int startIndex, int endIndex);
+    State ApplyCommitted();
 }
