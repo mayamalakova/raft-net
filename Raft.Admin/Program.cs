@@ -41,13 +41,14 @@ public static class Program
 
             Parser.Default
                 .ParseArguments<PingOptions, InfoOptions, CommandOptions, LogInfoOptions, DisconnectOptions,
-                    ReconnectOptions>(command.Split(' ').Select(x => x.Trim()))
+                    ReconnectOptions, GetStateOptions>(command.Split(' ').Select(x => x.Trim()))
                 .WithParsed<PingOptions>(_ => Console.WriteLine(raftClient.Ping()))
                 .WithParsed<InfoOptions>(_ => Console.WriteLine(raftClient.Info()))
                 .WithParsed<CommandOptions>(c => Console.WriteLine(raftClient.Command(c)))
                 .WithParsed<LogInfoOptions>(_ => Console.WriteLine(raftClient.LogInfo()))
                 .WithParsed<DisconnectOptions>(_ => Console.WriteLine(raftClient.Disconnect()))
                 .WithParsed<ReconnectOptions>(_ => Console.WriteLine(raftClient.Reconnect()))
+                .WithParsed<GetStateOptions>(_ => Console.WriteLine(raftClient.GetState()))
                 .WithNotParsed(errors => { Console.WriteLine(errors.ToString()); });
         }
     }

@@ -45,7 +45,7 @@ public class RaftNodeTests
         var leader = CreateLeader("leader1", 5001);
         CreateFollower("follower1", 5002, 5001);
         CreateFollower("follower2", 5003, 5002);
-        leader.GetNodeState().ShouldBe("commitIndex=-1, term=0");
+        leader.GetNodeState().ShouldBe("commitIndex=-1, term=0, lastApplied=-1");
 
         var leaderClient = new RaftClient("localhost", 5001);
         var followerClient1 = new RaftClient("localhost", 5002);
@@ -53,12 +53,12 @@ public class RaftNodeTests
 
         leaderClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = 1 });
         leaderClient.LogInfo().ShouldBe( "{ \"entries\": \"(A=1)\" }");
-        leader.GetNodeState().ShouldBe("commitIndex=0, term=0");
+        leader.GetNodeState().ShouldBe("commitIndex=0, term=0, lastApplied=0");
         leader.GetClusterState().ShouldBe("(follower1, 1),(follower2, 1)");
 
         leaderClient.Command(new CommandOptions { Var = "A", Operation = "+", Literal = 5 });
         leaderClient.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
-        leader.GetNodeState().ShouldBe("commitIndex=1, term=0");
+        leader.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
         leader.GetClusterState().ShouldBe("(follower1, 2),(follower2, 2)");
         followerClient1.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
         followerClient2.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
@@ -76,14 +76,14 @@ public class RaftNodeTests
 
         leaderClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = 1 });
         leader.GetClusterState().ShouldBe("(follower1, 1),(follower2, 1)");
-        leader.GetNodeState().ShouldBe("commitIndex=0, term=0");
+        leader.GetNodeState().ShouldBe("commitIndex=0, term=0, lastApplied=0");
         
         follower.Stop();
         _nodes.Remove(follower);
         leaderClient.Command(new CommandOptions { Var = "A", Operation = "+", Literal = 5 });
 
         leaderClient.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
-        leader.GetNodeState().ShouldBe("commitIndex=0, term=0");
+        leader.GetNodeState().ShouldBe("commitIndex=0, term=0, lastApplied=0");
         leader.GetClusterState().ShouldBe("(follower1, 2),(follower2, 1)");
         followerClient1.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
     }

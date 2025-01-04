@@ -28,11 +28,12 @@ public class LogReplicationService(
 
         heartBeatRunner.StopBeating();
         logReplicator.ReplicateToFollowers();
+        var newState = stateStore.ApplyCommitted();
         heartBeatRunner.StartBeating();
 
         return Task.FromResult(new CommandReply()
         {
-            Result = $"Success at {context.Host}"
+            Result = $"Success at {context.Host} newState={newState}"
         });
     }
 

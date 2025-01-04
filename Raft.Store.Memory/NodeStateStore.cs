@@ -11,6 +11,9 @@ public class NodeStateStore : INodeStateStore
     public NodeAddress? LeaderAddress { get; set; }
     public int CurrentTerm { get; set; } = 0;
     public int CommitIndex { get; set; } = -1;
+    public int LastApplied { get; set; } = -1;
+
+    public StateMachine StateMachine { get; init; } = new();
     public int LogLength => _log.Entries.Count;
 
     public void AppendLogEntry(LogEntry entry)
@@ -41,5 +44,19 @@ public class NodeStateStore : INodeStateStore
     public IList<LogEntry> GetLastEntries(int entriesCount)
     {
         return _log.GetLastEntries(entriesCount);
+    }
+
+    public State ApplyCommands(int startIndex, int endIndex)
+    {
+        var logEntries = Enumerable.Range(startIndex, endIndex - startIndex + 1)
+            .Select(x => _log.GetItemAt(x)!);
+        return StateMachine.ApplyCommands(logEntries.Select(x => x.Command));
+    }
+    
+    public State ApplyCommitted()
+    {
+        var newState = ApplyCommands(LastApplied + 1, CommitIndex);
+        LastApplied = CommitIndex;
+        return newState;
     }
 }

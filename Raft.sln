@@ -6,7 +6,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raft.Node", "Raft.Node\Raft
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raft.Communication.Contract", "Raft.Communication.Contract\Raft.Communication.Contract.csproj", "{03A19489-B74D-4CDE-A8EF-B980D28A7390}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raft.Cli", "Raft.Cli\Raft.Cli.csproj", "{EBBE1CDB-8082-434D-ACC6-3D86C39BCB70}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raft.Admin", "Raft.Admin\Raft.Admin.csproj", "{EBBE1CDB-8082-434D-ACC6-3D86C39BCB70}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raft.Store.Memory", "Raft.Store.Memory\Raft.Store.Memory.csproj", "{C2D03C53-C6A2-4EE5-8BEF-587283DE218E}"
 EndProject

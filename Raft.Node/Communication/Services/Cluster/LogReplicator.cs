@@ -74,9 +74,14 @@ public class LogReplicator(
     {
         var nodes = clusterStore.GetNodes().ToArray();
         var nodesCount = nodes.Count();
+        if (nodesCount == 0)
+        {
+            stateStore.CommitIndex = stateStore.LogLength - 1;
+            return;
+        }
         var matchingIndexes = nodes.Select(x => clusterStore.GetMatchingIndex((x.NodeName))).ToArray();
         var current = stateStore.LogLength;
-        while (current > stateStore.CurrentTerm)
+        while (current > stateStore.CommitIndex)
         {
             var next = current - 1;
             if (MatchingCountAtIndex(matchingIndexes, next) > nodesCount / 2)

@@ -59,7 +59,7 @@ public class LogReplicatorTests
     {
         var nodeStore = new NodeStateStore
         {
-            Role = NodeType.Leader, CommitIndex = -1, CurrentTerm = 0
+            Role = NodeType.Leader, CurrentTerm = 0
         };
         nodeStore.AppendLogEntry(new LogEntry(new Command("A", CommandOperation.Assignment, 1), 0));
         var clusterStore = new ClusterNodeStore();
@@ -81,7 +81,7 @@ public class LogReplicatorTests
     {
         var nodeStore = new NodeStateStore
         {
-            Role = NodeType.Leader, CommitIndex = -1, CurrentTerm = 0
+            Role = NodeType.Leader, CurrentTerm = 0
         };
         nodeStore.AppendLogEntry(new LogEntry(new Command("A", CommandOperation.Assignment, 1), 0));
         var clusterStore = new ClusterNodeStore();
@@ -106,7 +106,7 @@ public class LogReplicatorTests
     {
         var nodeStore = new NodeStateStore
         {
-            Role = NodeType.Leader, CommitIndex = -1, CurrentTerm = 1
+            Role = NodeType.Leader, CurrentTerm = 1
         };
         nodeStore.AppendLogEntry(new LogEntry(new Command("A", CommandOperation.Assignment, 1), 0));
         var clusterStore = new ClusterNodeStore();
@@ -128,7 +128,7 @@ public class LogReplicatorTests
     {
         var nodeStore = new NodeStateStore
         {
-            Role = NodeType.Leader, CommitIndex = -1, CurrentTerm = 1
+            Role = NodeType.Leader, CurrentTerm = 1
         };
         nodeStore.AppendLogEntry(new LogEntry(new Command("A", CommandOperation.Assignment, 1), 0));
         nodeStore.AppendLogEntry(new LogEntry(new Command("B", CommandOperation.Assignment, 1), 1));

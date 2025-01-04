@@ -16,7 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Raft.Cli\Raft.Cli.csproj" />
+      <ProjectReference Include="..\Raft.Admin\Raft.Admin.csproj" />
       <ProjectReference Include="..\Raft.Node\Raft.Node.csproj" />
     </ItemGroup>
 
