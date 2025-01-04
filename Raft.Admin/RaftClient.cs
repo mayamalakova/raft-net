@@ -73,6 +73,7 @@ public class RaftClient
 
     public string GetState()
     {
-        return _getStateClient.GetState(new GetStateMassage()).ToString();
+        var state = _getStateClient.GetState(new GetStateMassage());
+        return $"value: {state.Value}, errors: {state.Errors}";
     }
 }

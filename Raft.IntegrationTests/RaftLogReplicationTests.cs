@@ -45,6 +45,19 @@ public class RaftLogReplicationTests
         followerClient2.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (B=1)\" }");
     }
 
+    [Test]
+    public void ShouldApplyCommittedEntriesAfterReplication()
+    {
+        var leader = CreateLeader("leader1", 5001);
+        var leaderClient = new RaftClient("localhost", 5001);
+
+        const int someLiteral = 5;
+        leaderClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = someLiteral });
+        
+        leaderClient.GetState().ShouldBe($"value: {someLiteral}, errors: [ ]");
+        leader.GetNodeState().ShouldBe("commitIndex=0, term=0, lastApplied=0");
+    }
+
     private void ReconnectNode(RaftClient followerClient2, RaftNode follower2)
     {
         followerClient2.Reconnect();

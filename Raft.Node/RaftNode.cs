@@ -107,6 +107,6 @@ public class RaftNode
 
     public string GetNodeState()
     {
-        return $"commitIndex={_stateStore.CommitIndex}, term={_stateStore.CurrentTerm}";
+        return $"commitIndex={_stateStore.CommitIndex}, term={_stateStore.CurrentTerm}, lastApplied={_stateStore.LastApplied}";
     }
 }
