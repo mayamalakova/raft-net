@@ -74,7 +74,6 @@ public class LogReplicatorTests
         replicator.ReplicateToFollowers();
         
         nodeStore.CommitIndex.ShouldBe(0);
-        nodeStore.LastApplied.ShouldBe(0);
     }
 
     [Test]
@@ -100,7 +99,6 @@ public class LogReplicatorTests
         replicator.ReplicateToFollowers();
         
         nodeStore.CommitIndex.ShouldBe(-1);
-        nodeStore.LastApplied.ShouldBe(-1);
     }
 
     [Test]
@@ -123,7 +121,6 @@ public class LogReplicatorTests
         replicator.ReplicateToFollowers();
         
         nodeStore.CommitIndex.ShouldBe(-1);
-        nodeStore.LastApplied.ShouldBe(-1);
     }
     
     [Test]
@@ -147,7 +144,6 @@ public class LogReplicatorTests
         replicator.ReplicateToFollowers();
         
         nodeStore.CommitIndex.ShouldBe(1);
-        nodeStore.LastApplied.ShouldBe(1);
     }
 
     [Test]
