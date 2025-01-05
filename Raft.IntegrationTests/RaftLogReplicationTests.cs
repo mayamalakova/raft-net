@@ -52,8 +52,9 @@ public class RaftLogReplicationTests
         var leaderClient = new RaftClient("localhost", 5001);
 
         const int someLiteral = 5;
-        leaderClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = someLiteral });
+        var result = leaderClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = someLiteral });
         
+        result.ShouldContain($"value={someLiteral}");
         leaderClient.GetState().ShouldBe($"value: {someLiteral}, errors: [ ]");
         leader.GetNodeState().ShouldBe("commitIndex=0, term=0, lastApplied=0");
     }
