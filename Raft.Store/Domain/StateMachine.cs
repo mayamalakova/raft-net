@@ -15,8 +15,9 @@ public record State
 public class StateMachine
 {
     private readonly ConcurrentDictionary<string, int> _varToValue = new();
-    public State CurrentState { get; } = new();
     private readonly Lock _lock = new();
+
+    public State CurrentState { get; } = new();
 
     public State Calculate(IEnumerable<Command> commands)
     {
@@ -61,11 +62,6 @@ public class StateMachine
         {
             ApplyCommand(command);
         }
-        return CurrentState;
-    }
-
-    public State GetCurrent()
-    {
         return CurrentState;
     }
 }
