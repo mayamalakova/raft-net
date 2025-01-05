@@ -46,17 +46,15 @@ public class NodeStateStore : INodeStateStore
         return _log.GetLastEntries(entriesCount);
     }
 
-    public State ApplyCommands(int startIndex, int endIndex)
-    {
-        var logEntries = Enumerable.Range(startIndex, endIndex - startIndex + 1)
-            .Select(x => _log.GetItemAt(x)!);
-        return StateMachine.ApplyCommands(logEntries.Select(x => x.Command));
-    }
-    
     public State ApplyCommitted()
     {
-        var newState = ApplyCommands(LastApplied + 1, CommitIndex);
-        LastApplied = CommitIndex;
-        return newState;
+        var state = StateMachine.CurrentState;
+        while (LastApplied < CommitIndex)
+        {
+            var entryToApply = _log.GetItemAt(LastApplied + 1)!;
+            state = StateMachine.ApplyCommands([entryToApply.Command]);
+            LastApplied++;
+        }
+        return state;
     }
 }
