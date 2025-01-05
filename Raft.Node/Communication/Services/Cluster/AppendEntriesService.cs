@@ -28,6 +28,8 @@ public class AppendEntriesService(INodeStateStore stateStore) : AppendEntriesSvc
         {
             stateStore.CommitIndex = Math.Min(request.LeaderCommit, stateStore.LogLength - 1);
         }
+
+        stateStore.ApplyCommitted();
         return Success();
     }
 
@@ -36,7 +38,7 @@ public class AppendEntriesService(INodeStateStore stateStore) : AppendEntriesSvc
     /// term on and then add only new entries that aren't already in the log and then append new entries that are not
     /// already in the log.
     /// This removes all entries that are after prevLogIndex regardless of their term and adds all new ones.
-    /// The later approach may do more remove and add operations, but hopefully the state of the log at the end should
+    /// The latter approach may do more remove and add operations, but hopefully the state of the log at the end should
     /// be the same
     /// TODO This will not keep the log consistent if the node crashes after removing
     /// </summary>

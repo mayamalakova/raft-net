@@ -46,7 +46,7 @@ public class RaftLogReplicationTests
     }
 
     [Test]
-    public void ShouldApplyCommittedEntriesAfterReplication()
+    public void ShouldApplyCommittedEntriesOnLeaderAfterReplication()
     {
         var leader = CreateLeader("leader1", 5001);
         var leaderClient = new RaftClient("localhost", 5001);
@@ -56,6 +56,21 @@ public class RaftLogReplicationTests
         
         leaderClient.GetState().ShouldBe($"value: {someLiteral}, errors: [ ]");
         leader.GetNodeState().ShouldBe("commitIndex=0, term=0, lastApplied=0");
+    }
+    
+    [Test]
+    public void ShouldApplyCommittedEntriesOnFollowerAfterReplication()
+    {
+        CreateLeader("leader1", 5001);
+        var leaderClient = new RaftClient("localhost", 5001);
+        var follower = CreateFollower("follower1", 5002, 5001);
+
+        const int someLiteral = 5;
+        leaderClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = someLiteral });
+        
+        Task.Delay(4000).Wait();
+        
+        follower.GetNodeState().ShouldBe("commitIndex=0, term=0, lastApplied=0");
     }
 
     private void ReconnectNode(RaftClient followerClient2, RaftNode follower2)
