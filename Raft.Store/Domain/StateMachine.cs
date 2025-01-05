@@ -15,8 +15,8 @@ public record State
 public class StateMachine
 {
     private readonly ConcurrentDictionary<string, int> _varToValue = new();
-    private readonly State _currentState = new();
-    private readonly object _lock = new();
+    public State CurrentState { get; } = new();
+    private readonly Lock _lock = new();
 
     public State Calculate(IEnumerable<Command> commands)
     {
@@ -24,7 +24,7 @@ public class StateMachine
         {
             ApplyCommand(command);
         }
-        return _currentState;
+        return CurrentState;
     }
 
     private void ApplyCommand(Command command)
@@ -40,17 +40,17 @@ public class StateMachine
         if (command.Operation == CommandOperation.Assignment)
         {
             _varToValue[command.Variable] = command.Literal;
-            _currentState.Value = command.Literal;
+            CurrentState.Value = command.Literal;
         } else if (_varToValue.TryGetValue(command.Variable, out var value))
         {
             _varToValue[command.Variable] = command.Operation == CommandOperation.Plus
                 ? value + command.Literal
                 : value - command.Literal;
-            _currentState.Value = _varToValue[command.Variable];
+            CurrentState.Value = _varToValue[command.Variable];
         }
         else
         {
-            _currentState.Errors.Add(
+            CurrentState.Errors.Add(
                 $"Tried to do arithmetic operation {command.Operation} on unassigned variable {command.Variable}.");
         }
     }
@@ -61,11 +61,11 @@ public class StateMachine
         {
             ApplyCommand(command);
         }
-        return _currentState;
+        return CurrentState;
     }
 
     public State GetCurrent()
     {
-        return _currentState;
+        return CurrentState;
     }
 }
