@@ -13,7 +13,7 @@ public class GetStateService(INodeStateStore stateStore) : GetStateSvc.GetStateS
 
     public override Task<GetStateReply> GetState(GetStateMassage request, ServerCallContext context)
     {
-        var currentState = stateStore.StateMachine.GetCurrent();
+        var currentState = stateStore.StateMachine.CurrentState;
         var errors = currentState.Errors.ToArray();
         return Task.FromResult(new GetStateReply()
         {
