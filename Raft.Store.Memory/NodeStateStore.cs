@@ -14,7 +14,7 @@ public class NodeStateStore : INodeStateStore
     public int LastApplied { get; set; } = -1;
 
     public StateMachine StateMachine { get; init; } = new();
-    public int LogLength => _log.Entries.Count;
+    public int LogLength => _log.Length;
 
     public void AppendLogEntry(LogEntry entry)
     {
@@ -23,7 +23,7 @@ public class NodeStateStore : INodeStateStore
 
     public string PrintLog()
     {
-        return string.Join(", ", _log.Entries.Select(x => x.Command));
+        return _log.ToString();
     }
 
     public int GetTermAtIndex(int lastLogIndex)
