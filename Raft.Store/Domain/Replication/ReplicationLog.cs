@@ -2,11 +2,13 @@
 
 public class ReplicationLog
 {
-    public List<LogEntry> Entries { get; } = new();
+    private readonly List<LogEntry> _entries = [];
+    
+    public int Length => _entries.Count;
 
     public void Append(LogEntry entry)
     {
-        Entries.Add(entry);
+        _entries.Add(entry);
     }
 
     /// <summary>
@@ -16,16 +18,21 @@ public class ReplicationLog
     /// <returns></returns>
     public LogEntry? GetItemAt(int index)
     {
-        return index < 0 ? null : Entries[index];
+        return index < 0 ? null : _entries[index];
     }
 
     public void RemoveFrom(int index)
     {
-        Entries.RemoveRange(index, Entries.Count - index);
+        _entries.RemoveRange(index, _entries.Count - index);
     }
 
     public IList<LogEntry> GetLastEntries(int count)
     {
-        return Entries.TakeLast(count).ToList();
+        return _entries.TakeLast(count).ToList();
+    }
+    
+    public override string ToString()
+    {
+        return string.Join(", ", _entries.Select(e => e.Command));
     }
 }

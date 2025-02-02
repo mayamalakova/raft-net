@@ -43,12 +43,12 @@
   &lt;Assembly Path="C:\Users\Maya\.nuget\packages\grpc.core.api\2.66.0\lib\netstandard2.1\Grpc.Core.Api.dll" /&gt;&#xD;
 &lt;/AssemblyExplorer&gt;</s:String>
 	
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=25c9d963_002Da0ef_002D488b_002D8d49_002D32915ef8e6bd/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="ShouldReconcileFollowerLogAfterReconnecting" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=25c9d963_002Da0ef_002D488b_002D8d49_002D32915ef8e6bd/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="ShouldReconcileFollowerLogAfterReconnecting" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;Solution /&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	
 	
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=dbe6ac3a_002D8d93_002D48c7_002D990a_002D70749f2a0ca5/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="Session" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=dbe6ac3a_002D8d93_002D48c7_002D990a_002D70749f2a0ca5/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="Session" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;And&gt;&#xD;
     &lt;Namespace&gt;Raft.IntegrationTests&lt;/Namespace&gt;&#xD;
     &lt;Project Location="C:\Users\Maya\RiderProjects\raft-net\Raft.IntegrationTests" Presentation="&amp;lt;Raft.IntegrationTests&amp;gt;" /&gt;&#xD;

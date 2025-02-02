@@ -9,12 +9,12 @@ public class NodeStateStore : INodeStateStore
 
     public NodeType Role { get; set; }
     public NodeAddress? LeaderAddress { get; set; }
-    public int CurrentTerm { get; set; } = 0;
-    public int CommitIndex { get; set; } = -1;
-    public int LastApplied { get; set; } = -1;
+    public int CurrentTerm { get; set; }
+    public int CommitIndex { get; set; } = -1; // -1 means no items committed
+    public int LastApplied { get; set; } = -1; // -1 means no items applied
 
     public StateMachine StateMachine { get; init; } = new();
-    public int LogLength => _log.Entries.Count;
+    public int LogLength => _log.Length;
 
     public void AppendLogEntry(LogEntry entry)
     {
@@ -23,7 +23,7 @@ public class NodeStateStore : INodeStateStore
 
     public string PrintLog()
     {
-        return string.Join(", ", _log.Entries.Select(x => x.Command));
+        return _log.ToString();
     }
 
     public int GetTermAtIndex(int lastLogIndex)
@@ -51,9 +51,9 @@ public class NodeStateStore : INodeStateStore
         var state = StateMachine.CurrentState;
         while (LastApplied < CommitIndex)
         {
-            var entryToApply = _log.GetItemAt(LastApplied + 1)!;
-            state = StateMachine.ApplyCommands([entryToApply.Command]);
             LastApplied++;
+            var entryToApply = _log.GetItemAt(LastApplied)!; 
+            state = StateMachine.ApplyCommands([entryToApply.Command]);
         }
         return state;
     }
