@@ -19,6 +19,7 @@ public class LogReplicator(
 
     public void ReplicateToFollowers()
     {
+        if (!clusterStore.GetNodes().Any()) return;
         var replies = SendAppendEntriesRequestsAndWaitForResults().Result;
         UpdateClusterState(replies);
         UpdateCommitIndex();

@@ -28,7 +28,7 @@ public class HeartBeatRunner
     
     private void PerformAction(object? sender, ElapsedEventArgs e)
     {
-        Console.WriteLine($"Action executed at {DateTime.Now:HH:mm:ss.fff}");
+        Console.WriteLine($"HeartBeat at {DateTime.Now:HH:mm:ss.fff}");
         _action();
     }
 
