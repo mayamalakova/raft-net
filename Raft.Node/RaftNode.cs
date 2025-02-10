@@ -6,6 +6,7 @@ using Raft.Node.HeartBeat;
 using Raft.Store;
 using Raft.Store.Domain;
 using Raft.Store.Memory;
+using Serilog;
 
 namespace Raft.Node;
 
@@ -68,7 +69,7 @@ public class RaftNode
                 Host = _nodeHost, 
                 Port = _nodePort
             });
-            Console.WriteLine($"Registered with leader {registerReply}");
+            Log.Information($"Registered with leader {registerReply}");
         }
 
         _nodeMessageReceiver.Start();
@@ -86,7 +87,7 @@ public class RaftNode
         var reply = client.GetLeader(new LeaderQueryRequest());
 
         var leaderAddress = new NodeAddress(reply.Host, reply.Port);
-        Console.WriteLine($"{_nodeName} found leader: {leaderAddress}");
+        Log.Information($"{_nodeName} found leader: {leaderAddress}");
 
         return leaderAddress;
     }

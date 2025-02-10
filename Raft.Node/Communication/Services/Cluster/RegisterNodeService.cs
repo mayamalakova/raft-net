@@ -2,6 +2,7 @@
 using Raft.Communication.Contract;
 using Raft.Store;
 using Raft.Store.Domain;
+using Serilog;
 
 namespace Raft.Node.Communication.Services.Cluster;
 
@@ -10,7 +11,7 @@ public class RegisterNodeService(IClusterNodeStore nodeStore) : RegisterNodeSvc.
     public override Task<RegisterNodeRply> RegisterNode(RegisterNodeRequest request, ServerCallContext context)
     {
         var result = nodeStore.AddNode(request.Name, new NodeAddress(request.Host, request.Port));
-        Console.WriteLine($"Added node {request.Name}. Cluster members are {nodeStore}");
+        Log.Information($"Added node {request.Name}. Cluster members are {nodeStore}");
         return Task.FromResult(new RegisterNodeRply
         {
             Reply = result

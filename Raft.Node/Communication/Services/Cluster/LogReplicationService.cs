@@ -6,6 +6,7 @@ using Raft.Node.HeartBeat;
 using Raft.Store;
 using Raft.Store.Domain;
 using Raft.Store.Domain.Replication;
+using Serilog;
 
 namespace Raft.Node.Communication.Services.Cluster;
 
@@ -24,7 +25,7 @@ public class LogReplicationService(
 
         var command = request.FromMessage();
         stateStore.AppendLogEntry(new LogEntry(command, stateStore.CurrentTerm));
-        Console.WriteLine($"{command} appended in term={stateStore.CurrentTerm}. log is {stateStore.PrintLog()}");
+        Log.Information($"{command} appended in term={stateStore.CurrentTerm}. log is {stateStore.PrintLog()}");
 
         heartBeatRunner.StopBeating();
         logReplicator.ReplicateToFollowers();
@@ -48,7 +49,7 @@ public class LogReplicationService(
         }
 
         var commandClient = clientPool.GetCommandServiceClient(stateStore.LeaderAddress);
-        Console.WriteLine($"Forwarding command {request}");
+        Log.Information($"Forwarding command {request}");
         return commandClient.ApplyCommandAsync(request).ResponseAsync;
     }
 

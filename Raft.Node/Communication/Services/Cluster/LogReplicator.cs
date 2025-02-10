@@ -4,6 +4,7 @@ using Raft.Node.Extensions;
 using Raft.Store;
 using Raft.Store.Domain;
 using Raft.Store.Domain.Replication;
+using Serilog;
 
 namespace Raft.Node.Communication.Services.Cluster;
 
@@ -23,7 +24,7 @@ public class LogReplicator(
         var replies = SendAppendEntriesRequestsAndWaitForResults().Result;
         UpdateClusterState(replies);
         UpdateCommitIndex();
-        Console.WriteLine($"Replicated to followers - nextIndex: {clusterStore.GetNextIndexesPrintable()}");
+        Log.Information($"Replicated to followers - nextIndex: {clusterStore.GetNextIndexesPrintable()}");
     }
 
     private async Task<IDictionary<string, AppendEntriesReply?>> SendAppendEntriesRequestsAndWaitForResults()
@@ -52,7 +53,7 @@ public class LogReplicator(
     {
         foreach (var (nodeName, reply) in replies)
         {
-            Console.WriteLine($"{nodeName}: {reply}");
+            Log.Information($"{nodeName}: {reply}");
             if (reply == null)
             {
                 continue;
@@ -102,7 +103,7 @@ public class LogReplicator(
 
     private async Task<AppendEntriesReply?> TrySendAppendEntriesRequest(NodeInfo node, IList<LogEntry> entries)
     {
-        Console.WriteLine($"Sending append entries to node {node.NodeName} - {entries.Count} entries");
+        Log.Information($"Sending append entries to node {node.NodeName} - {entries.Count} entries");
         try
         {
             return await SendAppendEntriesRequestAsync(node, entries.Select(e => e.ToMessage())
@@ -110,17 +111,17 @@ public class LogReplicator(
         }
         catch (RpcException ex) when (ex.StatusCode == StatusCode.DeadlineExceeded)
         {
-            Console.WriteLine($"Timeout occurred for node {node.NodeName}: {ex.GetType()} {ex.Message}");
+            Log.Information($"Timeout occurred for node {node.NodeName}: {ex.GetType()} {ex.Message}");
             return null;
         }
         catch (RpcException ex)
         {
-            Console.WriteLine($"Could not connect to {node.NodeName}: {ex.GetType()}");
+            Log.Information($"Could not connect to {node.NodeName}: {ex.GetType()}");
             return null;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error occurred for node {node.NodeName}: {ex.GetType()} {ex.StackTrace}");
+            Log.Information($"Error occurred for node {node.NodeName}: {ex.GetType()} {ex.StackTrace}");
             return null;
         }
     }

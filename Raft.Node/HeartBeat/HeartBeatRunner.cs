@@ -1,4 +1,5 @@
 ﻿using System.Timers;
+using Serilog;
 using Timer = System.Timers.Timer;
 
 namespace Raft.Node.HeartBeat;
@@ -28,7 +29,7 @@ public class HeartBeatRunner
     
     private void PerformAction(object? sender, ElapsedEventArgs e)
     {
-        Console.WriteLine($"HeartBeat at {DateTime.Now:HH:mm:ss.fff}");
+        Log.Debug($"HeartBeat at {DateTime.Now:HH:mm:ss.fff}");
         _action();
     }
 
