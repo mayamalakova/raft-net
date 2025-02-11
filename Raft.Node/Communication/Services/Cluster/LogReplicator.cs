@@ -20,11 +20,13 @@ public class LogReplicator(
 
     public void ReplicateToFollowers()
     {
-        if (!clusterStore.GetNodes().Any()) return;
-        var replies = SendAppendEntriesRequestsAndWaitForResults().Result;
-        UpdateClusterState(replies);
+        if (clusterStore.GetNodes().Any())
+        {
+            var replies = SendAppendEntriesRequestsAndWaitForResults().Result;
+            UpdateClusterState(replies);
+            Log.Information($"Replicated to followers - nextIndex: {clusterStore.GetNextIndexesPrintable()}");
+        }
         UpdateCommitIndex();
-        Log.Information($"Replicated to followers - nextIndex: {clusterStore.GetNextIndexesPrintable()}");
     }
 
     private async Task<IDictionary<string, AppendEntriesReply?>> SendAppendEntriesRequestsAndWaitForResults()
