@@ -2,6 +2,7 @@
 using Raft.Communication.Contract;
 using Raft.Node.Extensions;
 using Raft.Store;
+using Serilog;
 
 namespace Raft.Node.Communication.Services.Cluster;
 
@@ -9,7 +10,7 @@ public class AppendEntriesService(INodeStateStore stateStore) : AppendEntriesSvc
 {
     public override Task<AppendEntriesReply> AppendEntries(AppendEntriesRequest request, ServerCallContext context)
     {
-        Console.WriteLine($"Appending {request.Entries.Count} entries {request}");
+        Log.Debug($"Appending {request.Entries.Count} entries {request}");
         // 1. reply false if term < currentTerm
         // 2. reply false if log doesn't contain an entry at prevLogIndex whose term matches prevLogTerm
         if (stateStore.CurrentTerm > request.Term || stateStore.GetTermAtIndex(request.PrevLogIndex) != request.PrevLogTerm)

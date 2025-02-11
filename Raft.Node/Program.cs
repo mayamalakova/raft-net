@@ -1,5 +1,7 @@
 ﻿using CommandLine;
+using Raft.Shared;
 using Raft.Store.Domain;
+using Serilog;
 
 namespace Raft.Node;
 
@@ -9,28 +11,33 @@ public static class Program
 
     public static void Main(string[] args)
     {
-        var result = Parser.Default.ParseArguments<AddOptions>(args)
-            .MapResult(
-                opts =>
-                {
-                    _node = AddNode(opts);
-                    return 0;
-                },
-                errs =>
-                {
-                    Console.WriteLine($"Error: {string.Join(Environment.NewLine, errs)}");
-                    return 1;
-                });
-        if (result != 0)
-        {
-            Console.WriteLine("Please provide valid command line options.");
-            return;
+        try {
+            Logger.ConfigureLogger();
+            var result = Parser.Default.ParseArguments<AddOptions>(args)
+                .MapResult(
+                    opts =>
+                    {
+                        _node = AddNode(opts);
+                        return 0;
+                    },
+                    errs =>
+                    {
+                        Log.Information($"Error: {string.Join(Environment.NewLine, errs)}");
+                        return 1;
+                    });
+            if (result != 0)
+            {
+                Log.Information("Please provide valid command line options.");
+                return;
+            }
+
+            Log.Information("Press any key to terminate");
+            Console.ReadKey();
+
+            _node?.Stop();
+        } finally {
+            Logger.Close();
         }
-
-        Console.WriteLine("Press any key to terminate");
-        Console.ReadKey();
-
-        _node?.Stop();
     }
 
     private static RaftNode AddNode(AddOptions addOptions)
@@ -61,7 +68,7 @@ public static class Program
             addOptions.TimeoutSeconds);
 
         follower.Start();
-        Console.WriteLine($"Created follower node {addOptions.Name} listening on port {port}.");
+        Log.Information($"Created follower node {addOptions.Name} listening on port {port}.");
 
         return follower;
     }
@@ -72,7 +79,7 @@ public static class Program
         var leader = new RaftNode(NodeType.Leader, addOptions.Name, port, "localhost", port, addOptions.TimeoutSeconds);
 
         leader.Start();
-        Console.WriteLine($"Created leader node {addOptions.Name} listening on port {port}");
+        Log.Information($"Created leader node {addOptions.Name} listening on port {port}");
 
         return leader;
     }

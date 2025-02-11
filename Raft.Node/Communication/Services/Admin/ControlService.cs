@@ -3,6 +3,7 @@ using Raft.Communication.Contract;
 using Raft.Node.HeartBeat;
 using Raft.Store;
 using Raft.Store.Domain;
+using Serilog;
 
 namespace Raft.Node.Communication.Services.Admin;
 
@@ -11,22 +12,22 @@ public class ControlService(HeartBeatRunner? heartBeatRunner, IRaftMessageReceiv
     public override Task<DisconnectReply> DisconnectNode(DisconnectMessage request, ServerCallContext context)
     {
         heartBeatRunner?.StopBeating();
-        Console.WriteLine("Stopping heartbeat");
+        Log.Information("Stopping heartbeat");
 
         raftServer.DisconnectFromCluster();
-        Console.WriteLine("Disconnecting");
+        Log.Information("Disconnecting");
         
         return Task.FromResult(new DisconnectReply {Reply = "Node disconnected."});
     }
 
     public override Task<ReconnectReply> ReconnectNode(ReconnectMessage request, ServerCallContext context)
     {
-        Console.WriteLine("Reconnecting");
+        Log.Information("Reconnecting");
         raftServer.ReconnectToCluster();
 
         if (stateStore.Role == NodeType.Leader)
         {
-            Console.WriteLine("Starting heartbeat");
+            Log.Information("Starting heartbeat");
             heartBeatRunner?.StartBeating();
         }
 
