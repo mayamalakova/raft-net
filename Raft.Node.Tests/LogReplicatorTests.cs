@@ -55,28 +55,6 @@ public class LogReplicatorTests
     }
 
     [Test]
-    public void ShouldUpdateCommitIndexAfterMajoritySuccess()
-    {
-        var nodeStore = new NodeStateStore
-        {
-            Role = NodeType.Leader, CurrentTerm = 0
-        };
-        nodeStore.AppendLogEntry(new LogEntry(new Command("A", CommandOperation.Assignment, 1), 0));
-        var clusterStore = new ClusterNodeStore();
-        var followerAddress = new NodeAddress("host", 199);
-        clusterStore.AddNode("fol1", followerAddress);
-        var replicator = new LogReplicator(nodeStore, _clientPool, clusterStore, "lead1", 2)
-        {
-            EntriesRequestFactory = _appendEntriesRequestFactory
-        };
-        SetUpMockAppendEntriesClient(followerAddress);
-        
-        replicator.ReplicateToFollowers();
-        
-        nodeStore.CommitIndex.ShouldBe(0);
-    }
-
-    [Test]
     public void ShouldNotUpdateCommitIndexWithoutMajoritySuccess()
     {
         var nodeStore = new NodeStateStore
@@ -123,29 +101,7 @@ public class LogReplicatorTests
         nodeStore.CommitIndex.ShouldBe(-1);
     }
     
-    [Test]
-    public void LeaderShouldIncreaseCommitIndexWhenLastMatchingMajorityForSameTerm()
-    {
-        var nodeStore = new NodeStateStore
-        {
-            Role = NodeType.Leader, CurrentTerm = 1
-        };
-        nodeStore.AppendLogEntry(new LogEntry(new Command("A", CommandOperation.Assignment, 1), 0));
-        nodeStore.AppendLogEntry(new LogEntry(new Command("B", CommandOperation.Assignment, 1), 1));
-        var clusterStore = new ClusterNodeStore();
-        var followerAddress = new NodeAddress("host", 199);
-        clusterStore.AddNode("fol1", followerAddress);
-        var replicator = new LogReplicator(nodeStore, _clientPool, clusterStore, "lead1", 2)
-        {
-            EntriesRequestFactory = _appendEntriesRequestFactory
-        };
-        SetUpMockAppendEntriesClient(followerAddress);
-        
-        replicator.ReplicateToFollowers();
-        
-        nodeStore.CommitIndex.ShouldBe(1);
-    }
-
+    
     [Test]
     public void LeaderShouldNotDecreaseIndexWhenAppendEntryWithNoEntriesReturnsSuccess()
     {
