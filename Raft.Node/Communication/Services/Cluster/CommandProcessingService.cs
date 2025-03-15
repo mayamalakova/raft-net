@@ -10,7 +10,7 @@ using Serilog;
 
 namespace Raft.Node.Communication.Services.Cluster;
 
-public class LogReplicationService(
+public class CommandProcessingService(
     INodeStateStore stateStore,
     IClusterNodeStore clusterStore,
     IClientPool clientPool,
