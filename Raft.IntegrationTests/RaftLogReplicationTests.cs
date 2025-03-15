@@ -23,7 +23,7 @@ public class RaftLogReplicationTests
     [Test]
     public void ShouldReconcileFollowerLogAfterReconnecting()
     {
-        CreateLeader("leader1", 5001, 1);
+        CreateLeader("leader1", 5001);
         CreateFollower("follower1", 5002, 5001);
         var follower2 = CreateFollower("follower2", 5003, 5002);
 
@@ -48,7 +48,7 @@ public class RaftLogReplicationTests
     [Test]
     public void ShouldApplyLatestCommittedAtLeaderAfterReconcilingFollowerToGetMajority()
     {
-        var leader = CreateLeader("leader1", 5001, 1);
+        var leader = CreateLeader("leader1", 5001, 2);
         var follower1 = CreateFollower("follower1", 5002, 5001);
         var follower2 = CreateFollower("follower2", 5003, 5002);
 
@@ -76,14 +76,28 @@ public class RaftLogReplicationTests
         
         // reconnect follower2 and give time to replicate
         ReconnectNode(followerClient2, follower2);
-        Task.Delay(6000).Wait();
-        
+
+        for (var i = 0; i < 4; i++)
+        {
+            Task.Delay(2000).Wait();
+            if (HasReconciled()) break;
+            Console.WriteLine($"Checking if they have reconciled... {i + 1}");
+        }
+            
         leader.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
         follower1.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
         follower2.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
         leaderClient.GetState().ShouldBe("value: 2, errors: [ ]");
         followerClient2.GetState().ShouldBe("value: 2, errors: [ ]");
         followerClient1.GetState().ShouldBe("value: 2, errors: [ ]");
+        return;
+
+        bool HasReconciled()
+        {
+            return leader.GetNodeState() == "commitIndex=1, term=0, lastApplied=1" && 
+                   follower1.GetNodeState() == "commitIndex=1, term=0, lastApplied=1" && 
+                   follower2.GetNodeState() == "commitIndex=1, term=0, lastApplied=1";
+        }
     }
 
     [Test]
