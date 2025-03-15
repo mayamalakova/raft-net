@@ -12,8 +12,10 @@ namespace Raft.Node.Communication.Services.Cluster;
 
 public class LogReplicationService(
     INodeStateStore stateStore,
+    IClusterNodeStore clusterStore,
     IClientPool clientPool,
     LogReplicator logReplicator,
+    ReplicationStateManager replicationStateManager,
     HeartBeatRunner heartBeatRunner) : CommandSvc.CommandSvcBase, INodeService
 {
     public override Task<CommandReply> ApplyCommand(CommandRequest request, ServerCallContext context)
@@ -28,8 +30,11 @@ public class LogReplicationService(
         Log.Information($"{command} appended in term={stateStore.CurrentTerm}. log is {stateStore.PrintLog()}");
 
         heartBeatRunner.StopBeating();
+        
         logReplicator.ReplicateToFollowers();
+        replicationStateManager.UpdateCommitIndex(clusterStore.GetNodes().ToArray());
         var newState = stateStore.ApplyCommitted();
+        
         heartBeatRunner.StartBeating();
 
         return Task.FromResult(new CommandReply()

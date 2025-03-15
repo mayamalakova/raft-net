@@ -19,6 +19,7 @@ public class LogReplicationServiceTests
     private IClientPool _clientPool;
     private IClusterNodeStore _clusterStore;
     private IAppendEntriesRequestFactory _appendEntriesRequestFactory;
+    private ReplicationStateManager _replicationStateManager;
 
     [SetUp]
     public void SetUp()
@@ -26,12 +27,13 @@ public class LogReplicationServiceTests
         _stateStore = Substitute.For<INodeStateStore>();
         _clientPool = Substitute.For<IClientPool>();
         _clusterStore = Substitute.For<IClusterNodeStore>();
+        _replicationStateManager = Substitute.For<ReplicationStateManager>(_stateStore, _clusterStore);
         _appendEntriesRequestFactory = Substitute.For<IAppendEntriesRequestFactory>();
         var logReplicator = new LogReplicator(_stateStore, _clientPool, _clusterStore, "lead1", 2)
         {
             EntriesRequestFactory = _appendEntriesRequestFactory
         };
-        _logReplicationService = new LogReplicationService(_stateStore, _clientPool, logReplicator,
+        _logReplicationService = new LogReplicationService(_stateStore, _clusterStore, _clientPool, logReplicator, _replicationStateManager,
             new HeartBeatRunner(50, () => { }));
     }
 
