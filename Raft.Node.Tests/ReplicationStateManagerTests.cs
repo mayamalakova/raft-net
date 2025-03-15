@@ -9,7 +9,7 @@ using Shouldly;
 
 namespace Raft.Node.Tests;
 
-public class NodeStateUpdaterTests
+public class ReplicationStateManagerTests
 {
     private INodeStateStore _nodeStateStore;
     private IClusterNodeStore _clusterNodeStore;
@@ -37,8 +37,7 @@ public class NodeStateUpdaterTests
     {
         PopulateLog([1, 1]);
         _nodeStateStore.CurrentTerm = 1;
-        _clusterNodeStore.GetMatchingIndex("node1").Returns(1);
-        _clusterNodeStore.GetMatchingIndex("node2").Returns(1);
+        _clusterNodeStore.GetMatchingIndexes().Returns([1, 1]);
         
         _replicationStateManager.UpdateCommitIndex([
             new NodeInfo("node1", new NodeAddress("host1", 1)), 
@@ -53,9 +52,7 @@ public class NodeStateUpdaterTests
     {
         PopulateLog([1, 1, 1]);
         _nodeStateStore.CurrentTerm = 1;
-        _clusterNodeStore.GetMatchingIndex("node1").Returns(1);
-        _clusterNodeStore.GetMatchingIndex("node2").Returns(1);
-        _clusterNodeStore.GetMatchingIndex("node3").Returns(2);
+        _clusterNodeStore.GetMatchingIndexes().Returns([1, 1, 2]);
         _replicationStateManager.UpdateCommitIndex([
             new NodeInfo("node1", new NodeAddress("some", 1)), 
             new NodeInfo("node2", new NodeAddress("some", 2)),

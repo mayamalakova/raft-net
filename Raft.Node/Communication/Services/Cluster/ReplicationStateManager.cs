@@ -21,23 +21,18 @@ public class ReplicationStateManager
             _stateStore.CommitIndex = _stateStore.LogLength - 1;
             return;
         }
-        var matchingIndexes = nodes.Select(x => _clusterStore.GetMatchingIndex(x.NodeName)).ToArray();
-        var current = _stateStore.LogLength;
-        while (current > _stateStore.CommitIndex)
+
+        var matchingIndexes = _clusterStore.GetMatchingIndexes();
+        for (var current = _stateStore.LogLength - 1; current > _stateStore.CommitIndex; current--)
         {
-            var next = current - 1;
-            var termAtNext = _stateStore.GetTermAtIndex(next);
-            if (termAtNext == _stateStore.CurrentTerm && matchingIndexes.Count(x => x >= next) > nodes.Length / 2)
+            var termAtCurrent = _stateStore.GetTermAtIndex(current);
+            if (termAtCurrent == _stateStore.CurrentTerm && matchingIndexes.Count(x => x >= current) > nodes.Length / 2)
             {
-                _stateStore.CommitIndex = next;
+                _stateStore.CommitIndex = current;
                 return;
             }
-            current = next;
         }
     }
-
-    private int MatchingCountAtIndex(int[] matchingIndexes, int current)
-    {
-        return matchingIndexes.Count(x => x >= current);
-    }
 }
+
+
