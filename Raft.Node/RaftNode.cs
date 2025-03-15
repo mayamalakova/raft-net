@@ -10,14 +10,18 @@ using Serilog;
 
 namespace Raft.Node;
 
+/// <summary>
+/// A node in a Raft cluster.
+/// Listens for messages from other nodes in the cluster and from admin clients.
+/// </summary>
 public class RaftNode
 {
-    private readonly IRaftMessageReceiver _nodeMessageReceiver;
+    private readonly IClusterMessageReceiver _clusterMessageReceiver;
+    private readonly IMessageReceiver _adminMessageReceiver;
     private readonly INodeStateStore _stateStore;
     private readonly IClientPool _clientPool;
     private readonly IClusterNodeStore _clusterStore;
     private readonly HeartBeatRunner _heartBeatRunner;
-    private readonly IMessageReceiver _controlMessageServer;
 
     private readonly string _nodeName;
     private readonly string _nodeHost;
@@ -47,17 +51,17 @@ public class RaftNode
             new CommandProcessingService(_stateStore, _clusterStore, _clientPool, logReplicator, replicationStateManager, _heartBeatRunner), //listening for command forwarded by other nodes to leader
             new AppendEntriesService(_stateStore),
         ];
-        _nodeMessageReceiver = new RaftMessageReceiver(port, clusterServices);
+        _clusterMessageReceiver = new ClusterMessageReceiver(port, clusterServices);
         IEnumerable<INodeService> adminServices =
         [
             new CommandProcessingService(_stateStore, _clusterStore, _clientPool, logReplicator, replicationStateManager, _heartBeatRunner), // listening for command from the cli
             new PingReplyService(_nodeName),
             new NodeInfoService(_nodeName, new NodeAddress(_nodeHost, _nodePort), _stateStore, _clusterStore),
             new LogInfoService(_stateStore),
-            new ControlService(_heartBeatRunner, _nodeMessageReceiver, _stateStore),
+            new ControlService(_heartBeatRunner, _clusterMessageReceiver, _stateStore),
             new GetStateService(_stateStore)
         ];
-        _controlMessageServer = new ControlMessageReceiver(port + 1000, adminServices);
+        _adminMessageReceiver = new AdminMessageReceiver(port + 1000, adminServices);
     }
 
     public void Start()
@@ -77,8 +81,8 @@ public class RaftNode
             Log.Information($"Registered with leader {registerReply}");
         }
 
-        _nodeMessageReceiver.Start();
-        _controlMessageServer.Start();
+        _clusterMessageReceiver.Start();
+        _adminMessageReceiver.Start();
         if (_stateStore.Role == NodeType.Leader)
         {
             _heartBeatRunner.StartBeating();
@@ -99,8 +103,8 @@ public class RaftNode
 
     public void Stop()
     {
-        _nodeMessageReceiver.Stop();
-        _controlMessageServer.Stop();
+        _clusterMessageReceiver.Stop();
+        _adminMessageReceiver.Stop();
     }
 
     public string GetClusterState()

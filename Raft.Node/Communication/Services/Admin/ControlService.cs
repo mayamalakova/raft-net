@@ -7,7 +7,13 @@ using Serilog;
 
 namespace Raft.Node.Communication.Services.Admin;
 
-public class ControlService(HeartBeatRunner? heartBeatRunner, IRaftMessageReceiver raftServer, INodeStateStore stateStore) : ControlSvc.ControlSvcBase, INodeService
+/// <summary>
+/// Can connect and disconnect a node from the cluster
+/// </summary>
+/// <param name="heartBeatRunner"></param>
+/// <param name="raftServer"></param>
+/// <param name="stateStore"></param>
+public class ControlService(HeartBeatRunner? heartBeatRunner, IClusterMessageReceiver raftServer, INodeStateStore stateStore) : ControlSvc.ControlSvcBase, INodeService
 {
     public override Task<DisconnectReply> DisconnectNode(DisconnectMessage request, ServerCallContext context)
     {

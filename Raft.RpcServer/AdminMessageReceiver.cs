@@ -3,7 +3,12 @@ using Raft.Communication.Contract;
 
 namespace Raft;
 
-public class ControlMessageReceiver(int port, IEnumerable<INodeService> services): IMessageReceiver
+/// <summary>
+/// Processes messages from the admin client
+/// </summary>
+/// <param name="port"></param>
+/// <param name="services"></param>
+public class AdminMessageReceiver(int port, IEnumerable<INodeService> services): IMessageReceiver
 {
     private readonly Server _server = new()
     {
