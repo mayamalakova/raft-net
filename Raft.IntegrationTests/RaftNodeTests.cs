@@ -32,11 +32,11 @@ public class RaftNodeTests
         var pingReply = followerRaftClient.Ping();
         pingReply.ShouldBe("{ \"reply\": \"Pong from follower1 at localhost:6002\" }");
         var followerInfo = followerRaftClient.Info();
-        followerInfo.ShouldBe("{ \"name\": \"follower1\", \"role\": \"Follower\", \"address\": \"localhost:5002\", \"leaderAddress\": \"localhost:5001\" }");
+        followerInfo.ShouldBe("{ \"name\": \"follower1\", \"role\": \"Follower\", \"address\": \"localhost:5002\", \"leaderAddress\": \"localhost:5001\", \"commitIndex\": \"-1\" }");
 
         var leaderRaftClient = new RaftClient("localhost", 5001);
         var leaderInfo = leaderRaftClient.Info();
-        leaderInfo.ShouldBe("{ \"name\": \"leader1\", \"role\": \"Leader\", \"address\": \"localhost:5001\", \"leaderAddress\": \"localhost:5001\", \"knownNodes\": \"(follower1=localhost:5002),(follower2=localhost:5003)\" }");
+        leaderInfo.ShouldBe("{ \"name\": \"leader1\", \"role\": \"Leader\", \"address\": \"localhost:5001\", \"leaderAddress\": \"localhost:5001\", \"knownNodes\": \"(follower1=localhost:5002),(follower2=localhost:5003)\", \"commitIndex\": \"-1\" }");
     }
 
     [Test]
