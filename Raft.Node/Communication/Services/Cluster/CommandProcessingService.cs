@@ -10,10 +10,28 @@ using Serilog;
 
 namespace Raft.Node.Communication.Services.Cluster;
 
-public class LogReplicationService(
+/// <summary>
+/// Processes commands.
+/// If the node is a follower, forwards the command to the leader.
+/// If the node is a leader:
+///  - appends the command to the log
+///  - sends it to followers
+///  - updates the commit index depending on the replies from the followers
+///  - applies any committed commands
+///  - replies with the updated state of the state machine
+/// </summary>
+/// <param name="stateStore"></param>
+/// <param name="clusterStore"></param>
+/// <param name="clientPool"></param>
+/// <param name="logReplicator"></param>
+/// <param name="replicationStateManager"></param>
+/// <param name="heartBeatRunner"></param>
+public class CommandProcessingService(
     INodeStateStore stateStore,
+    IClusterNodeStore clusterStore,
     IClientPool clientPool,
     LogReplicator logReplicator,
+    ReplicationStateManager replicationStateManager,
     HeartBeatRunner heartBeatRunner) : CommandSvc.CommandSvcBase, INodeService
 {
     public override Task<CommandReply> ApplyCommand(CommandRequest request, ServerCallContext context)
@@ -28,8 +46,11 @@ public class LogReplicationService(
         Log.Information($"{command} appended in term={stateStore.CurrentTerm}. log is {stateStore.PrintLog()}");
 
         heartBeatRunner.StopBeating();
+        
         logReplicator.ReplicateToFollowers();
+        replicationStateManager.UpdateCommitIndex(clusterStore.GetNodes().ToArray());
         var newState = stateStore.ApplyCommitted();
+        
         heartBeatRunner.StartBeating();
 
         return Task.FromResult(new CommandReply()

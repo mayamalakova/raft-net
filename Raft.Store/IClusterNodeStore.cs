@@ -12,4 +12,5 @@ public interface IClusterNodeStore
     void IncreaseMatchingIndex(string nodeName, int entriesCount);
     string GetNextIndexesPrintable();
     int GetMatchingIndex(string nodeName);
+    int[] GetMatchingIndexes();
 }

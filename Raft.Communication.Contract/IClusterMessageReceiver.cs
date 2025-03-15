@@ -1,6 +1,9 @@
 ﻿namespace Raft.Communication.Contract;
 
-public interface IRaftMessageReceiver: IMessageReceiver
+/// <summary>
+/// Processes messages from the cluster
+/// </summary>
+public interface IClusterMessageReceiver: IMessageReceiver
 {
     /// <summary>
     /// Stop accepting communication from the cluster

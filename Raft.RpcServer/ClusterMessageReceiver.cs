@@ -3,7 +3,12 @@ using Raft.Communication.Contract;
 
 namespace Raft;
 
-public class RaftMessageReceiver(int port, IEnumerable<INodeService> services) : IRaftMessageReceiver
+/// <summary>
+/// 
+/// </summary>
+/// <param name="port"></param>
+/// <param name="services"></param>
+public class ClusterMessageReceiver(int port, IEnumerable<INodeService> services) : IClusterMessageReceiver
 {
     private Server _server = new()
     {

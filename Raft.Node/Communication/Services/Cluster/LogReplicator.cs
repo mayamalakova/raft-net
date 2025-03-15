@@ -20,13 +20,10 @@ public class LogReplicator(
 
     public void ReplicateToFollowers()
     {
-        if (clusterStore.GetNodes().Any())
-        {
-            var replies = SendAppendEntriesRequestsAndWaitForResults().Result;
-            UpdateClusterState(replies);
-            Log.Information($"Replicated to followers - nextIndex: {clusterStore.GetNextIndexesPrintable()}");
-        }
-        UpdateCommitIndex();
+        if (!clusterStore.GetNodes().Any()) return;
+        var replies = SendAppendEntriesRequestsAndWaitForResults().Result;
+        UpdateClusterState(replies);
+        Log.Information($"Replicated to followers - nextIndex: {clusterStore.GetNextIndexesPrintable()}");
     }
 
     private async Task<IDictionary<string, AppendEntriesReply?>> SendAppendEntriesRequestsAndWaitForResults()
@@ -72,35 +69,6 @@ public class LogReplicator(
                 clusterStore.DecreaseNextLogIndex(nodeName);
             }
         }
-    }
-
-    private void UpdateCommitIndex()
-    {
-        var nodes = clusterStore.GetNodes().ToArray();
-        var nodesCount = nodes.Count();
-        if (nodesCount == 0)
-        {
-            stateStore.CommitIndex = stateStore.LogLength - 1;
-            return;
-        }
-        var matchingIndexes = nodes.Select(x => clusterStore.GetMatchingIndex((x.NodeName))).ToArray();
-        var current = stateStore.LogLength;
-        while (current > stateStore.CommitIndex)
-        {
-            var next = current - 1;
-            if (MatchingCountAtIndex(matchingIndexes, next) > nodesCount / 2)
-            {
-                stateStore.CommitIndex = next;
-                return;
-            }
-            current = next;
-        }
-    }
-
-    private int MatchingCountAtIndex(int[] matchingIndexes, int current)
-    {
-        return matchingIndexes.Count(x =>
-            x >= current && stateStore.GetTermAtIndex(current) == stateStore.CurrentTerm);
     }
 
     private async Task<AppendEntriesReply?> TrySendAppendEntriesRequest(NodeInfo node, IList<LogEntry> entries)

@@ -59,4 +59,9 @@ public class ClusterNodeStore: IClusterNodeStore
     {
         return _matchingIndex.GetValueOrDefault(nodeName, -1);
     }
+    
+    public int[] GetMatchingIndexes()
+    {
+        return _matchingIndex.Values.ToArray();
+    }
 }

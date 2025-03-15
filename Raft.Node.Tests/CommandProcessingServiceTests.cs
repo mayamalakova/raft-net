@@ -12,13 +12,14 @@ using Shouldly;
 
 namespace Raft.Node.Tests;
 
-public class LogReplicationServiceTests
+public class CommandProcessingServiceTests
 {
     private INodeStateStore _stateStore;
-    private LogReplicationService _logReplicationService;
+    private CommandProcessingService _commandProcessingService;
     private IClientPool _clientPool;
     private IClusterNodeStore _clusterStore;
     private IAppendEntriesRequestFactory _appendEntriesRequestFactory;
+    private ReplicationStateManager _replicationStateManager;
 
     [SetUp]
     public void SetUp()
@@ -26,12 +27,13 @@ public class LogReplicationServiceTests
         _stateStore = Substitute.For<INodeStateStore>();
         _clientPool = Substitute.For<IClientPool>();
         _clusterStore = Substitute.For<IClusterNodeStore>();
+        _replicationStateManager = Substitute.For<ReplicationStateManager>(_stateStore, _clusterStore);
         _appendEntriesRequestFactory = Substitute.For<IAppendEntriesRequestFactory>();
         var logReplicator = new LogReplicator(_stateStore, _clientPool, _clusterStore, "lead1", 2)
         {
             EntriesRequestFactory = _appendEntriesRequestFactory
         };
-        _logReplicationService = new LogReplicationService(_stateStore, _clientPool, logReplicator,
+        _commandProcessingService = new CommandProcessingService(_stateStore, _clusterStore, _clientPool, logReplicator, _replicationStateManager,
             new HeartBeatRunner(50, () => { }));
     }
 
@@ -42,7 +44,7 @@ public class LogReplicationServiceTests
         _stateStore.ApplyCommitted().Returns(new State() {Value = 666});
         var mockCallContext = CreateMockCallContext();
 
-        var reply = _logReplicationService.ApplyCommand(
+        var reply = _commandProcessingService.ApplyCommand(
             new CommandRequest() { Variable = "A", Operation = "=", Literal = 5 }, mockCallContext);
 
         reply.Result.ShouldBe(new CommandReply() { Result = "Success at localhost newState=value=666 errors=" });
@@ -57,7 +59,7 @@ public class LogReplicationServiceTests
         var mockFollowerClient = SetUpMockAppendEntriesClient(followerAddress);
         var mockCallContext = CreateMockCallContext();
 
-        _logReplicationService.ApplyCommand(
+        _commandProcessingService.ApplyCommand(
             new CommandRequest() { Variable = "A", Operation = "=", Literal = 5 }, mockCallContext);
 
         mockFollowerClient.Received().AppendEntriesAsync(Arg.Any<AppendEntriesRequest>(), Arg.Any<CallOptions>());
@@ -74,7 +76,7 @@ public class LogReplicationServiceTests
         CreateMockCommandClient(leaderAddress, commandRequest,
             new CommandReply() { Result = "Success at leader" });
 
-        var reply = _logReplicationService.ApplyCommand(commandRequest, Substitute.For<ServerCallContext>());
+        var reply = _commandProcessingService.ApplyCommand(commandRequest, Substitute.For<ServerCallContext>());
 
         reply.Result.ShouldBe(new CommandReply() { Result = "Success at leader" });
         _stateStore.DidNotReceive().AppendLogEntry(Arg.Any<LogEntry>());
