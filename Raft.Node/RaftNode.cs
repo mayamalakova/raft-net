@@ -44,24 +44,38 @@ public class RaftNode
             logReplicator.ReplicateToFollowers();
             replicationStateManager.UpdateCommitIndex(_clusterStore.GetNodes().ToArray());
         });
-        IEnumerable<INodeService> clusterServices =
+
+        _clusterMessageReceiver =
+            new ClusterMessageReceiver(port, GetClusterServices(replicationStateManager, logReplicator));
+        _adminMessageReceiver =
+            new AdminMessageReceiver(port + 1000, GetAdminServices(replicationStateManager, logReplicator));
+    }
+
+    private IEnumerable<INodeService> GetClusterServices(ReplicationStateManager replicationStateManager,
+        LogReplicator logReplicator)
+    {
+        return
         [
             new LeaderDiscoveryService(_stateStore),
             new RegisterNodeService(_clusterStore),
-            new CommandProcessingService(_stateStore, _clusterStore, _clientPool, logReplicator, replicationStateManager, _heartBeatRunner), //listening for command forwarded by other nodes to leader
+            new CommandProcessingService(_stateStore, _clusterStore, _clientPool, logReplicator,
+                replicationStateManager, _heartBeatRunner),
             new AppendEntriesService(_stateStore),
         ];
-        _clusterMessageReceiver = new ClusterMessageReceiver(port, clusterServices);
-        IEnumerable<INodeService> adminServices =
-        [
-            new CommandProcessingService(_stateStore, _clusterStore, _clientPool, logReplicator, replicationStateManager, _heartBeatRunner), // listening for command from the cli
+    }
+
+    private IEnumerable<INodeService> GetAdminServices(ReplicationStateManager replicationStateManager,
+        LogReplicator logReplicator)
+    {
+        return [
+            new CommandProcessingService(_stateStore, _clusterStore, _clientPool, logReplicator,
+                replicationStateManager, _heartBeatRunner),
             new PingReplyService(_nodeName),
             new NodeInfoService(_nodeName, new NodeAddress(_nodeHost, _nodePort), _stateStore, _clusterStore),
             new LogInfoService(_stateStore),
             new ControlService(_heartBeatRunner, _clusterMessageReceiver, _stateStore),
             new GetStateService(_stateStore)
         ];
-        _adminMessageReceiver = new AdminMessageReceiver(port + 1000, adminServices);
     }
 
     public void Start()
@@ -92,12 +106,9 @@ public class RaftNode
     private NodeAddress AskForLeader()
     {
         var client = _clientPool.GetLeaderDiscoveryClient(_peerAddress);
-
         var reply = client.GetLeader(new LeaderQueryRequest());
-
         var leaderAddress = new NodeAddress(reply.Host, reply.Port);
         Log.Information($"{_nodeName} found leader: {leaderAddress}");
-
         return leaderAddress;
     }
 
