@@ -65,7 +65,7 @@ public static class Program
 
         var clusterHost = addOptions.ClusterHost.Split(":");
         var follower = new RaftNode(NodeType.Follower, addOptions.Name, port, clusterHost[0], int.Parse(clusterHost[1]),
-            addOptions.TimeoutSeconds);
+            addOptions.TimeoutSeconds, 3);
 
         follower.Start();
         Log.Information($"Created follower node {addOptions.Name} listening on port {port}.");
@@ -76,7 +76,7 @@ public static class Program
     private static RaftNode AddLeaderNode(AddOptions addOptions)
     {
         var port = int.Parse(addOptions.Port);
-        var leader = new RaftNode(NodeType.Leader, addOptions.Name, port, "localhost", port, addOptions.TimeoutSeconds);
+        var leader = new RaftNode(NodeType.Leader, addOptions.Name, port, "localhost", port, addOptions.TimeoutSeconds, 3);
 
         leader.Start();
         Log.Information($"Created leader node {addOptions.Name} listening on port {port}");

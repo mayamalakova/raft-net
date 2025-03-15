@@ -28,7 +28,8 @@ public class RaftNode
     private readonly int _nodePort;
     private readonly NodeAddress _peerAddress;
 
-    public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort, int timeoutSeconds)
+    public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort, int timeoutSeconds, int
+        heartBeatIntervalSeconds)
     {
         _nodeHost = "localhost"; //TODO this should be externally visible IP address
         _nodeName = nodeName;
@@ -39,10 +40,11 @@ public class RaftNode
         _clusterStore = new ClusterNodeStore();
         var replicationStateManager = new ReplicationStateManager(_stateStore, _clusterStore);
         var logReplicator = new LogReplicator(_stateStore, _clientPool, _clusterStore, _nodeName, timeoutSeconds);
-        _heartBeatRunner = new HeartBeatRunner(3000, () =>
+        _heartBeatRunner = new HeartBeatRunner(heartBeatIntervalSeconds * 1000, () =>
         {
             logReplicator.ReplicateToFollowers();
             replicationStateManager.UpdateCommitIndex(_clusterStore.GetNodes().ToArray());
+            _stateStore.ApplyCommitted();
         });
 
         _clusterMessageReceiver =

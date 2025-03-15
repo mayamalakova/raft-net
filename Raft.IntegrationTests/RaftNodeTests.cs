@@ -90,7 +90,7 @@ public class RaftNodeTests
 
     private RaftNode CreateLeader(string name, int port)
     {
-        var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port, 1);
+        var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port, 1, 1);
         leader.Start();
         _nodes.Add(leader);
         return leader;
@@ -98,7 +98,7 @@ public class RaftNodeTests
     
     private RaftNode CreateFollower(string name, int port, int peerPort)
     {
-        var node = new RaftNode(NodeType.Follower, name, port, "localhost", peerPort, 1);
+        var node = new RaftNode(NodeType.Follower, name, port, "localhost", peerPort, 1, 1);
         node.Start();
         _nodes.Add(node);
         return node;

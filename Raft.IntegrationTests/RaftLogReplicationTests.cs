@@ -49,7 +49,7 @@ public class RaftLogReplicationTests
     public void ShouldApplyLatestCommittedAtLeaderAfterReconcilingFollowerToGetMajority()
     {
         var leader = CreateLeader("leader1", 5001);
-        CreateFollower("follower1", 5002, 5001);
+        var follower1 = CreateFollower("follower1", 5002, 5001);
         var follower2 = CreateFollower("follower2", 5003, 5002);
 
         var leaderClient = new RaftClient("localhost", 5001);
@@ -72,12 +72,15 @@ public class RaftLogReplicationTests
         followerClient2.LogInfo().ShouldBe( "{ \"entries\": \"(A=1)\" }");
         leaderClient.GetState().ShouldBe("value: 1, errors: [ ]");
         leader.GetNodeState().ShouldBe("commitIndex=0, term=0, lastApplied=0");
+        follower1.GetNodeState().ShouldBe("commitIndex=0, term=0, lastApplied=0");
         
         // reconnect follower2 and give time to replicate
         ReconnectNode(followerClient2, follower2);
-        Task.Delay(8000).Wait();
+        Task.Delay(4000).Wait();
         
         leader.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
+        follower2.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
+        follower1.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
         leaderClient.GetState().ShouldBe("value: 2, errors: [ ]");
         followerClient2.GetState().ShouldBe("value: 2, errors: [ ]");
         followerClient1.GetState().ShouldBe("value: 2, errors: [ ]");
@@ -126,7 +129,7 @@ public class RaftLogReplicationTests
 
     private RaftNode CreateLeader(string name, int port)
     {
-        var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port, 1);
+        var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port, 1, 2);
         leader.Start();
         _nodes.Add(leader);
         return leader;
@@ -134,7 +137,7 @@ public class RaftLogReplicationTests
     
     private RaftNode CreateFollower(string name, int port, int peerPort)
     {
-        var node = new RaftNode(NodeType.Follower, name, port, "localhost", peerPort, 1);
+        var node = new RaftNode(NodeType.Follower, name, port, "localhost", peerPort, 1, 2);
         node.Start();
         _nodes.Add(node);
         return node;
