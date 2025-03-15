@@ -44,6 +44,44 @@ public class RaftLogReplicationTests
         Task.Delay(4000).Wait();
         followerClient2.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (B=1)\" }");
     }
+    
+    [Test]
+    public void ShouldApplyLatestCommittedAtLeaderAfterReconcilingFollowerToGetMajority()
+    {
+        var leader = CreateLeader("leader1", 5001);
+        CreateFollower("follower1", 5002, 5001);
+        var follower2 = CreateFollower("follower2", 5003, 5002);
+
+        var leaderClient = new RaftClient("localhost", 5001);
+        var followerClient1 = new RaftClient("localhost", 5002);
+        var followerClient2 = new RaftClient("localhost", 5003);
+        leader.GetNodeState().ShouldBe("commitIndex=-1, term=0, lastApplied=-1");
+        
+        // command 1 - A=1
+        leaderClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = 1 });
+        followerClient1.LogInfo().ShouldBe( "{ \"entries\": \"(A=1)\" }");
+        followerClient2.LogInfo().ShouldBe( "{ \"entries\": \"(A=1)\" }");
+        leader.GetNodeState().ShouldBe("commitIndex=0, term=0, lastApplied=0");
+
+        // disconnect follower2
+        DisconnectNode(followerClient2, follower2);
+        
+        // command 2 - A=2
+        leaderClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = 2 });
+        followerClient1.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A=2)\" }");
+        followerClient2.LogInfo().ShouldBe( "{ \"entries\": \"(A=1)\" }");
+        leaderClient.GetState().ShouldBe("value: 1, errors: [ ]");
+        leader.GetNodeState().ShouldBe("commitIndex=0, term=0, lastApplied=0");
+        
+        // reconnect follower2 and give time to replicate
+        ReconnectNode(followerClient2, follower2);
+        Task.Delay(8000).Wait();
+        
+        leader.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
+        leaderClient.GetState().ShouldBe("value: 2, errors: [ ]");
+        followerClient2.GetState().ShouldBe("value: 2, errors: [ ]");
+        followerClient1.GetState().ShouldBe("value: 2, errors: [ ]");
+    }
 
     [Test]
     public void ShouldApplyCommittedEntriesOnLeaderAfterReplication()
