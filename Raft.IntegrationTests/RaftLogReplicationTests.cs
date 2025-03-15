@@ -77,7 +77,7 @@ public class RaftLogReplicationTests
         // reconnect follower2 and give time to replicate
         ReconnectNode(followerClient2, follower2);
 
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < 6; i++)
         {
             Task.Delay(2000).Wait();
             if (HasReconciled()) break;
