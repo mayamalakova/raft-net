@@ -23,7 +23,7 @@ public class RaftLogReplicationTests
     [Test]
     public void ShouldReconcileFollowerLogAfterReconnecting()
     {
-        CreateLeader("leader1", 5001);
+        CreateLeader("leader1", 5001, 1);
         CreateFollower("follower1", 5002, 5001);
         var follower2 = CreateFollower("follower2", 5003, 5002);
 
@@ -48,7 +48,7 @@ public class RaftLogReplicationTests
     [Test]
     public void ShouldApplyLatestCommittedAtLeaderAfterReconcilingFollowerToGetMajority()
     {
-        var leader = CreateLeader("leader1", 5001);
+        var leader = CreateLeader("leader1", 5001, 1);
         var follower1 = CreateFollower("follower1", 5002, 5001);
         var follower2 = CreateFollower("follower2", 5003, 5002);
 
@@ -76,11 +76,11 @@ public class RaftLogReplicationTests
         
         // reconnect follower2 and give time to replicate
         ReconnectNode(followerClient2, follower2);
-        Task.Delay(4000).Wait();
+        Task.Delay(6000).Wait();
         
         leader.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
-        follower2.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
         follower1.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
+        follower2.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
         leaderClient.GetState().ShouldBe("value: 2, errors: [ ]");
         followerClient2.GetState().ShouldBe("value: 2, errors: [ ]");
         followerClient1.GetState().ShouldBe("value: 2, errors: [ ]");
@@ -129,7 +129,15 @@ public class RaftLogReplicationTests
 
     private RaftNode CreateLeader(string name, int port)
     {
-        var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port, 1, 2);
+        var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port, 1, 3);
+        leader.Start();
+        _nodes.Add(leader);
+        return leader;
+    }
+
+    private RaftNode CreateLeader(string name, int port, int heartBeatInterval)
+    {
+        var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port, 1, heartBeatInterval);
         leader.Start();
         _nodes.Add(leader);
         return leader;
@@ -137,7 +145,7 @@ public class RaftLogReplicationTests
     
     private RaftNode CreateFollower(string name, int port, int peerPort)
     {
-        var node = new RaftNode(NodeType.Follower, name, port, "localhost", peerPort, 1, 2);
+        var node = new RaftNode(NodeType.Follower, name, port, "localhost", peerPort, 1, 3);
         node.Start();
         _nodes.Add(node);
         return node;
