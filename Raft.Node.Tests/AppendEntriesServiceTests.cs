@@ -21,7 +21,7 @@ public class AppendEntriesServiceTests
     public void SetUp()
     {
         _nodeStateStore = new NodeStateStore();
-        _service = new AppendEntriesService(_nodeStateStore);
+        _service = new AppendEntriesService(_nodeStateStore, "someNode");
     }
     
     [TestCase(1, 1, true)]

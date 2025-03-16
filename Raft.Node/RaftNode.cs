@@ -62,7 +62,7 @@ public class RaftNode
             new RegisterNodeService(_clusterStore),
             new CommandProcessingService(_stateStore, _clusterStore, _clientPool, logReplicator,
                 replicationStateManager, _heartBeatRunner),
-            new AppendEntriesService(_stateStore),
+            new AppendEntriesService(_stateStore, _nodeName),
         ];
     }
 
@@ -75,7 +75,7 @@ public class RaftNode
             new PingReplyService(_nodeName),
             new NodeInfoService(_nodeName, new NodeAddress(_nodeHost, _nodePort), _stateStore, _clusterStore),
             new LogInfoService(_stateStore),
-            new ControlService(_heartBeatRunner, _clusterMessageReceiver, _stateStore),
+            new ControlService(_heartBeatRunner, _clusterMessageReceiver, _stateStore, _nodeName),
             new GetStateService(_stateStore)
         ];
     }
