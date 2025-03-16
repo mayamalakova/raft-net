@@ -76,27 +76,41 @@ public class RaftNode
 
     public void Start()
     {
-        _stateStore.LeaderAddress = _stateStore.Role == NodeType.Follower
-            ? AskForLeader()
-            : _peerAddress;
-        if (_stateStore.Role == NodeType.Follower)
+        switch (_stateStore.Role)
         {
-            var registerNodeClient = _clientPool.GetRegisterNodeClient(_stateStore.LeaderAddress);
-            var registerReply = registerNodeClient.RegisterNode(new RegisterNodeRequest
-            {
-                Name = _nodeName,
-                Host = _nodeHost, 
-                Port = _nodePort
-            });
-            Log.Information($"Registered with leader {registerReply}");
+            case NodeType.Leader:
+                StartLeader();
+                break;
+            case NodeType.Follower:
+                StartFollower();
+                break;
+            default:
+                throw new ArgumentException($"Unknown node role {_stateStore.Role}");
         }
+    }
+
+    private void StartLeader()
+    {
+        _stateStore.LeaderAddress = _peerAddress;
+        _clusterMessageReceiver.Start();
+        _adminMessageReceiver.Start();
+        _heartBeatRunner.StartBeating();
+    }
+
+    private void StartFollower()
+    {
+        _stateStore.LeaderAddress = AskForLeader();
+        var registerNodeClient = _clientPool.GetRegisterNodeClient(_stateStore.LeaderAddress);
+        var registerReply = registerNodeClient.RegisterNode(new RegisterNodeRequest
+        {
+            Name = _nodeName,
+            Host = _nodeHost, 
+            Port = _nodePort
+        });
+        Log.Information($"Registered with leader {registerReply}");
 
         _clusterMessageReceiver.Start();
         _adminMessageReceiver.Start();
-        if (_stateStore.Role == NodeType.Leader)
-        {
-            _heartBeatRunner.StartBeating();
-        }
     }
 
     private NodeAddress AskForLeader()
