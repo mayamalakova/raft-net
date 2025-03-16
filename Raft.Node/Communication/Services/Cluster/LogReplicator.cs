@@ -73,7 +73,7 @@ public class LogReplicator(
 
     private async Task<AppendEntriesReply?> TrySendAppendEntriesRequest(NodeInfo node, IList<LogEntry> entries)
     {
-        Log.Information($"Sending append entries to node {node.NodeName} - {entries.Count} entries");
+        Log.Information($"Sending append entries to node {node.NodeName} - {entries.Count} entries, commitIndex={stateStore.CommitIndex}");
         try
         {
             return await SendAppendEntriesRequestAsync(node, entries.Select(e => e.ToMessage())
@@ -86,12 +86,12 @@ public class LogReplicator(
         }
         catch (RpcException ex)
         {
-            Log.Information($"Could not connect to {node.NodeName}: {ex.GetType()}");
+            Log.Information($"Could not connect to {node.NodeName}: {ex.GetType()} {ex.Message} {ex.StackTrace}");
             return null;
         }
         catch (Exception ex)
         {
-            Log.Information($"Error occurred for node {node.NodeName}: {ex.GetType()} {ex.StackTrace}");
+            Log.Information($"Error occurred for node {node.NodeName}: {ex.GetType()} {ex.StackTrace} {ex.GetBaseException()} {ex.InnerException}");
             return null;
         }
     }
@@ -101,8 +101,10 @@ public class LogReplicator(
     {
         var appendEntriesRequest = EntriesRequestFactory.CreateRequest(follower.NodeName, entries);
         var deadline = DateTime.UtcNow.Add(timeout);
+        Log.Information($"awaiting GetAppendEntriesClient {follower.NodeName}");
         var reply = await clientPool.GetAppendEntriesClient(follower.NodeAddress)
             .AppendEntriesAsync(appendEntriesRequest, new CallOptions(deadline: deadline));
+        Log.Information($"got reply to GetAppendEntriesClient from {follower.NodeName}");
         return reply;
     }
 

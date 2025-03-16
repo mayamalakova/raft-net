@@ -13,7 +13,7 @@ namespace Raft.Node.Communication.Services.Admin;
 /// <param name="heartBeatRunner"></param>
 /// <param name="raftServer"></param>
 /// <param name="stateStore"></param>
-public class ControlService(HeartBeatRunner? heartBeatRunner, IClusterMessageReceiver raftServer, INodeStateStore stateStore) : ControlSvc.ControlSvcBase, INodeService
+public class ControlService(HeartBeatRunner? heartBeatRunner, IClusterMessageReceiver raftServer, INodeStateStore stateStore, string nodeName) : ControlSvc.ControlSvcBase, INodeService
 {
     public override Task<DisconnectReply> DisconnectNode(DisconnectMessage request, ServerCallContext context)
     {
@@ -21,14 +21,14 @@ public class ControlService(HeartBeatRunner? heartBeatRunner, IClusterMessageRec
         Log.Information("Stopping heartbeat");
 
         raftServer.DisconnectFromCluster();
-        Log.Information("Disconnecting");
+        Log.Information($"Disconnecting {nodeName}");
         
         return Task.FromResult(new DisconnectReply {Reply = "Node disconnected."});
     }
 
     public override Task<ReconnectReply> ReconnectNode(ReconnectMessage request, ServerCallContext context)
     {
-        Log.Information("Reconnecting");
+        Log.Information($"Reconnecting {nodeName}");
         raftServer.ReconnectToCluster();
 
         if (stateStore.Role == NodeType.Leader)

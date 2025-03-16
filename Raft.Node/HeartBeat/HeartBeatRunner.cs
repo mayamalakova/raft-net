@@ -9,6 +9,11 @@ public class HeartBeatRunner
     private readonly Action _action;
     private readonly Timer _timer;
 
+    /// <summary>
+    /// Create a heartbeat runner that will execute the given action at the given interval.
+    /// </summary>
+    /// <param name="interval">in milliseconds</param>
+    /// <param name="action">action to execute</param>
     public HeartBeatRunner(int interval, Action action)
     {
         _action = action;

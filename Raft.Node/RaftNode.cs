@@ -28,7 +28,8 @@ public class RaftNode
     private readonly int _nodePort;
     private readonly NodeAddress _peerAddress;
 
-    public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort, int timeoutSeconds)
+    public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort, int timeoutSeconds, int
+        heartBeatIntervalSeconds)
     {
         _nodeHost = "localhost"; //TODO this should be externally visible IP address
         _nodeName = nodeName;
@@ -39,10 +40,11 @@ public class RaftNode
         _clusterStore = new ClusterNodeStore();
         var replicationStateManager = new ReplicationStateManager(_stateStore, _clusterStore);
         var logReplicator = new LogReplicator(_stateStore, _clientPool, _clusterStore, _nodeName, timeoutSeconds);
-        _heartBeatRunner = new HeartBeatRunner(3000, () =>
+        _heartBeatRunner = new HeartBeatRunner(heartBeatIntervalSeconds * 1000, () =>
         {
             logReplicator.ReplicateToFollowers();
             replicationStateManager.UpdateCommitIndex(_clusterStore.GetNodes().ToArray());
+            _stateStore.ApplyCommitted();
         });
 
         _clusterMessageReceiver =
@@ -60,7 +62,7 @@ public class RaftNode
             new RegisterNodeService(_clusterStore),
             new CommandProcessingService(_stateStore, _clusterStore, _clientPool, logReplicator,
                 replicationStateManager, _heartBeatRunner),
-            new AppendEntriesService(_stateStore),
+            new AppendEntriesService(_stateStore, _nodeName),
         ];
     }
 
@@ -73,7 +75,7 @@ public class RaftNode
             new PingReplyService(_nodeName),
             new NodeInfoService(_nodeName, new NodeAddress(_nodeHost, _nodePort), _stateStore, _clusterStore),
             new LogInfoService(_stateStore),
-            new ControlService(_heartBeatRunner, _clusterMessageReceiver, _stateStore),
+            new ControlService(_heartBeatRunner, _clusterMessageReceiver, _stateStore, _nodeName),
             new GetStateService(_stateStore)
         ];
     }

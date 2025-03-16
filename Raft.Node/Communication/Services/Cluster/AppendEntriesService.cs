@@ -6,7 +6,7 @@ using Serilog;
 
 namespace Raft.Node.Communication.Services.Cluster;
 
-public class AppendEntriesService(INodeStateStore stateStore) : AppendEntriesSvc.AppendEntriesSvcBase, INodeService
+public class AppendEntriesService(INodeStateStore stateStore, string nodeName) : AppendEntriesSvc.AppendEntriesSvcBase, INodeService
 {
     public override Task<AppendEntriesReply> AppendEntries(AppendEntriesRequest request, ServerCallContext context)
     {
@@ -27,6 +27,7 @@ public class AppendEntriesService(INodeStateStore stateStore) : AppendEntriesSvc
         // 5. update commitIndex
         if (request.LeaderCommit > stateStore.CommitIndex)
         {
+            Log.Information($"{nodeName} updating commit index from {stateStore.CommitIndex} to {request.LeaderCommit}");
             stateStore.CommitIndex = Math.Min(request.LeaderCommit, stateStore.LogLength - 1);
         }
 
