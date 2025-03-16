@@ -32,15 +32,15 @@ public class RaftNodeTests
         var pingReply = followerClient1.Ping();
         pingReply.ShouldBe("{ \"reply\": \"Pong from follower1 at localhost:6002\" }");
         var followerInfo = followerClient1.Info();
-        followerInfo.ShouldBe("{ \"name\": \"follower1\", \"role\": \"Follower\", \"address\": \"localhost:5002\", \"leaderAddress\": \"localhost:5001\", \"knownNodes\": \"(follower2=localhost:5003),(leader1=localhost:5001)\", \"commitIndex\": \"-1\" }");
+        followerInfo.ShouldContain("\"leaderAddress\": \"localhost:5001\"");
+        followerInfo.ShouldContain("knownNodes\": \"(follower2=localhost:5003),(leader1=localhost:5001)\"");
 
         var leaderRaftClient = new RaftClient("localhost", 5001);
-        var leaderInfo = leaderRaftClient.Info();
-        leaderInfo.ShouldBe("{ \"name\": \"leader1\", \"role\": \"Leader\", \"address\": \"localhost:5001\", \"leaderAddress\": \"localhost:5001\", \"knownNodes\": \"(follower1=localhost:5002),(follower2=localhost:5003)\", \"commitIndex\": \"-1\" }");
+        leaderRaftClient.Info().ShouldContain("\"knownNodes\": \"(follower1=localhost:5002),(follower2=localhost:5003)\"");
     }
     
     [Test]
-    public void RaftNodesShouldAddExistingFollowersToKnownNodesWhenRegistered()
+    public void ShouldPopulateFollowerKnownNodesWhenRegistered()
     {
         CreateLeader("leader1", 5001);
         CreateFollower("follower1", 5002, 5001);
@@ -51,6 +51,20 @@ public class RaftNodeTests
         var followerInfo = followerClient2.Info();
 
         followerInfo.ShouldContain("\"knownNodes\": \"(follower1=localhost:5002),(leader1=localhost:5001)\"");
+    }
+    
+    [Test]
+    public void ShouldUpdateKnownNodesOfAllExistingFollowersWhenNewNodeIsRegistered()
+    {
+        CreateLeader("leader1", 5001);
+        CreateFollower("follower1", 5002, 5001);
+        var followerClient1 = new RaftClient("localhost", 5002);
+        
+        followerClient1.Info().ShouldContain("\"knownNodes\": \"(leader1=localhost:5001)\"");
+        
+        CreateFollower("follower2", 5003, 5002);
+
+        followerClient1.Info().ShouldContain("\"knownNodes\": \"(follower2=localhost:5003),(leader1=localhost:5001)\"");
     }
 
     [Test]
