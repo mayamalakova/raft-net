@@ -11,7 +11,7 @@ using Serilog;
 namespace Raft.Node.Communication.Services.Cluster;
 
 /// <summary>
-/// Processes commands.
+/// A GRPC service that processes command requests at a leader node.
 /// If the node is a follower, forwards the command to the leader.
 /// If the node is a leader:
 ///  - appends the command to the log
@@ -30,8 +30,7 @@ public class CommandProcessingService(
     INodeStateStore stateStore,
     IClusterNodeStore clusterStore,
     IClientPool clientPool,
-    LogReplicator logReplicator,
-    ReplicationStateManager replicationStateManager,
+    RaftLeaderService leaderService,
     HeartBeatRunner heartBeatRunner) : CommandSvc.CommandSvcBase, INodeService
 {
     public override Task<CommandReply> ApplyCommand(CommandRequest request, ServerCallContext context)
@@ -46,11 +45,7 @@ public class CommandProcessingService(
         Log.Information($"{command} appended in term={stateStore.CurrentTerm}. log is {stateStore.PrintLog()}");
 
         heartBeatRunner.StopBeating();
-        
-        logReplicator.ReplicateToFollowers();
-        replicationStateManager.UpdateCommitIndex(clusterStore.GetNodes().ToArray());
-        var newState = stateStore.ApplyCommitted();
-        
+        var newState = leaderService.ReconcileCluster();
         heartBeatRunner.StartBeating();
 
         return Task.FromResult(new CommandReply()

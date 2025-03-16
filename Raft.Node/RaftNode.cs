@@ -27,6 +27,7 @@ public class RaftNode
     private readonly string _nodeHost;
     private readonly int _nodePort;
     private readonly NodeAddress _peerAddress;
+    private readonly RaftLeaderService _leaderService;
 
     public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort, int timeoutSeconds, int
         heartBeatIntervalSeconds)
@@ -40,38 +41,31 @@ public class RaftNode
         _clusterStore = new ClusterNodeStore();
         var replicationStateManager = new ReplicationStateManager(_stateStore, _clusterStore);
         var logReplicator = new LogReplicator(_stateStore, _clientPool, _clusterStore, _nodeName, timeoutSeconds);
+        _leaderService = new RaftLeaderService(logReplicator, replicationStateManager, _stateStore, _clusterStore);
         _heartBeatRunner = new HeartBeatRunner(heartBeatIntervalSeconds * 1000, () =>
         {
-            logReplicator.ReplicateToFollowers();
-            replicationStateManager.UpdateCommitIndex(_clusterStore.GetNodes().ToArray());
-            _stateStore.ApplyCommitted();
+            _leaderService.ReconcileCluster();
         });
 
-        _clusterMessageReceiver =
-            new ClusterMessageReceiver(port, GetClusterServices(replicationStateManager, logReplicator));
-        _adminMessageReceiver =
-            new AdminMessageReceiver(port + 1000, GetAdminServices(replicationStateManager, logReplicator));
+        _clusterMessageReceiver = new ClusterMessageReceiver(port, GetClusterServices());
+        _adminMessageReceiver = new AdminMessageReceiver(port + 1000, GetAdminServices());
     }
 
-    private IEnumerable<INodeService> GetClusterServices(ReplicationStateManager replicationStateManager,
-        LogReplicator logReplicator)
+    private IEnumerable<INodeService> GetClusterServices()
     {
         return
         [
             new LeaderDiscoveryService(_stateStore),
             new RegisterNodeService(_clusterStore),
-            new CommandProcessingService(_stateStore, _clusterStore, _clientPool, logReplicator,
-                replicationStateManager, _heartBeatRunner),
+            new CommandProcessingService(_stateStore, _clusterStore, _clientPool, _leaderService, _heartBeatRunner),
             new AppendEntriesService(_stateStore, _nodeName),
         ];
     }
 
-    private IEnumerable<INodeService> GetAdminServices(ReplicationStateManager replicationStateManager,
-        LogReplicator logReplicator)
+    private IEnumerable<INodeService> GetAdminServices()
     {
         return [
-            new CommandProcessingService(_stateStore, _clusterStore, _clientPool, logReplicator,
-                replicationStateManager, _heartBeatRunner),
+            new CommandProcessingService(_stateStore, _clusterStore, _clientPool, _leaderService, _heartBeatRunner),
             new PingReplyService(_nodeName),
             new NodeInfoService(_nodeName, new NodeAddress(_nodeHost, _nodePort), _stateStore, _clusterStore),
             new LogInfoService(_stateStore),
