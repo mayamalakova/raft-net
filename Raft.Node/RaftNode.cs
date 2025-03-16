@@ -91,7 +91,7 @@ public class RaftNode
 
     private void StartLeader()
     {
-        _stateStore.LeaderAddress = _peerAddress;
+        _stateStore.LeaderInfo = new NodeInfo(_nodeName, _peerAddress);
         _clusterMessageReceiver.Start();
         _adminMessageReceiver.Start();
         _heartBeatRunner.StartBeating();
@@ -100,9 +100,9 @@ public class RaftNode
     private void StartFollower()
     {
         var leaderReply = AskForLeader();
-        _stateStore.LeaderAddress = leaderReply.address;
+        _stateStore.LeaderInfo = new NodeInfo(leaderReply.name, leaderReply.address);
         _clusterStore.AddNode(leaderReply.name, leaderReply.address);
-        var registerNodeClient = _clientPool.GetRegisterNodeClient(_stateStore.LeaderAddress);
+        var registerNodeClient = _clientPool.GetRegisterNodeClient(_stateStore.LeaderInfo.NodeAddress);
         var registerReply = registerNodeClient.RegisterNode(new RegisterNodeRequest
         {
             Name = _nodeName,

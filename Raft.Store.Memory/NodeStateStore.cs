@@ -8,7 +8,7 @@ public class NodeStateStore : INodeStateStore
     private readonly ReplicationLog _log = new();
 
     public NodeType Role { get; set; }
-    public NodeAddress? LeaderAddress { get; set; }
+    public NodeInfo? LeaderInfo { get; set; }
     public int CurrentTerm { get; set; }
     public int CommitIndex { get; set; } = -1; // -1 means no items committed
     public int LastApplied { get; set; } = -1; // -1 means no items applied

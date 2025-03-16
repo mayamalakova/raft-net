@@ -71,7 +71,7 @@ public class CommandProcessingServiceTests
     {
         var leaderAddress = new NodeAddress("localhost", 5001);
         _stateStore.Role.Returns(NodeType.Follower);
-        _stateStore.LeaderAddress.Returns(leaderAddress);
+        _stateStore.LeaderInfo.Returns(new NodeInfo("leader", leaderAddress));
 
         var commandRequest = new CommandRequest() { Variable = "A", Operation = "=", Literal = 5 };
         CreateMockCommandClient(leaderAddress, commandRequest,

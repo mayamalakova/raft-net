@@ -8,7 +8,8 @@ namespace Raft.Store;
 public interface INodeStateStore
 {
     NodeType Role { get; set; }
-    NodeAddress? LeaderAddress { get; set; }
+    NodeInfo? LeaderInfo { get; set; }
+    
     int CurrentTerm { get; set; }
     int CommitIndex { get; set; }
     int LogLength { get; }

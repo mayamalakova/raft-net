@@ -12,15 +12,16 @@ public class LeaderDiscoveryService(INodeStateStore stateStore) : LeaderDiscover
 {
     public override Task<LeaderQueryReply> GetLeader(LeaderQueryRequest request, ServerCallContext context)
     {
-        var leaderAddress = stateStore.LeaderAddress;
-        if (leaderAddress == null)
+        var leaderInfo = stateStore.LeaderInfo;
+        if (leaderInfo == null)
         {
             throw new RpcException(new Status(StatusCode.InvalidArgument, "Leader address not initialized"));
         }
         return Task.FromResult(new LeaderQueryReply
         {
-            Host = leaderAddress.Host, 
-            Port = leaderAddress.Port
+            Host = leaderInfo.NodeAddress.Host, 
+            Port = leaderInfo.NodeAddress.Port,
+            Name = leaderInfo.NodeName
         });
     }
 
