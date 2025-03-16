@@ -109,8 +109,12 @@ public class RaftNode
             Host = _nodeHost, 
             Port = _nodePort
         });
-        Log.Information($"Registered with leader {registerReply}");
+        Log.Information($"Registered with leader {registerReply.Reply}");
 
+        foreach (var n in registerReply.Nodes)
+        {
+            _clusterStore.AddNode(n.Name, new NodeAddress(n.Host, n.Port));
+        }
         _clusterMessageReceiver.Start();
         _adminMessageReceiver.Start();
     }

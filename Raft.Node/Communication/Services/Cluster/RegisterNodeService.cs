@@ -15,12 +15,15 @@ public class RegisterNodeService(INodeStateStore stateStore, IClusterNodeStore c
         {
             UpdateClusterMembersAtFollowers(request);
         }
-        
+
+        var knownNodes = clusterStore.GetNodes()
+            .Select(n => new NodeInfoMessage {Name = n.NodeName, Host = n.NodeAddress.Host, Port = n.NodeAddress.Port}).ToArray();
         var result = clusterStore.AddNode(request.Name, new NodeAddress(request.Host, request.Port));
         Log.Information($"Added node {request.Name}. Cluster members are {clusterStore}");
         return Task.FromResult(new RegisterNodeRply
         {
-            Reply = result
+            Reply = result,
+            Nodes = {knownNodes}
         });
     }
 
