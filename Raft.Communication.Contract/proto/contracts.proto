@@ -8,6 +8,7 @@ message LeaderQueryRequest{
 message LeaderQueryReply{
   string host = 1;
   int32 port = 2;
+  string name = 3;
 }
 
 service LeaderDiscoverySvc {
@@ -84,8 +85,15 @@ message RegisterNodeRequest {
   int32 port = 3;
 }
 
+message NodeInfoMessage {
+  string name = 1;
+  string host = 2;
+  int32 port = 3;
+}
+
 message RegisterNodeRply {
   string reply = 1;
+  repeated NodeInfoMessage nodes = 2;
 }
 
 service RegisterNodeSvc{

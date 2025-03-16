@@ -14,7 +14,7 @@ public class NodeInfoService(string name, NodeAddress nodeAddress, INodeStateSto
             Address = nodeAddress.ToString(),
             Name = name,
             Role = stateStore.Role.ToString(), 
-            LeaderAddress = stateStore.LeaderAddress?.ToString(),
+            LeaderAddress = stateStore.LeaderInfo?.NodeAddress.ToString(),
             KnownNodes = nodeStore.ToString(),
             CommitIndex = stateStore.CommitIndex.ToString(),
         });

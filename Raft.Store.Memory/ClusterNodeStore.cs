@@ -52,7 +52,7 @@ public class ClusterNodeStore: IClusterNodeStore
 
     public override string ToString()
     {
-        return string.Join(",", _nodes.Select(n => $"({n.Key}={n.Value})"));
+        return string.Join(",", _nodes.OrderBy(n => n.Key).Select(n => $"({n.Key}={n.Value})"));
     }
 
     public int GetMatchingIndex(string nodeName)

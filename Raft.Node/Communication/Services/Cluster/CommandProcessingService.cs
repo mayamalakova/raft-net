@@ -56,7 +56,7 @@ public class CommandProcessingService(
 
     private Task<CommandReply> ForwardCommand(CommandRequest request)
     {
-        if (stateStore.LeaderAddress == null)
+        if (stateStore.LeaderInfo == null)
         {
             return Task.FromResult(new CommandReply()
             {
@@ -64,7 +64,7 @@ public class CommandProcessingService(
             });
         }
 
-        var commandClient = clientPool.GetCommandServiceClient(stateStore.LeaderAddress);
+        var commandClient = clientPool.GetCommandServiceClient(stateStore.LeaderInfo.NodeAddress);
         Log.Information($"Forwarding command {request}");
         return commandClient.ApplyCommandAsync(request).ResponseAsync;
     }
