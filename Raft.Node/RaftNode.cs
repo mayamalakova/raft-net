@@ -56,7 +56,7 @@ public class RaftNode
         return
         [
             new LeaderDiscoveryService(_stateStore),
-            new RegisterNodeService(_clusterStore),
+            new RegisterNodeService(_stateStore, _clusterStore, _clientPool),
             new CommandProcessingService(_stateStore, _clusterStore, _clientPool, _leaderService, _heartBeatRunner),
             new AppendEntriesService(_stateStore, _nodeName),
         ];
@@ -99,7 +99,9 @@ public class RaftNode
 
     private void StartFollower()
     {
-        _stateStore.LeaderAddress = AskForLeader();
+        var leaderReply = AskForLeader();
+        _stateStore.LeaderAddress = leaderReply.address;
+        _clusterStore.AddNode(leaderReply.name, leaderReply.address);
         var registerNodeClient = _clientPool.GetRegisterNodeClient(_stateStore.LeaderAddress);
         var registerReply = registerNodeClient.RegisterNode(new RegisterNodeRequest
         {
@@ -113,13 +115,13 @@ public class RaftNode
         _adminMessageReceiver.Start();
     }
 
-    private NodeAddress AskForLeader()
+    private (string name, NodeAddress address) AskForLeader()
     {
         var client = _clientPool.GetLeaderDiscoveryClient(_peerAddress);
         var reply = client.GetLeader(new LeaderQueryRequest());
         var leaderAddress = new NodeAddress(reply.Host, reply.Port);
-        Log.Information($"{_nodeName} found leader: {leaderAddress}");
-        return leaderAddress;
+        Log.Information($"{_nodeName} found leader {reply.Name}: {leaderAddress}");
+        return (reply.Name, leaderAddress);
     }
 
     public void Stop()
@@ -139,5 +141,11 @@ public class RaftNode
     public string GetNodeState()
     {
         return $"commitIndex={_stateStore.CommitIndex}, term={_stateStore.CurrentTerm}, lastApplied={_stateStore.LastApplied}";
+    }
+
+    public void BecomeLeader()
+    {
+        _stateStore.Role = NodeType.Leader;
+        _heartBeatRunner.StartBeating();
     }
 }

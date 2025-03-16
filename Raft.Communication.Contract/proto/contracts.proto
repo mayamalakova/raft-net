@@ -8,6 +8,7 @@ message LeaderQueryRequest{
 message LeaderQueryReply{
   string host = 1;
   int32 port = 2;
+  string name = 3;
 }
 
 service LeaderDiscoverySvc {
