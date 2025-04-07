@@ -29,8 +29,6 @@ public class RaftNode
     private readonly NodeAddress _peerAddress;
     private readonly RaftLeaderService _leaderService;
     
-    private Object _lock = new Object();
-
     public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort, int timeoutSeconds, int
         heartBeatIntervalSeconds)
     {
@@ -47,7 +45,7 @@ public class RaftNode
         _heartBeatRunner = new HeartBeatRunner(heartBeatIntervalSeconds * 1000, () =>
         {
             _leaderService.ReconcileCluster();
-        });
+        }, StateStore);
 
         _clusterMessageReceiver = new ClusterMessageReceiver(port, GetClusterServices());
         _adminMessageReceiver = new AdminMessageReceiver(port + 1000, GetAdminServices());
@@ -157,8 +155,8 @@ public class RaftNode
 
     public void BecomeFollower(NodeInfo leaderInfo)
     {
+        StateStore.Role = NodeType.Follower;
         _heartBeatRunner.StopBeating();
         StateStore.LeaderInfo = leaderInfo;
-        StateStore.Role = NodeType.Follower;
     }
 }
