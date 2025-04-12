@@ -1,4 +1,6 @@
 ﻿using System.Timers;
+using Raft.Store;
+using Raft.Store.Domain;
 using Serilog;
 using Timer = System.Timers.Timer;
 
@@ -6,6 +8,7 @@ namespace Raft.Node.HeartBeat;
 
 public class HeartBeatRunner
 {
+    private INodeStateStore _stateStore;
     private readonly Action _action;
     private readonly Timer _timer;
 
@@ -13,10 +16,12 @@ public class HeartBeatRunner
     /// Create a heartbeat runner that will execute the given action at the given interval.
     /// </summary>
     /// <param name="interval">in milliseconds</param>
+    /// <param name="stateStore"></param>
     /// <param name="action">action to execute</param>
-    public HeartBeatRunner(int interval, Action action)
+    public HeartBeatRunner(int interval, INodeStateStore stateStore, Action action)
     {
         _action = action;
+        _stateStore = stateStore;
         _timer = new Timer(interval); 
         _timer.AutoReset = true; 
         _timer.Elapsed += PerformAction;
@@ -34,6 +39,11 @@ public class HeartBeatRunner
     
     private void PerformAction(object? sender, ElapsedEventArgs e)
     {
+        if (_stateStore.Role != NodeType.Leader)
+        {
+            Log.Information("The node is no longer a leader. Skipping heartbeat.");
+            return;
+        }
         Log.Debug($"HeartBeat at {DateTime.Now:HH:mm:ss.fff}");
         _action();
     }

@@ -1,5 +1,7 @@
-﻿using NUnit.Framework;
+﻿using NSubstitute;
+using NUnit.Framework;
 using Raft.Node.HeartBeat;
+using Raft.Store;
 using Shouldly;
 
 namespace Raft.Node.Tests;
@@ -23,7 +25,7 @@ public class HeartBeatRunnerTests
     public void SetUp()
     {
         _beatSink = new BeatSink();
-        _heartBeatRunner = new HeartBeatRunner(50, _beatSink.SendBeat);
+        _heartBeatRunner = new HeartBeatRunner(50, Substitute.For<INodeStateStore>(), _beatSink.SendBeat);
     }
 
     [Test]

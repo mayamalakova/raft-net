@@ -10,15 +10,24 @@ using Serilog;
 
 namespace Raft.Node;
 
+public interface IRaftNode
+{
+    void Start();
+    void Stop();
+    string GetClusterState();
+    string GetNodeState();
+    void BecomeLeader(int term);
+    void BecomeFollower(string leaderId, int term);
+}
+
 /// <summary>
 /// A node in a Raft cluster.
 /// Listens for messages from other nodes in the cluster and from admin clients.
 /// </summary>
-public class RaftNode
+public class RaftNode : IRaftNode
 {
     private readonly IClusterMessageReceiver _clusterMessageReceiver;
     private readonly IMessageReceiver _adminMessageReceiver;
-    private readonly INodeStateStore _stateStore;
     private readonly IClientPool _clientPool;
     private readonly IClusterNodeStore _clusterStore;
     private readonly HeartBeatRunner _heartBeatRunner;
@@ -28,6 +37,8 @@ public class RaftNode
     private readonly int _nodePort;
     private readonly NodeAddress _peerAddress;
     private readonly RaftLeaderService _leaderService;
+    
+    public INodeStateStore StateStore { get; }
 
     public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort, int timeoutSeconds, int
         heartBeatIntervalSeconds)
@@ -36,13 +47,13 @@ public class RaftNode
         _nodeName = nodeName;
         _nodePort = port;
         _peerAddress = new NodeAddress(clusterHost, clusterPort);
-        _stateStore = new NodeStateStore { Role = role };
+        StateStore = new NodeStateStore { Role = role };
         _clientPool = new ClientPool();
         _clusterStore = new ClusterNodeStore();
-        var replicationStateManager = new ReplicationStateManager(_stateStore, _clusterStore);
-        var logReplicator = new LogReplicator(_stateStore, _clientPool, _clusterStore, _nodeName, timeoutSeconds);
-        _leaderService = new RaftLeaderService(logReplicator, replicationStateManager, _stateStore, _clusterStore);
-        _heartBeatRunner = new HeartBeatRunner(heartBeatIntervalSeconds * 1000, () =>
+        var replicationStateManager = new ReplicationStateManager(StateStore, _clusterStore);
+        var logReplicator = new LogReplicator(StateStore, _clientPool, _clusterStore, _nodeName, timeoutSeconds);
+        _leaderService = new RaftLeaderService(logReplicator, replicationStateManager, StateStore, _clusterStore);
+        _heartBeatRunner = new HeartBeatRunner(heartBeatIntervalSeconds * 1000, StateStore, () =>
         {
             _leaderService.ReconcileCluster();
         });
@@ -55,28 +66,28 @@ public class RaftNode
     {
         return
         [
-            new LeaderDiscoveryService(_stateStore),
-            new RegisterNodeService(_stateStore, _clusterStore, _clientPool),
-            new CommandProcessingService(_stateStore, _clusterStore, _clientPool, _leaderService, _heartBeatRunner),
-            new AppendEntriesService(_stateStore, _nodeName),
+            new LeaderDiscoveryService(StateStore),
+            new RegisterNodeService(StateStore, _clusterStore, _clientPool),
+            new CommandProcessingService(StateStore, _clientPool, _leaderService, _heartBeatRunner),
+            new AppendEntriesService(StateStore, this, _nodeName),
         ];
     }
 
     private IEnumerable<INodeService> GetAdminServices()
     {
         return [
-            new CommandProcessingService(_stateStore, _clusterStore, _clientPool, _leaderService, _heartBeatRunner),
+            new CommandProcessingService(StateStore, _clientPool, _leaderService, _heartBeatRunner),
             new PingReplyService(_nodeName),
-            new NodeInfoService(_nodeName, new NodeAddress(_nodeHost, _nodePort), _stateStore, _clusterStore),
-            new LogInfoService(_stateStore),
-            new ControlService(_heartBeatRunner, _clusterMessageReceiver, _stateStore, _nodeName),
-            new GetStateService(_stateStore)
+            new NodeInfoService(_nodeName, new NodeAddress(_nodeHost, _nodePort), StateStore, _clusterStore),
+            new LogInfoService(StateStore),
+            new ControlService(_heartBeatRunner, _clusterMessageReceiver, StateStore, _nodeName),
+            new GetStateService(StateStore)
         ];
     }
 
     public void Start()
     {
-        switch (_stateStore.Role)
+        switch (StateStore.Role)
         {
             case NodeType.Leader:
                 StartLeader();
@@ -85,13 +96,13 @@ public class RaftNode
                 StartFollower();
                 break;
             default:
-                throw new ArgumentException($"Unknown node role {_stateStore.Role}");
+                throw new ArgumentException($"Unknown node role {StateStore.Role}");
         }
     }
 
     private void StartLeader()
     {
-        _stateStore.LeaderInfo = new NodeInfo(_nodeName, _peerAddress);
+        StateStore.LeaderInfo = new NodeInfo(_nodeName, _peerAddress);
         _clusterMessageReceiver.Start();
         _adminMessageReceiver.Start();
         _heartBeatRunner.StartBeating();
@@ -100,9 +111,9 @@ public class RaftNode
     private void StartFollower()
     {
         var leaderReply = AskForLeader();
-        _stateStore.LeaderInfo = new NodeInfo(leaderReply.name, leaderReply.address);
+        StateStore.LeaderInfo = new NodeInfo(leaderReply.name, leaderReply.address);
         _clusterStore.AddNode(leaderReply.name, leaderReply.address);
-        var registerNodeClient = _clientPool.GetRegisterNodeClient(_stateStore.LeaderInfo.NodeAddress);
+        var registerNodeClient = _clientPool.GetRegisterNodeClient(StateStore.LeaderInfo.NodeAddress);
         var registerReply = registerNodeClient.RegisterNode(new RegisterNodeRequest
         {
             Name = _nodeName,
@@ -144,12 +155,28 @@ public class RaftNode
 
     public string GetNodeState()
     {
-        return $"commitIndex={_stateStore.CommitIndex}, term={_stateStore.CurrentTerm}, lastApplied={_stateStore.LastApplied}";
+        return $"commitIndex={StateStore.CommitIndex}, term={StateStore.CurrentTerm}, lastApplied={StateStore.LastApplied}";
     }
 
-    public void BecomeLeader()
+    public void BecomeLeader(int term)
     {
-        _stateStore.Role = NodeType.Leader;
+        StateStore.Role = NodeType.Leader;
+        StateStore.LeaderInfo = new NodeInfo(_nodeName, new NodeAddress(_nodeHost, _nodePort));
+        StateStore.CurrentTerm = term;
         _heartBeatRunner.StartBeating();
+    }
+
+    public void BecomeFollower(NodeInfo leaderInfo, int term)
+    {
+        StateStore.Role = NodeType.Follower;
+        _heartBeatRunner.StopBeating();
+        StateStore.CurrentTerm = term;
+        StateStore.LeaderInfo = leaderInfo;
+    }
+
+    public void BecomeFollower(string leaderId, int term)
+    {
+        var newLeader = _clusterStore.GetNodes().First(x => x.NodeName == leaderId);
+        BecomeFollower(newLeader, term);
     }
 }

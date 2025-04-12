@@ -8,7 +8,7 @@ namespace Raft.IntegrationTests;
 
 public class RaftNodeTests
 {
-    private readonly ICollection<RaftNode> _nodes = new List<RaftNode>();
+    private readonly ICollection<IRaftNode> _nodes = new List<IRaftNode>();
     
     [TearDown]
     public void TearDown()
@@ -116,7 +116,29 @@ public class RaftNodeTests
         followerClient1.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
     }
 
-    private RaftNode CreateLeader(string name, int port)
+    [Test]
+    public void ShouldTurnToFollowerWhenGettingRequestFromNewerTerm()
+    {
+        var oldLeaderPort = 5000;
+        var oldLeader = CreateLeader("nodeA", oldLeaderPort);
+        var oldClient = new RaftClient("localhost", oldLeaderPort);
+        oldClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = 1 });
+
+        var newLeaderPort = 5001;
+        var newLeader = CreateFollower("nodeB", newLeaderPort, oldLeaderPort);
+        var newClient = new RaftClient("localhost", newLeaderPort);
+        const int newTerm = 1;
+        newLeader.BecomeLeader(newTerm);
+
+        var reply = newClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = 5 });
+        reply.ShouldContain("Success at node nodeB");
+        var oldLeaderInfo = oldClient.Info();
+        oldLeaderInfo.ShouldContain("\"role\": \"Follower\"");
+        oldLeaderInfo.ShouldContain($"\"leaderAddress\": \"localhost:{newLeaderPort}\"");
+        oldLeader.GetNodeState().ShouldContain($"term={newTerm}");
+    }
+
+    private IRaftNode CreateLeader(string name, int port)
     {
         var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port, 1, 3);
         leader.Start();
@@ -124,7 +146,7 @@ public class RaftNodeTests
         return leader;
     }
     
-    private RaftNode CreateFollower(string name, int port, int peerPort)
+    private IRaftNode CreateFollower(string name, int port, int peerPort)
     {
         var node = new RaftNode(NodeType.Follower, name, port, "localhost", peerPort, 1, 3);
         node.Start();

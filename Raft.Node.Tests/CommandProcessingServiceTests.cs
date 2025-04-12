@@ -34,21 +34,22 @@ public class CommandProcessingServiceTests
             EntriesRequestFactory = _appendEntriesRequestFactory
         };
         var leaderService = new RaftLeaderService(logReplicator, _replicationStateManager, _stateStore, _clusterStore);
-        _commandProcessingService = new CommandProcessingService(_stateStore, _clusterStore, _clientPool, leaderService,
-            new HeartBeatRunner(50, () => { }));
+        _commandProcessingService = new CommandProcessingService(_stateStore, _clientPool, leaderService,
+            new HeartBeatRunner(50, _stateStore, () => { }));
     }
 
     [Test]
     public void LeaderShouldApplyCommand()
     {
         _stateStore.Role.Returns(NodeType.Leader);
+        _stateStore.LeaderInfo.Returns(new NodeInfo("A", new NodeAddress("localhost", 5001)));
         _stateStore.ApplyCommitted().Returns(new State() {Value = 666});
         var mockCallContext = CreateMockCallContext();
 
         var reply = _commandProcessingService.ApplyCommand(
             new CommandRequest() { Variable = "A", Operation = "=", Literal = 5 }, mockCallContext);
 
-        reply.Result.ShouldBe(new CommandReply() { Result = "Success at localhost newState=value=666 errors=" });
+        reply.Result.ShouldBe(new CommandReply() { Result = "Success at node A newState=value=666 errors=" });
         _stateStore.Received().AppendLogEntry(new LogEntry(new Command("A", CommandOperation.Assignment, 5), 0));
     }
 
