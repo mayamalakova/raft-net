@@ -16,8 +16,9 @@ public class HeartBeatRunner
     /// Create a heartbeat runner that will execute the given action at the given interval.
     /// </summary>
     /// <param name="interval">in milliseconds</param>
+    /// <param name="stateStore"></param>
     /// <param name="action">action to execute</param>
-    public HeartBeatRunner(int interval, Action action, INodeStateStore stateStore)
+    public HeartBeatRunner(int interval, INodeStateStore stateStore, Action action)
     {
         _action = action;
         _stateStore = stateStore;

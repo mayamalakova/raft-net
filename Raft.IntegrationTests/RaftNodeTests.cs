@@ -116,6 +116,28 @@ public class RaftNodeTests
         followerClient1.LogInfo().ShouldBe( "{ \"entries\": \"(A=1), (A+5)\" }");
     }
 
+    [Test]
+    public void ShouldTurnToFollowerWhenGettingRequestFromNewerTerm()
+    {
+        var oldLeader = CreateLeader("nodeA", 1000);
+        var oldClient = new RaftClient("localhost", 1000);
+        oldClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = 1 });
+
+        var newLeaderPort = 1001;
+        var newLeader = CreateFollower("nodeB", newLeaderPort, 1000);
+        var newClient = new RaftClient("localhost", newLeaderPort);
+        const int newTerm = 1;
+        newLeader.BecomeLeader(newTerm);
+
+        var reply = newClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = 5 });
+        reply.ShouldContain("Success at nodeB");
+        oldLeader.GetNodeType().ShouldBe(NodeType.Follower);
+        var oldLeaderInfo = oldClient.Info();
+        oldLeaderInfo.ShouldContain("\"role\": \"Follower\"");
+        oldLeaderInfo.ShouldContain($"\"leaderAddress\": \"localhost:{newLeaderPort}\"");
+        oldLeader.GetNodeState().ShouldContain($"term={newTerm}");
+    }
+
     private RaftNode CreateLeader(string name, int port)
     {
         var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port, 1, 3);

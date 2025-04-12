@@ -35,7 +35,7 @@ public class CommandProcessingServiceTests
         };
         var leaderService = new RaftLeaderService(logReplicator, _replicationStateManager, _stateStore, _clusterStore);
         _commandProcessingService = new CommandProcessingService(_stateStore, _clusterStore, _clientPool, leaderService,
-            new HeartBeatRunner(50, () => { }));
+            new HeartBeatRunner(50, _stateStore, () => { }));
     }
 
     [Test]

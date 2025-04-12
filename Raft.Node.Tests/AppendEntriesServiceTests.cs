@@ -16,12 +16,14 @@ public class AppendEntriesServiceTests
 {
     private INodeStateStore _nodeStateStore;
     private AppendEntriesService _service;
+    private IRaftNode _raftNode;
 
     [SetUp]
     public void SetUp()
     {
         _nodeStateStore = new NodeStateStore();
-        _service = new AppendEntriesService(_nodeStateStore, "someNode");
+        _raftNode = Substitute.For<IRaftNode>();
+        _service = new AppendEntriesService(_nodeStateStore, _raftNode, "someNode");
     }
     
     [TestCase(1, 1, true)]
@@ -108,13 +110,13 @@ public class AppendEntriesServiceTests
     [Test]
     public void FollowerShouldOverrideExistingEntriesThatTakeNewEntriesPlace()
     {
-        var oldEntry = CreateLogEntry("B", "=", 2, 1);
+        var oldEntry = CreateLogEntry("B", "=", 2, 0);
         _nodeStateStore.AppendLogEntry(oldEntry);
-        var newLogEntry = CreateLogEntryMessage("A", "=", 1, 1);
+        var newLogEntry = CreateLogEntryMessage("A", "=", 1, 0);
 
         var appendEntriesRequest = new AppendEntriesRequest()
         {
-            Term = 1,
+            Term = 0,
             PrevLogIndex = -1,
             PrevLogTerm = -1,
             Entries = { new[] { newLogEntry } }

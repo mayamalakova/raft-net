@@ -6,10 +6,15 @@ using Serilog;
 
 namespace Raft.Node.Communication.Services.Cluster;
 
-public class AppendEntriesService(INodeStateStore stateStore, string nodeName) : AppendEntriesSvc.AppendEntriesSvcBase, INodeService
+public class AppendEntriesService(INodeStateStore stateStore, IRaftNode node,  string nodeName) : AppendEntriesSvc.AppendEntriesSvcBase, INodeService
 {
     public override Task<AppendEntriesReply> AppendEntries(AppendEntriesRequest request, ServerCallContext context)
     {
+        if (stateStore.CurrentTerm < request.Term)
+        {
+            node.BecomeFollower(request.LeaderId, request.Term);
+            return Fail();
+        }
         Log.Debug($"Appending {request.Entries.Count} entries {request}");
         // 1. reply false if term < currentTerm
         // 2. reply false if log doesn't contain an entry at prevLogIndex whose term matches prevLogTerm

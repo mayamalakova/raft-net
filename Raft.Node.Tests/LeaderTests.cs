@@ -18,7 +18,7 @@ public class LeaderTests
     public void ShouldConvertToFollower()
     {
         var newLeader = new NodeInfo("B", new NodeAddress("localhost", 1002));
-        _leader.BecomeFollower(newLeader);
+        _leader.BecomeFollower(newLeader, 1);
         
         _leader.StateStore.Role.ShouldBe(NodeType.Follower);
         _leader.StateStore.LeaderInfo.ShouldBe(newLeader);

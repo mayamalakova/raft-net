@@ -10,11 +10,22 @@ using Serilog;
 
 namespace Raft.Node;
 
+public interface IRaftNode
+{
+    void Start();
+    void Stop();
+    string GetClusterState();
+    string GetNodeState();
+    void BecomeLeader(int term);
+    void BecomeFollower(NodeInfo leaderInfo, int term);
+    void BecomeFollower(string leaderId, int term);
+}
+
 /// <summary>
 /// A node in a Raft cluster.
 /// Listens for messages from other nodes in the cluster and from admin clients.
 /// </summary>
-public class RaftNode
+public class RaftNode : IRaftNode
 {
     private readonly IClusterMessageReceiver _clusterMessageReceiver;
     private readonly IMessageReceiver _adminMessageReceiver;
@@ -42,10 +53,10 @@ public class RaftNode
         var replicationStateManager = new ReplicationStateManager(StateStore, _clusterStore);
         var logReplicator = new LogReplicator(StateStore, _clientPool, _clusterStore, _nodeName, timeoutSeconds);
         _leaderService = new RaftLeaderService(logReplicator, replicationStateManager, StateStore, _clusterStore);
-        _heartBeatRunner = new HeartBeatRunner(heartBeatIntervalSeconds * 1000, () =>
+        _heartBeatRunner = new HeartBeatRunner(heartBeatIntervalSeconds * 1000, StateStore, () =>
         {
             _leaderService.ReconcileCluster();
-        }, StateStore);
+        });
 
         _clusterMessageReceiver = new ClusterMessageReceiver(port, GetClusterServices());
         _adminMessageReceiver = new AdminMessageReceiver(port + 1000, GetAdminServices());
@@ -58,7 +69,7 @@ public class RaftNode
             new LeaderDiscoveryService(StateStore),
             new RegisterNodeService(StateStore, _clusterStore, _clientPool),
             new CommandProcessingService(StateStore, _clusterStore, _clientPool, _leaderService, _heartBeatRunner),
-            new AppendEntriesService(StateStore, _nodeName),
+            new AppendEntriesService(StateStore, this, _nodeName),
         ];
     }
 
@@ -146,17 +157,31 @@ public class RaftNode
     {
         return $"commitIndex={StateStore.CommitIndex}, term={StateStore.CurrentTerm}, lastApplied={StateStore.LastApplied}";
     }
+    
+    public NodeType GetNodeType()
+    {
+        return StateStore.Role;
+    }
 
-    public void BecomeLeader()
+    public void BecomeLeader(int term)
     {
         StateStore.Role = NodeType.Leader;
+        StateStore.LeaderInfo = new NodeInfo(_nodeName, new NodeAddress(_nodeHost, _nodePort));
+        StateStore.CurrentTerm = term;
         _heartBeatRunner.StartBeating();
     }
 
-    public void BecomeFollower(NodeInfo leaderInfo)
+    public void BecomeFollower(NodeInfo leaderInfo, int term)
     {
         StateStore.Role = NodeType.Follower;
         _heartBeatRunner.StopBeating();
+        StateStore.CurrentTerm = term;
         StateStore.LeaderInfo = leaderInfo;
+    }
+
+    public void BecomeFollower(string leaderId, int term)
+    {
+        var newLeader = _clusterStore.GetNodes().First(x => x.NodeName == leaderId);
+        BecomeFollower(newLeader, term);
     }
 }
