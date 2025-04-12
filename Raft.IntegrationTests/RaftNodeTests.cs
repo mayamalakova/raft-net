@@ -8,7 +8,7 @@ namespace Raft.IntegrationTests;
 
 public class RaftNodeTests
 {
-    private readonly ICollection<RaftNode> _nodes = new List<RaftNode>();
+    private readonly ICollection<IRaftNode> _nodes = new List<IRaftNode>();
     
     [TearDown]
     public void TearDown()
@@ -131,14 +131,13 @@ public class RaftNodeTests
 
         var reply = newClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = 5 });
         reply.ShouldContain("Success at nodeB");
-        oldLeader.GetNodeType().ShouldBe(NodeType.Follower);
         var oldLeaderInfo = oldClient.Info();
         oldLeaderInfo.ShouldContain("\"role\": \"Follower\"");
         oldLeaderInfo.ShouldContain($"\"leaderAddress\": \"localhost:{newLeaderPort}\"");
         oldLeader.GetNodeState().ShouldContain($"term={newTerm}");
     }
 
-    private RaftNode CreateLeader(string name, int port)
+    private IRaftNode CreateLeader(string name, int port)
     {
         var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port, 1, 3);
         leader.Start();
@@ -146,7 +145,7 @@ public class RaftNodeTests
         return leader;
     }
     
-    private RaftNode CreateFollower(string name, int port, int peerPort)
+    private IRaftNode CreateFollower(string name, int port, int peerPort)
     {
         var node = new RaftNode(NodeType.Follower, name, port, "localhost", peerPort, 1, 3);
         node.Start();

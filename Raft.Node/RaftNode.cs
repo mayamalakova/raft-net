@@ -1,4 +1,5 @@
-﻿using Raft.Communication.Contract;
+﻿using System.Runtime.CompilerServices;
+using Raft.Communication.Contract;
 using Raft.Node.Communication.Client;
 using Raft.Node.Communication.Services.Admin;
 using Raft.Node.Communication.Services.Cluster;
@@ -17,7 +18,6 @@ public interface IRaftNode
     string GetClusterState();
     string GetNodeState();
     void BecomeLeader(int term);
-    void BecomeFollower(NodeInfo leaderInfo, int term);
     void BecomeFollower(string leaderId, int term);
 }
 
