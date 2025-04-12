@@ -29,7 +29,6 @@ public class RaftNode : IRaftNode
 {
     private readonly IClusterMessageReceiver _clusterMessageReceiver;
     private readonly IMessageReceiver _adminMessageReceiver;
-    public readonly INodeStateStore StateStore;
     private readonly IClientPool _clientPool;
     private readonly IClusterNodeStore _clusterStore;
     private readonly HeartBeatRunner _heartBeatRunner;
@@ -40,6 +39,8 @@ public class RaftNode : IRaftNode
     private readonly NodeAddress _peerAddress;
     private readonly RaftLeaderService _leaderService;
     
+    public INodeStateStore StateStore { get; }
+
     public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort, int timeoutSeconds, int
         heartBeatIntervalSeconds)
     {
