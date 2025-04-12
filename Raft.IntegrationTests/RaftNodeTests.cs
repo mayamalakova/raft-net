@@ -119,12 +119,13 @@ public class RaftNodeTests
     [Test]
     public void ShouldTurnToFollowerWhenGettingRequestFromNewerTerm()
     {
-        var oldLeader = CreateLeader("nodeA", 1000);
-        var oldClient = new RaftClient("localhost", 1000);
+        var oldLeaderPort = 5000;
+        var oldLeader = CreateLeader("nodeA", oldLeaderPort);
+        var oldClient = new RaftClient("localhost", oldLeaderPort);
         oldClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = 1 });
 
-        var newLeaderPort = 1001;
-        var newLeader = CreateFollower("nodeB", newLeaderPort, 1000);
+        var newLeaderPort = 5001;
+        var newLeader = CreateFollower("nodeB", newLeaderPort, oldLeaderPort);
         var newClient = new RaftClient("localhost", newLeaderPort);
         const int newTerm = 1;
         newLeader.BecomeLeader(newTerm);
