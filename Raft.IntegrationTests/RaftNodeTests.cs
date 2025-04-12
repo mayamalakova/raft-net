@@ -131,7 +131,7 @@ public class RaftNodeTests
         newLeader.BecomeLeader(newTerm);
 
         var reply = newClient.Command(new CommandOptions { Var = "A", Operation = "=", Literal = 5 });
-        reply.ShouldContain("Success at nodeB");
+        reply.ShouldContain("Success at node nodeB");
         var oldLeaderInfo = oldClient.Info();
         oldLeaderInfo.ShouldContain("\"role\": \"Follower\"");
         oldLeaderInfo.ShouldContain($"\"leaderAddress\": \"localhost:{newLeaderPort}\"");

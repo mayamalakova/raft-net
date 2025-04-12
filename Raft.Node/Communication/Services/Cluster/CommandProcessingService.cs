@@ -47,7 +47,7 @@ public class CommandProcessingService(
 
         return Task.FromResult(new CommandReply()
         {
-            Result = $"Success at {stateStore.LeaderInfo?.NodeName} newState={newState}"
+            Result = $"Success at node {stateStore.LeaderInfo?.NodeName} newState={newState}"
         });
     }
 
