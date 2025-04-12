@@ -158,11 +158,6 @@ public class RaftNode : IRaftNode
     {
         return $"commitIndex={StateStore.CommitIndex}, term={StateStore.CurrentTerm}, lastApplied={StateStore.LastApplied}";
     }
-    
-    public NodeType GetNodeType()
-    {
-        return StateStore.Role;
-    }
 
     public void BecomeLeader(int term)
     {
