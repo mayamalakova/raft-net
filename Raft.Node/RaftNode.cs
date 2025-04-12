@@ -1,5 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using Raft.Communication.Contract;
+﻿using Raft.Communication.Contract;
 using Raft.Node.Communication.Client;
 using Raft.Node.Communication.Services.Admin;
 using Raft.Node.Communication.Services.Cluster;
@@ -69,7 +68,7 @@ public class RaftNode : IRaftNode
         [
             new LeaderDiscoveryService(StateStore),
             new RegisterNodeService(StateStore, _clusterStore, _clientPool),
-            new CommandProcessingService(StateStore, _clusterStore, _clientPool, _leaderService, _heartBeatRunner),
+            new CommandProcessingService(StateStore, _clientPool, _leaderService, _heartBeatRunner),
             new AppendEntriesService(StateStore, this, _nodeName),
         ];
     }
@@ -77,7 +76,7 @@ public class RaftNode : IRaftNode
     private IEnumerable<INodeService> GetAdminServices()
     {
         return [
-            new CommandProcessingService(StateStore, _clusterStore, _clientPool, _leaderService, _heartBeatRunner),
+            new CommandProcessingService(StateStore, _clientPool, _leaderService, _heartBeatRunner),
             new PingReplyService(_nodeName),
             new NodeInfoService(_nodeName, new NodeAddress(_nodeHost, _nodePort), StateStore, _clusterStore),
             new LogInfoService(StateStore),

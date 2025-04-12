@@ -21,14 +21,11 @@ namespace Raft.Node.Communication.Services.Cluster;
 ///  - replies with the updated state of the state machine
 /// </summary>
 /// <param name="stateStore"></param>
-/// <param name="clusterStore"></param>
 /// <param name="clientPool"></param>
-/// <param name="logReplicator"></param>
-/// <param name="replicationStateManager"></param>
+/// <param name="leaderService"></param>
 /// <param name="heartBeatRunner"></param>
 public class CommandProcessingService(
     INodeStateStore stateStore,
-    IClusterNodeStore clusterStore,
     IClientPool clientPool,
     RaftLeaderService leaderService,
     HeartBeatRunner heartBeatRunner) : CommandSvc.CommandSvcBase, INodeService
