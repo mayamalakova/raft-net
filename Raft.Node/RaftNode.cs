@@ -2,7 +2,9 @@
 using Raft.Node.Communication.Client;
 using Raft.Node.Communication.Services.Admin;
 using Raft.Node.Communication.Services.Cluster;
+using Raft.Node.Election;
 using Raft.Node.HeartBeat;
+using Raft.Node.Timing;
 using Raft.Store;
 using Raft.Store.Domain;
 using Raft.Store.Memory;
@@ -18,6 +20,7 @@ public interface IRaftNode
     string GetNodeState();
     void BecomeLeader(int term);
     void BecomeFollower(string leaderId, int term);
+    void BecomeCandidate();
 }
 
 /// <summary>
@@ -37,11 +40,12 @@ public class RaftNode : IRaftNode
     private readonly int _nodePort;
     private readonly NodeAddress _peerAddress;
     private readonly RaftLeaderService _leaderService;
-    
+    private readonly LeaderPresenceTracker _leaderPresenceTracker;
+
     public INodeStateStore StateStore { get; }
 
-    public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort, int timeoutSeconds, int
-        heartBeatIntervalSeconds)
+    public RaftNode(NodeType role, string nodeName, int port, string clusterHost, int clusterPort,
+        int replicationTimeoutSeconds, int heartBeatIntervalSeconds, ITimerFactory timerFactory)
     {
         _nodeHost = "localhost"; //TODO this should be externally visible IP address
         _nodeName = nodeName;
@@ -51,12 +55,12 @@ public class RaftNode : IRaftNode
         _clientPool = new ClientPool();
         _clusterStore = new ClusterNodeStore();
         var replicationStateManager = new ReplicationStateManager(StateStore, _clusterStore);
-        var logReplicator = new LogReplicator(StateStore, _clientPool, _clusterStore, _nodeName, timeoutSeconds);
+        var logReplicator =
+            new LogReplicator(StateStore, _clientPool, _clusterStore, _nodeName, replicationTimeoutSeconds);
         _leaderService = new RaftLeaderService(logReplicator, replicationStateManager, StateStore, _clusterStore);
-        _heartBeatRunner = new HeartBeatRunner(heartBeatIntervalSeconds * 1000, StateStore, () =>
-        {
-            _leaderService.ReconcileCluster();
-        });
+        _heartBeatRunner = new HeartBeatRunner(heartBeatIntervalSeconds * 1000, StateStore,
+            () => { _leaderService.ReconcileCluster(); });
+        _leaderPresenceTracker = new LeaderPresenceTracker(this, timerFactory);
 
         _clusterMessageReceiver = new ClusterMessageReceiver(port, GetClusterServices());
         _adminMessageReceiver = new AdminMessageReceiver(port + 1000, GetAdminServices());
@@ -69,13 +73,14 @@ public class RaftNode : IRaftNode
             new LeaderDiscoveryService(StateStore),
             new RegisterNodeService(StateStore, _clusterStore, _clientPool),
             new CommandProcessingService(StateStore, _clientPool, _leaderService, _heartBeatRunner),
-            new AppendEntriesService(StateStore, this, _nodeName),
+            new AppendEntriesService(StateStore, this, _leaderPresenceTracker, _nodeName),
         ];
     }
 
     private IEnumerable<INodeService> GetAdminServices()
     {
-        return [
+        return
+        [
             new CommandProcessingService(StateStore, _clientPool, _leaderService, _heartBeatRunner),
             new PingReplyService(_nodeName),
             new NodeInfoService(_nodeName, new NodeAddress(_nodeHost, _nodePort), StateStore, _clusterStore),
@@ -117,7 +122,7 @@ public class RaftNode : IRaftNode
         var registerReply = registerNodeClient.RegisterNode(new RegisterNodeRequest
         {
             Name = _nodeName,
-            Host = _nodeHost, 
+            Host = _nodeHost,
             Port = _nodePort
         });
         Log.Information($"Registered with leader {registerReply.Reply}");
@@ -126,8 +131,10 @@ public class RaftNode : IRaftNode
         {
             _clusterStore.AddNode(n.Name, new NodeAddress(n.Host, n.Port));
         }
+
         _clusterMessageReceiver.Start();
         _adminMessageReceiver.Start();
+        _leaderPresenceTracker.Start();
     }
 
     private (string name, NodeAddress address) AskForLeader()
@@ -155,11 +162,14 @@ public class RaftNode : IRaftNode
 
     public string GetNodeState()
     {
-        return $"commitIndex={StateStore.CommitIndex}, term={StateStore.CurrentTerm}, lastApplied={StateStore.LastApplied}";
+        return
+            $"commitIndex={StateStore.CommitIndex}, term={StateStore.CurrentTerm}, lastApplied={StateStore.LastApplied}";
     }
 
     public void BecomeLeader(int term)
     {
+        Log.Information($"{_nodeName} becoming leader");
+        _leaderPresenceTracker.Stop();
         StateStore.Role = NodeType.Leader;
         StateStore.LeaderInfo = new NodeInfo(_nodeName, new NodeAddress(_nodeHost, _nodePort));
         StateStore.CurrentTerm = term;
@@ -168,15 +178,25 @@ public class RaftNode : IRaftNode
 
     public void BecomeFollower(NodeInfo leaderInfo, int term)
     {
+        Log.Information($"{_nodeName} becoming follower");
         StateStore.Role = NodeType.Follower;
         _heartBeatRunner.StopBeating();
         StateStore.CurrentTerm = term;
         StateStore.LeaderInfo = leaderInfo;
+        _leaderPresenceTracker.Start();
     }
 
     public void BecomeFollower(string leaderId, int term)
     {
         var newLeader = _clusterStore.GetNodes().First(x => x.NodeName == leaderId);
         BecomeFollower(newLeader, term);
+    }
+
+    public void BecomeCandidate()
+    {
+        Log.Information($"{_nodeName} becoming candidate");
+        StateStore.Role = NodeType.Candidate;
+        // StateStore.CurrentTerm++;
+        _leaderPresenceTracker.Stop();
     }
 }

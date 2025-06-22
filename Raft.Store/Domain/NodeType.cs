@@ -3,5 +3,6 @@
 public enum NodeType
 {
     Leader,
-    Follower
+    Follower,
+    Candidate
 }
