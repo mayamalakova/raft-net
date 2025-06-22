@@ -29,12 +29,12 @@ public class HeartBeatRunner
 
     public void StartBeating()
     {
-        _timer.Enabled = true;
+        _timer.Start();
     }
 
     public void StopBeating()
     {
-        _timer.Enabled = false;
+        _timer.Stop();
     }
     
     private void PerformAction(object? sender, ElapsedEventArgs e)
