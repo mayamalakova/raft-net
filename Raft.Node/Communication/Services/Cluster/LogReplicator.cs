@@ -13,7 +13,7 @@ public class LogReplicator(
     IClientPool clientPool,
     IClusterNodeStore clusterStore,
     string nodeName,
-    int timeoutSeconds)
+    int replicationTimeoutSeconds)
 {
     public IAppendEntriesRequestFactory EntriesRequestFactory { get; init; } =
         new AppendEntriesRequestFactory(clusterStore, stateStore, nodeName);
@@ -77,7 +77,7 @@ public class LogReplicator(
         try
         {
             return await SendAppendEntriesRequestAsync(node, entries.Select(e => e.ToMessage())
-                .ToArray(), TimeSpan.FromSeconds(timeoutSeconds));
+                .ToArray(), TimeSpan.FromSeconds(replicationTimeoutSeconds));
         }
         catch (RpcException ex) when (ex.StatusCode == StatusCode.DeadlineExceeded)
         {
