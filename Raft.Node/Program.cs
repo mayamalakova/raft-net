@@ -77,7 +77,7 @@ public static class Program
     private static RaftNode AddLeaderNode(AddOptions addOptions)
     {
         var port = int.Parse(addOptions.Port);
-        var leader = new RaftNode(NodeType.Leader, addOptions.Name, port, "localhost", port, addOptions.TimeoutSeconds, 3, new SystemTimerFactory());
+        var leader = new RaftNode(NodeType.Leader, addOptions.Name, port, "localhost", port, addOptions.TimeoutSeconds, 2, new SystemTimerFactory());
 
         leader.Start();
         Log.Information($"Created leader node {addOptions.Name} listening on port {port}");

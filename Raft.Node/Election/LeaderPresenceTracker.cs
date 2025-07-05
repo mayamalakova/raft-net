@@ -30,7 +30,7 @@ public class LeaderPresenceTracker : ILeaderPresenceTracker
         lock (_lock)
         {
             if (_timer.Enabled) return _timer.Interval;
-            var timerInterval = new Random().Next(150, 300);
+            var timerInterval = new Random().Next(3000, 6000);
             _timer.Interval = timerInterval;
             _timer.Start();
             return timerInterval;
