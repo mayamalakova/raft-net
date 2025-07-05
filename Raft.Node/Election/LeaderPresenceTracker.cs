@@ -4,7 +4,15 @@ using ITimer = Raft.Node.Timing.ITimer;
 
 namespace Raft.Node.Election;
 
-public class LeaderPresenceTracker
+public interface ILeaderPresenceTracker
+{
+    double Start();
+    void Stop();
+    double Reset();
+    bool IsStarted();
+}
+
+public class LeaderPresenceTracker : ILeaderPresenceTracker
 {
     private readonly IRaftNode _node;
     private readonly ITimer _timer;

@@ -40,7 +40,7 @@ public class RaftNode : IRaftNode
     private readonly int _nodePort;
     private readonly NodeAddress _peerAddress;
     private readonly RaftLeaderService _leaderService;
-    private readonly LeaderPresenceTracker _leaderPresenceTracker;
+    private readonly ILeaderPresenceTracker _leaderPresenceTracker;
 
     public INodeStateStore StateStore { get; }
 
