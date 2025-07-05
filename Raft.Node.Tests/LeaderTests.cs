@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using Raft.Node.Tests.MockHelpers;
 using Raft.Store.Domain;
 using Shouldly;
 
@@ -11,7 +12,8 @@ public class LeaderTests
     [SetUp]
     public void SetUp()
     {
-        _leader = new RaftNode(NodeType.Leader, "A", 1000, "localhost", 1001, 20, 2);
+        _leader = new RaftNode(NodeType.Leader, "A", 1000, "localhost", 1001, 20, 2,
+            new MockTimerFactory(new MockTimer()));
     }
 
     [Test]
@@ -19,7 +21,7 @@ public class LeaderTests
     {
         var newLeader = new NodeInfo("B", new NodeAddress("localhost", 1002));
         _leader.BecomeFollower(newLeader, 1);
-        
+
         _leader.StateStore.Role.ShouldBe(NodeType.Follower);
         _leader.StateStore.LeaderInfo.ShouldBe(newLeader);
     }

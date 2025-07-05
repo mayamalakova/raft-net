@@ -12,13 +12,13 @@ public class ReplicationLog
     }
 
     /// <summary>
-    /// Get the item at the given index or null if index is negative
+    /// Get the item at the given index or null if index is out of the bounds of the log
     /// </summary>
     /// <param name="index"></param>
     /// <returns></returns>
     public LogEntry? GetItemAt(int index)
     {
-        return index < 0 ? null : _entries[index];
+        return index < 0 || index > _entries.Count ? null : _entries[index];
     }
 
     public void RemoveFrom(int index)

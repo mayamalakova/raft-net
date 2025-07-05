@@ -1,4 +1,5 @@
 ﻿using CommandLine;
+using Raft.Node.Timing;
 using Raft.Shared;
 using Raft.Store.Domain;
 using Serilog;
@@ -65,7 +66,7 @@ public static class Program
 
         var clusterHost = addOptions.ClusterHost.Split(":");
         var follower = new RaftNode(NodeType.Follower, addOptions.Name, port, clusterHost[0], int.Parse(clusterHost[1]),
-            addOptions.TimeoutSeconds, 3);
+            addOptions.TimeoutSeconds, 3, new SystemTimerFactory());
 
         follower.Start();
         Log.Information($"Created follower node {addOptions.Name} listening on port {port}.");
@@ -76,7 +77,7 @@ public static class Program
     private static RaftNode AddLeaderNode(AddOptions addOptions)
     {
         var port = int.Parse(addOptions.Port);
-        var leader = new RaftNode(NodeType.Leader, addOptions.Name, port, "localhost", port, addOptions.TimeoutSeconds, 3);
+        var leader = new RaftNode(NodeType.Leader, addOptions.Name, port, "localhost", port, addOptions.TimeoutSeconds, 2, new SystemTimerFactory());
 
         leader.Start();
         Log.Information($"Created leader node {addOptions.Name} listening on port {port}");

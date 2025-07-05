@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using Raft.Cli;
 using Raft.Node;
+using Raft.Node.Timing;
 using Raft.Shared;
 using Raft.Store.Domain;
 using Shouldly;
@@ -10,6 +11,7 @@ namespace Raft.IntegrationTests;
 public class RaftLogReplicationTests
 {
     private readonly ICollection<RaftNode> _nodes = new List<RaftNode>();
+    private SystemTimerFactory _systemTimerFactory;
 
     [SetUp]
     public void SetUp()
@@ -145,7 +147,8 @@ public class RaftLogReplicationTests
 
     private RaftNode CreateLeader(string name, int port)
     {
-        var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port, 1, 3);
+        _systemTimerFactory = new SystemTimerFactory();
+        var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port, 1, 3, _systemTimerFactory);
         leader.Start();
         _nodes.Add(leader);
         return leader;
@@ -153,7 +156,8 @@ public class RaftLogReplicationTests
 
     private RaftNode CreateLeader(string name, int port, int heartBeatInterval)
     {
-        var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port, 1, heartBeatInterval);
+        var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port, 1, heartBeatInterval,
+            _systemTimerFactory);
         leader.Start();
         _nodes.Add(leader);
         return leader;
@@ -161,7 +165,7 @@ public class RaftLogReplicationTests
 
     private RaftNode CreateFollower(string name, int port, int peerPort)
     {
-        var node = new RaftNode(NodeType.Follower, name, port, "localhost", peerPort, 1, 3);
+        var node = new RaftNode(NodeType.Follower, name, port, "localhost", peerPort, 1, 3, _systemTimerFactory);
         node.Start();
         _nodes.Add(node);
         return node;
