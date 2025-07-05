@@ -74,6 +74,7 @@ public class RaftNode : IRaftNode
             new RegisterNodeService(StateStore, _clusterStore, _clientPool),
             new CommandProcessingService(StateStore, _clientPool, _leaderService, _heartBeatRunner),
             new AppendEntriesService(StateStore, this, _leaderPresenceTracker, _nodeName),
+            new RequestVoteService()
         ];
     }
 

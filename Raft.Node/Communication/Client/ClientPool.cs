@@ -32,4 +32,9 @@ public class ClientPool: IClientPool
     {
         return new AppendEntriesSvc.AppendEntriesSvcClient(GetChannel(targetAddress));
     }
+
+    public RequestForVoteSvc.RequestForVoteSvcClient GetRequestForVoteClient(NodeAddress targetAddress)
+    {
+        return new RequestForVoteSvc.RequestForVoteSvcClient(GetChannel(targetAddress));
+    }
 }
