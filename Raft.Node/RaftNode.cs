@@ -197,7 +197,31 @@ public class RaftNode : IRaftNode
     {
         Log.Information($"{_nodeName} becoming candidate");
         StateStore.Role = NodeType.Candidate;
-        // StateStore.CurrentTerm++;
         _leaderPresenceTracker.Stop();
+        
+        // StateStore.CurrentTerm++;
+        var tasks = _clusterStore.GetNodes()
+            .ToDictionary(
+                node => node.NodeName,
+                node => SendRequestForVote(node)
+            );
+        
+        var completedTask = Task.WhenAny(
+            Task.WhenAll(tasks.Values),
+            Task.Delay(TimeSpan.FromSeconds(5))
+        );
+        
+        completedTask.Wait();
+        
+        var repliesReceived = tasks.Count(x => x.Value.IsCompletedSuccessfully);
+        
+        Log.Information($"{_nodeName} received {repliesReceived} replies out of {tasks.Count} nodes");
+    }
+
+    private Task<RequestForVoteReply> SendRequestForVote(NodeInfo node)
+    {
+        var request = new RequestForVoteMessage() { CandidateId = _nodeName};
+        var client = _clientPool.GetRequestForVoteClient(node.NodeAddress);
+        return client.RequestVoteAsync(request).ResponseAsync;
     }
 }
