@@ -16,6 +16,9 @@ public class NodeStateStore : INodeStateStore
     public StateMachine StateMachine { get; init; } = new();
     public int LogLength => _log.Length;
 
+    public string? VotedFor { get; set; }
+    public int LastVoteTerm { get; set; } = -1; // -1 means no vote cast yet
+
     public void AppendLogEntry(LogEntry entry)
     {
         _log.Append(entry);

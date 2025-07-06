@@ -74,7 +74,7 @@ public class RaftNode : IRaftNode
             new RegisterNodeService(StateStore, _clusterStore, _clientPool),
             new CommandProcessingService(StateStore, _clientPool, _leaderService, _heartBeatRunner),
             new AppendEntriesService(StateStore, this, _leaderPresenceTracker, _nodeName),
-            new RequestVoteService()
+            new RequestVoteService(StateStore)
         ];
     }
 
@@ -174,6 +174,9 @@ public class RaftNode : IRaftNode
         StateStore.Role = NodeType.Leader;
         StateStore.LeaderInfo = new NodeInfo(_nodeName, new NodeAddress(_nodeHost, _nodePort));
         StateStore.CurrentTerm = term;
+        // Reset vote state when becoming leader
+        StateStore.VotedFor = null;
+        StateStore.LastVoteTerm = -1;
         _heartBeatRunner.StartBeating();
     }
 
@@ -184,6 +187,9 @@ public class RaftNode : IRaftNode
         _heartBeatRunner.StopBeating();
         StateStore.CurrentTerm = term;
         StateStore.LeaderInfo = leaderInfo;
+        // Reset vote state when becoming follower
+        StateStore.VotedFor = null;
+        StateStore.LastVoteTerm = -1;
         _leaderPresenceTracker.Start();
     }
 

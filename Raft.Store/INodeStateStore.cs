@@ -23,4 +23,7 @@ public interface INodeStateStore
     public int LastApplied { get; set; }
     public StateMachine StateMachine { get; init; }
     State ApplyCommitted();
+    
+    string? VotedFor { get; set; }
+    int LastVoteTerm { get; set; }
 }
