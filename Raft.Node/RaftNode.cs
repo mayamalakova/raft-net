@@ -219,19 +219,57 @@ public class RaftNode : IRaftNode
         
         collectVotesWithinElectionTimeout.Wait();
         
-        var repliesReceived = CountAndLogVotes(tasks);
+        var (repliesReceived, higherTermReceived) = CountAndLogVotes(tasks);
         Log.Information("{NodeName} received {RepliesReceived} replies out of {TasksCount} nodes", _nodeName, repliesReceived, tasks.Count);
         
+        // If we received a higher term, step down immediately
+        if (higherTermReceived)
+        {
+            Log.Information($"{_nodeName} received higher term in vote reply, stepping down to follower");
+            // StateStore.Role = NodeType.Follower;
+            // _leaderPresenceTracker.Start();
+            return;
+        }
+        
+        ProcessElectionResult(repliesReceived, tasks.Count);
     }
 
-    private static int CountAndLogVotes(Dictionary<string, Task<RequestForVoteReply>> taskEntries)
+    private (int votesReceived, bool higherTermReceived) CountAndLogVotes(Dictionary<string, Task<RequestForVoteReply>> taskEntries)
     {
         var failed = taskEntries.Where(t => !t.Value.IsCompletedSuccessfully);
         var notGranted = taskEntries.Where(t => t.Value is { IsCompletedSuccessfully: true, Result.VoteGranted: false });
+        var granted = taskEntries.Where(t => t.Value is { IsCompletedSuccessfully: true, Result.VoteGranted: true }).ToArray();
+        
         failed.ToList().ForEach(t => Log.Information("Failed to get vote response for vote to {NodeName}", t.Key));
         notGranted.ToList().ForEach(t => Log.Information("Vote not granted for {NodeName}", t.Key));
+        granted.ToList().ForEach(t => Log.Information("Vote granted by {NodeName}", t.Key));
 
-        return taskEntries.Count(t => t.Value is { IsCompletedSuccessfully: true, Result.VoteGranted: true });
+        // Check if any reply contained a higher term than our current term
+        var higherTermReceived = taskEntries.Any(t => 
+            t.Value.IsCompletedSuccessfully && 
+            t.Value.Result.Term > StateStore.CurrentTerm);
+
+        return (granted.Count(), higherTermReceived);
+    }
+
+    private void ProcessElectionResult(int votesReceived, int totalNodes)
+    {
+        var totalVotes = votesReceived + 1; // +1 for self
+        var votesNeeded = (totalNodes / 2) + 1; // Majority
+        
+        Log.Information($"{_nodeName} election result: {totalVotes}/{totalNodes} votes (need {votesNeeded} for majority)");
+        
+        if (totalVotes >= votesNeeded)
+        {
+            Log.Information($"{_nodeName} won election with {totalVotes}/{totalNodes} votes");
+            BecomeLeader(StateStore.CurrentTerm);
+        }
+        else
+        {
+            Log.Information($"{_nodeName} lost election with {totalVotes}/{totalNodes} votes, becoming follower");
+            // StateStore.Role = NodeType.Follower;
+            // _leaderPresenceTracker.Start();
+        }
     }
 
     private Task<RequestForVoteReply> SendRequestForVote(NodeInfo node, int term)
