@@ -1,4 +1,6 @@
-﻿using NUnit.Framework;
+﻿using NSubstitute;
+using NUnit.Framework;
+using Raft.Node.Election;
 using Raft.Node.Tests.MockHelpers;
 using Raft.Store.Domain;
 using Shouldly;
@@ -28,7 +30,10 @@ public class RaftNodeTimerTests
             replicationTimeoutSeconds: 5,
             heartBeatIntervalSeconds: 1,
             timerFactory: _mockTimerFactory
-        );
+        )
+        {
+            ElectionManager = Substitute.For<IElectionManager>()
+        };
     }
 
     [Test]

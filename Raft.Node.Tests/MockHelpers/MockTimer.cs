@@ -36,7 +36,6 @@ public class MockTimer : ITimer
         _enabled = false;
     }
 
-    // Method to simulate timer expiration
     public void SimulateElapsed()
     {
         if (_enabled && _elapsed != null)

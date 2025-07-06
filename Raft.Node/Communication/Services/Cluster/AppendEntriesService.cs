@@ -14,7 +14,7 @@ public class AppendEntriesService(INodeStateStore stateStore, IRaftNode node, IL
     {
         if (stateStore.CurrentTerm < request.Term)
         {
-            node.BecomeFollower(request.LeaderId, request.Term);
+            node.BecomeFollowerOfLeaderWithId(request.LeaderId, request.Term);
             return Fail();
         }
 

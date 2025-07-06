@@ -19,7 +19,7 @@ public interface IRaftNode
     string GetClusterState();
     string GetNodeState();
     void BecomeLeader(int term);
-    void BecomeFollower(string leaderId, int term);
+    void BecomeFollowerOfLeaderWithId(string leaderId, int term);
     void BecomeCandidate();
 }
 
@@ -27,7 +27,7 @@ public interface IRaftNode
 /// A node in a Raft cluster.
 /// Listens for messages from other nodes in the cluster and from admin clients.
 /// </summary>
-public class RaftNode : IRaftNode
+public class RaftNode : IRaftNode, IElectionResultsReceiver
 {
     private readonly IClusterMessageReceiver _clusterMessageReceiver;
     private readonly IMessageReceiver _adminMessageReceiver;
@@ -41,6 +41,7 @@ public class RaftNode : IRaftNode
     private readonly NodeAddress _peerAddress;
     private readonly RaftLeaderService _leaderService;
     private readonly ILeaderPresenceTracker _leaderPresenceTracker;
+    public IElectionManager ElectionManager { get; set; }
 
     public INodeStateStore StateStore { get; }
 
@@ -64,6 +65,8 @@ public class RaftNode : IRaftNode
 
         _clusterMessageReceiver = new ClusterMessageReceiver(port, GetClusterServices());
         _adminMessageReceiver = new AdminMessageReceiver(port + 1000, GetAdminServices());
+
+        ElectionManager = new ElectionManager(_nodeName, _clusterStore, StateStore, _clientPool, this);
     }
 
     private IEnumerable<INodeService> GetClusterServices()
@@ -180,7 +183,7 @@ public class RaftNode : IRaftNode
         _heartBeatRunner.StartBeating();
     }
 
-    public void BecomeFollower(NodeInfo leaderInfo, int term)
+    public void BecomeFollower(NodeInfo? leaderInfo, int term)
     {
         Log.Information($"{_nodeName} becoming follower");
         StateStore.Role = NodeType.Follower;
@@ -193,7 +196,7 @@ public class RaftNode : IRaftNode
         _leaderPresenceTracker.Start();
     }
 
-    public void BecomeFollower(string leaderId, int term)
+    public void BecomeFollowerOfLeaderWithId(string leaderId, int term)
     {
         var newLeader = _clusterStore.GetNodes().First(x => x.NodeName == leaderId);
         BecomeFollower(newLeader, term);
@@ -206,76 +209,25 @@ public class RaftNode : IRaftNode
         _leaderPresenceTracker.Stop();
         
         StateStore.CurrentTerm++;
-        var tasks = _clusterStore.GetNodes()
-            .ToDictionary(
-                node => node.NodeName,
-                node => SendRequestForVote(node, StateStore.CurrentTerm)
-            );
-        
-        var collectVotesWithinElectionTimeout = Task.WhenAny(
-            Task.WhenAll(tasks.Values),
-            Task.Delay(TimeSpan.FromSeconds(5))
-        );
-        
-        collectVotesWithinElectionTimeout.Wait();
-        
-        var (repliesReceived, higherTermReceived) = CountAndLogVotes(tasks);
-        Log.Information("{NodeName} received {RepliesReceived} replies out of {TasksCount} nodes", _nodeName, repliesReceived, tasks.Count);
-        
-        // If we received a higher term, step down immediately
-        if (higherTermReceived)
-        {
-            Log.Information($"{_nodeName} received higher term in vote reply, stepping down to follower");
-            // StateStore.Role = NodeType.Follower;
-            // _leaderPresenceTracker.Start();
-            return;
-        }
-        
-        ProcessElectionResult(repliesReceived, tasks.Count);
+        ElectionManager.StartElection();
     }
 
-    private (int votesReceived, bool higherTermReceived) CountAndLogVotes(Dictionary<string, Task<RequestForVoteReply>> taskEntries)
+    public void OnElectionWon()
     {
-        var failed = taskEntries.Where(t => !t.Value.IsCompletedSuccessfully);
-        var notGranted = taskEntries.Where(t => t.Value is { IsCompletedSuccessfully: true, Result.VoteGranted: false });
-        var granted = taskEntries.Where(t => t.Value is { IsCompletedSuccessfully: true, Result.VoteGranted: true }).ToArray();
-        
-        failed.ToList().ForEach(t => Log.Information("Failed to get vote response for vote to {NodeName}", t.Key));
-        notGranted.ToList().ForEach(t => Log.Information("Vote not granted for {NodeName}", t.Key));
-        granted.ToList().ForEach(t => Log.Information("Vote granted by {NodeName}", t.Key));
-
-        // Check if any reply contained a higher term than our current term
-        var higherTermReceived = taskEntries.Any(t => 
-            t.Value.IsCompletedSuccessfully && 
-            t.Value.Result.Term > StateStore.CurrentTerm);
-
-        return (granted.Count(), higherTermReceived);
+        BecomeLeader(StateStore.CurrentTerm);
     }
 
-    private void ProcessElectionResult(int votesReceived, int totalNodes)
+    public void OnElectionLost()
     {
-        var totalVotes = votesReceived + 1; // +1 for self
-        var votesNeeded = (totalNodes / 2) + 1; // Majority
-        
-        Log.Information($"{_nodeName} election result: {totalVotes}/{totalNodes} votes (need {votesNeeded} for majority)");
-        
-        if (totalVotes >= votesNeeded)
-        {
-            Log.Information($"{_nodeName} won election with {totalVotes}/{totalNodes} votes");
-            BecomeLeader(StateStore.CurrentTerm);
-        }
-        else
-        {
-            Log.Information($"{_nodeName} lost election with {totalVotes}/{totalNodes} votes, becoming follower");
-            // StateStore.Role = NodeType.Follower;
-            // _leaderPresenceTracker.Start();
-        }
+        // TODO: handle election loss (e.g., become follower, restart election timer)
+        StateStore.Role = NodeType.Follower;
+        _leaderPresenceTracker.Start();
     }
 
-    private Task<RequestForVoteReply> SendRequestForVote(NodeInfo node, int term)
+    public void OnHigherTermReceivedWithVoteReply(int newTerm)
     {
-        var request = new RequestForVoteMessage() { CandidateId = _nodeName, Term = term};
-        var client = _clientPool.GetRequestForVoteClient(node.NodeAddress);
-        return client.RequestVoteAsync(request).ResponseAsync;
+        Log.Information($"{_nodeName} received higher term in vote reply, stepping down to follower");
+        // Become follower with no leader info (will be set when AppendEntries received)
+        BecomeFollower(null, newTerm);
     }
 }

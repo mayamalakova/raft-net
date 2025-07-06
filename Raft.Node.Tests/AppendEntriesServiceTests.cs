@@ -166,7 +166,7 @@ public class AppendEntriesServiceTests
 
         _service.AppendEntries(appendEntriesRequest, Substitute.For<ServerCallContext>());
 
-        _raftNode.Received().BecomeFollower("newLeader", 2);
+        _raftNode.Received().BecomeFollowerOfLeaderWithId("newLeader", 2);
     }
 
     [Test]
