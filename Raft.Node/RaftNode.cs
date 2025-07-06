@@ -199,28 +199,28 @@ public class RaftNode : IRaftNode
         StateStore.Role = NodeType.Candidate;
         _leaderPresenceTracker.Stop();
         
-        // StateStore.CurrentTerm++;
+        StateStore.CurrentTerm++;
         var tasks = _clusterStore.GetNodes()
             .ToDictionary(
                 node => node.NodeName,
-                node => SendRequestForVote(node)
+                node => SendRequestForVote(node, StateStore.CurrentTerm)
             );
         
-        var completedTask = Task.WhenAny(
+        var collectVotesWithinElectionTimeout = Task.WhenAny(
             Task.WhenAll(tasks.Values),
             Task.Delay(TimeSpan.FromSeconds(5))
         );
         
-        completedTask.Wait();
+        collectVotesWithinElectionTimeout.Wait();
         
-        var repliesReceived = tasks.Count(x => x.Value.IsCompletedSuccessfully);
+        var repliesReceived = tasks.Count(x => x.Value is { IsCompletedSuccessfully: true, Result.VoteGranted: true });
+        Log.Information("{NodeName} received {RepliesReceived} replies out of {TasksCount} nodes", _nodeName, repliesReceived, tasks.Count);
         
-        Log.Information($"{_nodeName} received {repliesReceived} replies out of {tasks.Count} nodes");
     }
 
-    private Task<RequestForVoteReply> SendRequestForVote(NodeInfo node)
+    private Task<RequestForVoteReply> SendRequestForVote(NodeInfo node, int term)
     {
-        var request = new RequestForVoteMessage() { CandidateId = _nodeName};
+        var request = new RequestForVoteMessage() { CandidateId = _nodeName, Term = term};
         var client = _clientPool.GetRequestForVoteClient(node.NodeAddress);
         return client.RequestVoteAsync(request).ResponseAsync;
     }
