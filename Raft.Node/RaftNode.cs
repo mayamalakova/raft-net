@@ -214,24 +214,27 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
 
     public void OnElectionWon(int termAtElectionStart)
     {
-        if (StateStore.CurrentTerm == termAtElectionStart && StateStore.Role == NodeType.Candidate)
+        StateStore.CheckTermAndRole(termAtElectionStart, NodeType.Candidate, () =>
         {
             BecomeLeader(StateStore.CurrentTerm);
-        }
+        });
     }
 
     public void OnElectionLost(int termAtElectionStart)
     {
-        if (StateStore.CurrentTerm == termAtElectionStart && StateStore.Role == NodeType.Candidate)
+        StateStore.CheckTermAndRole(termAtElectionStart, NodeType.Candidate, () =>
         {
             ElectionManager.StartElectionAsync(StateStore.CurrentTerm);
-        }
+        });
     }
 
-    public void OnHigherTermReceivedWithVoteReply(int newTerm)
+    public void OnHigherTermReceivedWithVoteReply(int oldTerm, int newTerm)
     {
         Log.Information($"{_nodeName} received higher term in vote reply, stepping down to follower");
-        // Become follower with no leader info (will be set when AppendEntries received)
-        BecomeFollower(null, newTerm);
+        StateStore.CheckTermAndRole(oldTerm, NodeType.Candidate, () =>
+        {
+            // Become follower with no leader info (will be set when AppendEntries received)
+            BecomeFollower(null, newTerm);
+        });
     }
 }

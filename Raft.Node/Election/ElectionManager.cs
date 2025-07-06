@@ -7,7 +7,7 @@ namespace Raft.Node.Election;
 
 public interface IElectionManager
 {
-    Task StartElectionAsync(int term);
+    Task StartElectionAsync(int termAtElectionStart);
 }
 
 public class ElectionManager : IElectionManager
@@ -29,12 +29,12 @@ public class ElectionManager : IElectionManager
         _resultsReceiver = resultsReceiver;
     }
 
-    public async Task StartElectionAsync(int term)
+    public async Task StartElectionAsync(int termAtElectionStart)
     {
         var tasks = _clusterStore.GetNodes()
             .ToDictionary(
                 node => node.NodeName,
-                node => SendRequestForVote(node, term)
+                node => SendRequestForVote(node, termAtElectionStart)
             );
         
         await Task.WhenAny(
@@ -42,7 +42,7 @@ public class ElectionManager : IElectionManager
             Task.Delay(TimeSpan.FromSeconds(5))
         );
         
-        var (repliesReceived, higherTermReceived) = CountAndLogVotes(tasks, term);
+        var (repliesReceived, higherTermReceived) = CountAndLogVotes(tasks, termAtElectionStart);
         Log.Information("{NodeName} received {RepliesReceived} replies out of {TasksCount} nodes", _nodeName, 
             repliesReceived, tasks.Count);
         
@@ -52,11 +52,11 @@ public class ElectionManager : IElectionManager
             var highestTerm = tasks
                 .Where(t => t.Value.IsCompletedSuccessfully)
                 .Max(t => t.Value.Result.Term);
-            _resultsReceiver.OnHigherTermReceivedWithVoteReply(highestTerm);
+            _resultsReceiver.OnHigherTermReceivedWithVoteReply(termAtElectionStart, highestTerm);
             return;
         }
         
-        ProcessElectionResult(repliesReceived, tasks.Count + 1, term);
+        ProcessElectionResult(repliesReceived, tasks.Count + 1, termAtElectionStart);
     }
 
     private void ProcessElectionResult(int votesReceived, int totalNodes, int term)

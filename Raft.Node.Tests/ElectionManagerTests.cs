@@ -79,7 +79,7 @@ public class ElectionManagerTests
         await _electionManager.StartElectionAsync(1);
 
         // Assert
-        _resultsReceiver.Received(1).OnHigherTermReceivedWithVoteReply(2);
+        _resultsReceiver.Received(1).OnHigherTermReceivedWithVoteReply(1, 2);
     }
 
     private void SetupVoteClientMock(RequestForVoteReply voteReply)
