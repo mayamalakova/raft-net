@@ -209,7 +209,7 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
         _leaderPresenceTracker.Stop();
         
         StateStore.CurrentTerm++;
-        ElectionManager.StartElection();
+        ElectionManager.StartElectionAsync();
     }
 
     public void OnElectionWon()

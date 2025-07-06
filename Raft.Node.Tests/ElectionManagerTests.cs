@@ -26,7 +26,7 @@ public class ElectionManagerTests
     }
 
     [Test]
-    public void ShouldCallOnElectionWon_WhenMajorityVotesGranted()
+    public async Task ShouldCallOnElectionWon_WhenMajorityVotesGranted()
     {
         // Arrange
         var nodes = new[]
@@ -40,14 +40,14 @@ public class ElectionManagerTests
         _electionManager = new ElectionManager("nodeA", _clusterStore, _stateStore, _clientPool, _resultsReceiver);
 
         // Act
-        _electionManager.StartElection();
+        await _electionManager.StartElectionAsync();
 
         // Assert
         _resultsReceiver.Received(1).OnElectionWon();
     }
 
     [Test]
-    public void ShouldCallOnElectionLost_WhenNotEnoughVotes()
+    public async Task ShouldCallOnElectionLost_WhenNotEnoughVotes()
     {
         // Arrange
         var nodes = new[]
@@ -61,14 +61,14 @@ public class ElectionManagerTests
         _electionManager = new ElectionManager("nodeA", _clusterStore, _stateStore, _clientPool, _resultsReceiver);
 
         // Act
-        _electionManager.StartElection();
+        await _electionManager.StartElectionAsync();
 
         // Assert
         _resultsReceiver.Received(1).OnElectionLost();
     }
 
     [Test]
-    public void ShouldCallOnHigherTermReceivedWithVoteReply_WhenHigherTermSeen()
+    public async Task ShouldCallOnHigherTermReceivedWithVoteReply_WhenHigherTermSeen()
     {
         // Arrange
         var nodes = new[]
@@ -81,7 +81,7 @@ public class ElectionManagerTests
         _electionManager = new ElectionManager("nodeA", _clusterStore, _stateStore, _clientPool, _resultsReceiver);
 
         // Act
-        _electionManager.StartElection();
+        await _electionManager.StartElectionAsync();
 
         // Assert
         _resultsReceiver.Received(1).OnHigherTermReceivedWithVoteReply(2);

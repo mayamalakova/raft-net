@@ -7,7 +7,7 @@ namespace Raft.Node.Election;
 
 public interface IElectionManager
 {
-    void StartElection();
+    Task StartElectionAsync();
 }
 
 public class ElectionManager : IElectionManager
@@ -32,7 +32,7 @@ public class ElectionManager : IElectionManager
         this._resultsReceiver = resultsReceiver;
     }
 
-    public void StartElection()
+    public async Task StartElectionAsync()
     {
         var tasks = clusterStore.GetNodes()
             .ToDictionary(
@@ -40,12 +40,10 @@ public class ElectionManager : IElectionManager
                 node => SendRequestForVote(node, stateStore.CurrentTerm)
             );
         
-        var collectVotesWithinElectionTimeout = Task.WhenAny(
+        await Task.WhenAny(
             Task.WhenAll(tasks.Values),
             Task.Delay(TimeSpan.FromSeconds(5))
         );
-        
-        collectVotesWithinElectionTimeout.Wait();
         
         var (repliesReceived, higherTermReceived) = CountAndLogVotes(tasks);
         Log.Information("{NodeName} received {RepliesReceived} replies out of {TasksCount} nodes", nodeName, repliesReceived, tasks.Count);
