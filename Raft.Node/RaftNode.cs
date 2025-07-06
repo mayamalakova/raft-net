@@ -213,9 +213,19 @@ public class RaftNode : IRaftNode
         
         collectVotesWithinElectionTimeout.Wait();
         
-        var repliesReceived = tasks.Count(x => x.Value is { IsCompletedSuccessfully: true, Result.VoteGranted: true });
+        var repliesReceived = CountAndLogVotes(tasks);
         Log.Information("{NodeName} received {RepliesReceived} replies out of {TasksCount} nodes", _nodeName, repliesReceived, tasks.Count);
         
+    }
+
+    private static int CountAndLogVotes(Dictionary<string, Task<RequestForVoteReply>> taskEntries)
+    {
+        var failed = taskEntries.Where(t => !t.Value.IsCompletedSuccessfully);
+        var notGranted = taskEntries.Where(t => t.Value is { IsCompletedSuccessfully: true, Result.VoteGranted: false });
+        failed.ToList().ForEach(t => Log.Information("Failed to get vote response for vote to {NodeName}", t.Key));
+        notGranted.ToList().ForEach(t => Log.Information("Vote not granted for {NodeName}", t.Key));
+
+        return taskEntries.Count(t => t.Value is { IsCompletedSuccessfully: true, Result.VoteGranted: true });
     }
 
     private Task<RequestForVoteReply> SendRequestForVote(NodeInfo node, int term)
