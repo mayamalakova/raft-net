@@ -12,7 +12,6 @@ public class ElectionManagerTests
 {
     private ElectionManager _electionManager;
     private IClusterNodeStore _clusterStore;
-    private INodeStateStore _stateStore;
     private IClientPool _clientPool;
     private IElectionResultsReceiver _resultsReceiver;
 
@@ -20,7 +19,6 @@ public class ElectionManagerTests
     public void SetUp()
     {
         _clusterStore = Substitute.For<IClusterNodeStore>();
-        _stateStore = Substitute.For<INodeStateStore>();
         _clientPool = Substitute.For<IClientPool>();
         _resultsReceiver = Substitute.For<IElectionResultsReceiver>();
     }
@@ -35,15 +33,14 @@ public class ElectionManagerTests
             new NodeInfo("node2", new NodeAddress("localhost", 5003))
         };
         _clusterStore.GetNodes().Returns(nodes);
-        _stateStore.CurrentTerm.Returns(1);
         SetupVoteClientMock(new RequestForVoteReply { Term = 1, VoteGranted = true });
-        _electionManager = new ElectionManager("nodeA", _clusterStore, _stateStore, _clientPool, _resultsReceiver);
+        _electionManager = new ElectionManager("nodeA", _clusterStore, _clientPool, _resultsReceiver);
 
         // Act
-        await _electionManager.StartElectionAsync();
+        await _electionManager.StartElectionAsync(1);
 
         // Assert
-        _resultsReceiver.Received(1).OnElectionWon();
+        _resultsReceiver.Received(1).OnElectionWon(1);
     }
 
     [Test]
@@ -56,15 +53,14 @@ public class ElectionManagerTests
             new NodeInfo("node2", new NodeAddress("localhost", 5003))
         };
         _clusterStore.GetNodes().Returns(nodes);
-        _stateStore.CurrentTerm.Returns(1);
         SetupVoteClientMock(new RequestForVoteReply { Term = 1, VoteGranted = false });
-        _electionManager = new ElectionManager("nodeA", _clusterStore, _stateStore, _clientPool, _resultsReceiver);
+        _electionManager = new ElectionManager("nodeA", _clusterStore, _clientPool, _resultsReceiver);
 
         // Act
-        await _electionManager.StartElectionAsync();
+        await _electionManager.StartElectionAsync(1);
 
         // Assert
-        _resultsReceiver.Received(1).OnElectionLost();
+        _resultsReceiver.Received(1).OnElectionLost(1);
     }
 
     [Test]
@@ -76,12 +72,11 @@ public class ElectionManagerTests
             new NodeInfo("node1", new NodeAddress("localhost", 5002))
         };
         _clusterStore.GetNodes().Returns(nodes);
-        _stateStore.CurrentTerm.Returns(1);
         SetupVoteClientMock(new RequestForVoteReply { Term = 2, VoteGranted = false });
-        _electionManager = new ElectionManager("nodeA", _clusterStore, _stateStore, _clientPool, _resultsReceiver);
+        _electionManager = new ElectionManager("nodeA", _clusterStore, _clientPool, _resultsReceiver);
 
         // Act
-        await _electionManager.StartElectionAsync();
+        await _electionManager.StartElectionAsync(1);
 
         // Assert
         _resultsReceiver.Received(1).OnHigherTermReceivedWithVoteReply(2);

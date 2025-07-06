@@ -2,7 +2,7 @@ namespace Raft.Node.Election;
 
 public interface IElectionResultsReceiver
 {
-    void OnElectionWon();
-    void OnElectionLost();
+    void OnElectionWon(int termAtElectionStart);
+    void OnElectionLost(int termAtElectionStart);
     void OnHigherTermReceivedWithVoteReply(int newTerm);
 } 

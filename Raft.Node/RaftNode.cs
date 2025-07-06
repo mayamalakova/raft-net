@@ -66,7 +66,7 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
         _clusterMessageReceiver = new ClusterMessageReceiver(port, GetClusterServices());
         _adminMessageReceiver = new AdminMessageReceiver(port + 1000, GetAdminServices());
 
-        ElectionManager = new ElectionManager(_nodeName, _clusterStore, StateStore, _clientPool, this);
+        ElectionManager = new ElectionManager(_nodeName, _clusterStore, _clientPool, this);
     }
 
     private IEnumerable<INodeService> GetClusterServices()
@@ -209,19 +209,23 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
         _leaderPresenceTracker.Stop();
         
         StateStore.CurrentTerm++;
-        ElectionManager.StartElectionAsync();
+        ElectionManager.StartElectionAsync(StateStore.CurrentTerm);
     }
 
-    public void OnElectionWon()
+    public void OnElectionWon(int termAtElectionStart)
     {
-        BecomeLeader(StateStore.CurrentTerm);
+        if (StateStore.CurrentTerm == termAtElectionStart && StateStore.Role == NodeType.Candidate)
+        {
+            BecomeLeader(StateStore.CurrentTerm);
+        }
     }
 
-    public void OnElectionLost()
+    public void OnElectionLost(int termAtElectionStart)
     {
-        // TODO: handle election loss (e.g., become follower, restart election timer)
-        StateStore.Role = NodeType.Follower;
-        _leaderPresenceTracker.Start();
+        if (StateStore.CurrentTerm == termAtElectionStart && StateStore.Role == NodeType.Candidate)
+        {
+            ElectionManager.StartElectionAsync(StateStore.CurrentTerm);
+        }
     }
 
     public void OnHigherTermReceivedWithVoteReply(int newTerm)
