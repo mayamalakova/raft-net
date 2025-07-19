@@ -27,5 +27,5 @@ public interface INodeStateStore
     string? VotedFor { get; set; }
     int LastVoteTerm { get; set; }
 
-    void CheckTermAndRole(int expectedTerm, NodeType expectedRole, Action onSuccess, Action onFailure);
+    void CheckTermAndRoleAndDo(int expectedTerm, NodeType expectedRole, Action onSuccess, Action onFailure);
 }

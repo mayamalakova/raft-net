@@ -105,7 +105,7 @@ public class NodeStateStore : INodeStateStore
         }
     }
 
-    public void CheckTermAndRole(int expectedTerm, NodeType expectedRole, Action onSuccess, Action onFailure)
+    public void CheckTermAndRoleAndDo(int expectedTerm, NodeType expectedRole, Action onSuccess, Action onFailure)
     {
         lock (_lock)
         {
