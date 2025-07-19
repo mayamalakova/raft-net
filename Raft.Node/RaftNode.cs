@@ -209,6 +209,8 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
         _leaderPresenceTracker.Stop();
         
         StateStore.CurrentTerm++;
+        StateStore.VotedFor = _nodeName;
+        StateStore.LastVoteTerm = StateStore.CurrentTerm;
         ElectionManager.StartElectionAsync(StateStore.CurrentTerm);
     }
 
@@ -217,7 +219,7 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
         StateStore.CheckTermAndRole(termAtElectionStart, NodeType.Candidate, () =>
         {
             BecomeLeader(StateStore.CurrentTerm);
-        });
+        }, () => Log.Information($"{_nodeName} out of sync"));
     }
 
     public void OnElectionLost(int termAtElectionStart)
@@ -225,7 +227,7 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
         StateStore.CheckTermAndRole(termAtElectionStart, NodeType.Candidate, () =>
         {
             ElectionManager.StartElectionAsync(StateStore.CurrentTerm);
-        });
+        }, () => Log.Information($"{_nodeName} out of sync"));
     }
 
     public void OnHigherTermReceivedWithVoteReply(int oldTerm, int newTerm)
@@ -235,6 +237,6 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
         {
             // Become follower with no leader info (will be set when AppendEntries received)
             BecomeFollower(null, newTerm);
-        });
+        }, () => Log.Information($"{_nodeName} out of sync"));
     }
 }
