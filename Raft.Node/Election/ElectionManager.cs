@@ -1,6 +1,5 @@
 ﻿using Raft.Node.Communication.Client;
 using Raft.Store;
-using Raft.Store.Domain;
 using Serilog;
 
 namespace Raft.Node.Election;
@@ -8,6 +7,29 @@ namespace Raft.Node.Election;
 public interface IElectionManager
 {
     Task StartElectionAsync(int termAtElectionStart);
+}
+
+public class ElectionResult
+{
+    public int YesVotes { get; }
+    public int NoVotes { get; }
+    public bool WonElection { get; }
+    public bool HigherTerm { get; }
+
+    public int TermReceived { get; }
+
+    private ElectionResult(int yesVotes, int noVotes, bool wonElection, bool higherTerm, int termReceived = 0)
+    {
+        YesVotes = yesVotes;
+        NoVotes = noVotes;
+        WonElection = wonElection;
+        HigherTerm = higherTerm;
+        TermReceived = termReceived;
+    }
+
+    public static ElectionResult Lost(int noVotes) => new(0, noVotes, false, false);
+    public static ElectionResult Won(int yesVotes) => new(yesVotes, 0, true, false);
+    public static ElectionResult HigherTermReceived(int replyTerm) => new(0, 0, false, true, replyTerm);
 }
 
 public class ElectionManager : IElectionManager
@@ -31,76 +53,86 @@ public class ElectionManager : IElectionManager
 
     public async Task StartElectionAsync(int termAtElectionStart)
     {
-        var tasks = _clusterStore.GetNodes()
-            .ToDictionary(
-                node => node.NodeName,
-                node => SendRequestForVote(node, termAtElectionStart)
-            );
-        
-        await Task.WhenAny(
-            Task.WhenAll(tasks.Values),
+        var totalNodes = _clusterStore.GetNodes().Count() + 1; // +1 for self
+        var yesVotes = 0;
+        var noVotes = 0;
+        var votesNeeded = (totalNodes / 2) + 1; // Majority
+        var votesLock = new object();
+
+        var taskCompletionSource = new TaskCompletionSource<ElectionResult>();
+        foreach (var node in _clusterStore.GetNodes())
+        {
+            Task.Run(async () =>
+            {
+                var request = new RequestForVoteMessage() { CandidateId = _nodeName, Term = termAtElectionStart };
+                var client = _clientPool.GetRequestForVoteClient(node.NodeAddress);
+                var reply = await client.RequestVoteAsync(request).ResponseAsync;
+
+                if (reply.Term > termAtElectionStart)
+                {
+                    taskCompletionSource.TrySetResult(ElectionResult.HigherTermReceived(reply.Term));
+                    return;
+                }
+
+                lock (votesLock)
+                {
+                    if (reply.VoteGranted)
+                    {
+                        yesVotes++;
+                    }
+                    else
+                    {
+                        noVotes++;
+                    }
+
+                    if (yesVotes >= votesNeeded)
+                    {
+                        taskCompletionSource.TrySetResult(ElectionResult.Won(yesVotes));
+                    }
+                    else if (noVotes >= votesNeeded)
+                    {
+                        taskCompletionSource.TrySetResult(ElectionResult.Lost(noVotes));
+                    }
+                }
+            });
+        }
+
+        var electionTask = await Task.WhenAny(
+            taskCompletionSource.Task,
             Task.Delay(TimeSpan.FromSeconds(5))
         );
-        
-        var (repliesReceived, higherTermReceived) = CountAndLogVotes(tasks, termAtElectionStart);
-        Log.Information("{NodeName} received {RepliesReceived} replies out of {TasksCount} nodes", _nodeName, 
-            repliesReceived, tasks.Count);
-        
-        // If we received a higher term, step down immediately
-        if (higherTermReceived)
-        {
-            var highestTerm = tasks
-                .Where(t => t.Value.IsCompletedSuccessfully)
-                .Max(t => t.Value.Result.Term);
-            _resultsReceiver.OnHigherTermReceivedWithVoteReply(termAtElectionStart, highestTerm);
-            return;
-        }
-        
-        ProcessElectionResult(repliesReceived, tasks.Count + 1, termAtElectionStart);
-    }
 
-    private void ProcessElectionResult(int votesReceived, int totalNodes, int term)
-    {
-        var totalVotes = votesReceived + 1; // +1 for self
-        var votesNeeded = (totalNodes / 2) + 1; // Majority
-        
-        Log.Information("{NodeName} election result: {TotalVotes}/{TotalNodes} votes (need {VotesNeeded} for majority)", 
-            _nodeName, totalVotes, totalNodes, votesNeeded);
-        if (totalVotes >= votesNeeded)
+        if (electionTask == taskCompletionSource.Task)
         {
-            Log.Information("{NodeName} won election with {TotalVotes}/{TotalNodes} votes", 
-                _nodeName, totalVotes, totalNodes);
-            _resultsReceiver.OnElectionWon(term);
+            var electionResult = taskCompletionSource.Task.Result;
+            ProcessResult(termAtElectionStart, electionResult, totalNodes);
         }
         else
         {
-            Log.Information("{NodeName} lost election with {TotalVotes}/{TotalNodes} votes, becoming follower", _nodeName, totalVotes, totalNodes);
-            _resultsReceiver.OnElectionLost(term);
+            Log.Information("{NodeName} lost election due to election timeout", _nodeName);
+            _resultsReceiver.OnElectionLost(termAtElectionStart);
         }
     }
 
-    private (int votesReceived, bool higherTermReceived) CountAndLogVotes(Dictionary<string, Task<RequestForVoteReply>> taskEntries, int term)
+    private void ProcessResult(int termAtElectionStart, ElectionResult electionResult, int totalNodes)
     {
-        var failed = taskEntries.Where(t => !t.Value.IsCompletedSuccessfully);
-        var notGranted = taskEntries.Where(t => t.Value is { IsCompletedSuccessfully: true, Result.VoteGranted: false });
-        var granted = taskEntries.Where(t => t.Value is { IsCompletedSuccessfully: true, Result.VoteGranted: true }).ToArray();
-        
-        failed.ToList().ForEach(t => Log.Information("Failed to get vote response for vote to {NodeName}", t.Key));
-        notGranted.ToList().ForEach(t => Log.Information("Vote not granted for {NodeName}", t.Key));
-        granted.ToList().ForEach(t => Log.Information("Vote granted by {NodeName}", t.Key));
-
-        // Check if any reply contained a higher term than our current term
-        var higherTermReceived = taskEntries.Any(t => 
-            t.Value.IsCompletedSuccessfully && 
-            t.Value.Result.Term > term);
-
-        return (granted.Count(), higherTermReceived);
-    }
-
-    private Task<RequestForVoteReply> SendRequestForVote(NodeInfo node, int term)
-    {
-        var request = new RequestForVoteMessage() { CandidateId = _nodeName, Term = term};
-        var client = _clientPool.GetRequestForVoteClient(node.NodeAddress);
-        return client.RequestVoteAsync(request).ResponseAsync;
+        if (electionResult.HigherTerm)
+        {
+            _resultsReceiver.OnHigherTermReceivedWithVoteReply(termAtElectionStart, electionResult.TermReceived);
+            return;
+        }
+        if (electionResult.WonElection)
+        {
+            Log.Information("{NodeName} won election with {YesVotes}/{TotalNodes} votes granted, becoming leader",
+                _nodeName, electionResult.YesVotes, totalNodes);
+            _resultsReceiver.OnElectionWon(termAtElectionStart);
+        }
+        else
+        {
+            Log.Information(
+                "{NodeName} lost election with {NoVotes}/{TotalNodes} votes refused, becoming follower",
+                _nodeName, electionResult.NoVotes, totalNodes);
+            _resultsReceiver.OnElectionLost(termAtElectionStart);
+        }
     }
 }
