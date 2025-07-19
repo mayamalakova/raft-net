@@ -154,6 +154,8 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
     {
         _clusterMessageReceiver.Stop();
         _adminMessageReceiver.Stop();
+        _heartBeatRunner.StopBeating();
+        _leaderPresenceTracker.Stop();
     }
 
     public string GetClusterState()

@@ -11,7 +11,7 @@ namespace Raft.IntegrationTests;
 public class RaftLogReplicationTests
 {
     private readonly ICollection<RaftNode> _nodes = new List<RaftNode>();
-    private SystemTimerFactory _systemTimerFactory;
+    private readonly SystemTimerFactory _systemTimerFactory = new();
 
     [SetUp]
     public void SetUp()
@@ -147,7 +147,6 @@ public class RaftLogReplicationTests
 
     private RaftNode CreateLeader(string name, int port)
     {
-        _systemTimerFactory = new SystemTimerFactory();
         var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port, 1, 3, _systemTimerFactory);
         leader.Start();
         _nodes.Add(leader);
