@@ -96,12 +96,11 @@ public class RaftLogReplicationTests
         }
 
         leader.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
-        // TODO - figure out why follower1 stops responding at times
-        // follower1.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
+        follower1.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
         follower2.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
         leaderClient.GetState().ShouldBe("value: 2, errors: [ ]");
         followerClient2.GetState().ShouldBe("value: 2, errors: [ ]");
-        // followerClient1.GetState().ShouldBe("value: 2, errors: [ ]");
+        followerClient1.GetState().ShouldBe("value: 2, errors: [ ]");
     }
 
     [Test]
