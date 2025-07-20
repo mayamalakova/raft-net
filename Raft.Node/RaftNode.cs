@@ -21,6 +21,8 @@ public interface IRaftNode
     void BecomeLeader(int term);
     void BecomeFollowerOfLeaderWithId(string leaderId, int term);
     void BecomeCandidate();
+
+    string GetName();
 }
 
 /// <summary>
@@ -174,7 +176,7 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
 
     public void BecomeLeader(int term)
     {
-        Log.Information($"{_nodeName} becoming leader");
+        Log.Information("({nodeName}, term={term}) becoming leader", _nodeName, term);
         _leaderPresenceTracker.Stop();
         StateStore.Role = NodeType.Leader;
         StateStore.LeaderInfo = new NodeInfo(_nodeName, new NodeAddress(_nodeHost, _nodePort));
@@ -187,7 +189,7 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
 
     public void BecomeFollower(NodeInfo? leaderInfo, int term)
     {
-        Log.Information($"{_nodeName} becoming follower");
+        Log.Information("({nodeName}, term={term}) becoming follower", _nodeName, term);
         StateStore.Role = NodeType.Follower;
         _heartBeatRunner.StopBeating();
         StateStore.CurrentTerm = term;
@@ -206,7 +208,8 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
 
     public void BecomeCandidate()
     {
-        Log.Information($"{_nodeName} becoming candidate");
+        Log.Information("({nodeName}, term={term}) becoming candidate", 
+            _nodeName, StateStore.CurrentTerm + 1);
         StateStore.Role = NodeType.Candidate;
         _leaderPresenceTracker.Stop();
         
@@ -215,6 +218,8 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
         StateStore.LastVoteTerm = StateStore.CurrentTerm;
         ElectionManager.StartElectionAsync(StateStore.CurrentTerm);
     }
+
+    public string GetName() => _nodeName;
 
     public void OnElectionWon(int termAtElectionStart)
     {
@@ -234,7 +239,8 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
 
     public void OnHigherTermReceivedWithVoteReply(int oldTerm, int newTerm)
     {
-        Log.Information($"{_nodeName} received higher term in vote reply, stepping down to follower");
+        Log.Information("Election result: {nodeName} received higher term ({newTerm} > {oldTerm}) in vote reply, stepping down to follower", 
+            _nodeName, newTerm, oldTerm);
         StateStore.CheckTermAndRoleAndDo(oldTerm, NodeType.Candidate, () =>
         {
             // Become follower with no leader info (will be set when AppendEntries received)

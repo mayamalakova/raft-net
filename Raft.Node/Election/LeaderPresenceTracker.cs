@@ -1,5 +1,6 @@
 ﻿using System.Timers;
 using Raft.Node.Timing;
+using Serilog;
 using ITimer = Raft.Node.Timing.ITimer;
 
 namespace Raft.Node.Election;
@@ -29,6 +30,8 @@ public class LeaderPresenceTracker : ILeaderPresenceTracker
     {
         lock (_lock)
         {
+            Log.Information("({node}) start tracking leader presence", _node.GetName());
+            
             if (_timer.Enabled) return _timer.Interval;
             var timerInterval = new Random().Next(3000, 6000);
             _timer.Interval = timerInterval;
@@ -41,6 +44,8 @@ public class LeaderPresenceTracker : ILeaderPresenceTracker
     {
         lock (_lock)
         {
+            Log.Information("({node}) stop tracking leader presence", _node.GetName());
+            
             _timer.Stop();
         }
     }

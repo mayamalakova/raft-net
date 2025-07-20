@@ -23,7 +23,7 @@ public class LogReplicator(
         if (!clusterStore.GetNodes().Any()) return;
         var replies = SendAppendEntriesRequestsAndWaitForResults().Result;
         UpdateClusterState(replies);
-        Log.Information($"Replicated to followers - nextIndex: {clusterStore.GetNextIndexesPrintable()}");
+        Log.Debug($"Replicated to followers - nextIndex: {clusterStore.GetNextIndexesPrintable()}");
     }
 
     private async Task<IDictionary<string, AppendEntriesReply?>> SendAppendEntriesRequestsAndWaitForResults()
@@ -52,7 +52,7 @@ public class LogReplicator(
     {
         foreach (var (nodeName, reply) in replies)
         {
-            Log.Information($"{nodeName}: {reply}");
+            Log.Debug($"Reply from {nodeName}: {reply}");
             if (reply == null)
             {
                 continue;
@@ -73,7 +73,7 @@ public class LogReplicator(
 
     private async Task<AppendEntriesReply?> TrySendAppendEntriesRequest(NodeInfo node, IList<LogEntry> entries)
     {
-        Log.Information($"Sending append entries to node {node.NodeName} - {entries.Count} entries, commitIndex={stateStore.CommitIndex}");
+        Log.Debug($"Sending append entries to node {node.NodeName} - {entries.Count} entries, commitIndex={stateStore.CommitIndex}");
         try
         {
             return await SendAppendEntriesRequestAsync(node, entries.Select(e => e.ToMessage())
@@ -101,10 +101,10 @@ public class LogReplicator(
     {
         var appendEntriesRequest = EntriesRequestFactory.CreateRequest(follower.NodeName, entries);
         var deadline = DateTime.UtcNow.Add(timeout);
-        Log.Information($"awaiting GetAppendEntriesClient {follower.NodeName}");
+        Log.Debug($"awaiting GetAppendEntriesClient {follower.NodeName}");
         var reply = await clientPool.GetAppendEntriesClient(follower.NodeAddress)
             .AppendEntriesAsync(appendEntriesRequest, new CallOptions(deadline: deadline));
-        Log.Information($"got reply to GetAppendEntriesClient from {follower.NodeName}");
+        Log.Debug($"got reply to GetAppendEntriesClient from {follower.NodeName}");
         return reply;
     }
 

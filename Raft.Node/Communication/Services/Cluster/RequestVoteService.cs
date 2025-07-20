@@ -22,19 +22,24 @@ public class RequestVoteService : RequestForVoteSvc.RequestForVoteSvcBase, INode
 
     public override Task<RequestForVoteReply> RequestVote(RequestForVoteMessage request, ServerCallContext context)
     {
-        Log.Information($"Received vote request from {request.CandidateId} for term {request.Term}");
-
         // 1. Reply false if term < currentTerm
         if (request.Term < _stateStore.CurrentTerm)
         {
-            Log.Information($"Rejecting vote request from {request.CandidateId} - request term {request.Term} < current term {_stateStore.CurrentTerm}");
+            Log.Information("Vote request (from: {candidateId}, term: {requestTerm}) - result: Rejecting as currentTerm is higher (currentTerm={currentTerm})", 
+                request.CandidateId, 
+                request.Term, 
+                _stateStore.CurrentTerm);
             return SendRejected();
         }
 
         // 2. Reply false if already voted for this term
         if (_stateStore.LastVoteTerm == _stateStore.CurrentTerm && _stateStore.VotedFor != null)
         {
-            Log.Information($"Rejecting vote request from {request.CandidateId} - already voted for {_stateStore.VotedFor} in term {_stateStore.CurrentTerm}");
+            Log.Information("Vote request (from: {candidateId}, term: {requestTerm}) - result: Rejecting as already voted for {votedFor} in term {lastVotedTerm}", 
+                request.CandidateId, 
+                request.Term, 
+                _stateStore.VotedFor, 
+                _stateStore.LastVoteTerm);
             return SendRejected();       
         }
 
@@ -46,7 +51,7 @@ public class RequestVoteService : RequestForVoteSvc.RequestForVoteSvcBase, INode
         }
 
         // 4. Grant vote and update vote state
-        Log.Information($"Granting vote to {request.CandidateId} for term {request.Term}");
+        Log.Information("Vote request (from: {candidateId}, term: {requestTerm}) - result: Granting vote", request.CandidateId, request.Term);
         _stateStore.VotedFor = request.CandidateId;
         _stateStore.LastVoteTerm = _stateStore.CurrentTerm;
 
@@ -61,7 +66,6 @@ public class RequestVoteService : RequestForVoteSvc.RequestForVoteSvcBase, INode
             VoteGranted = true
         };
 
-        Log.Information($"Sending vote reply: Term={reply.Term}, VoteGranted={reply.VoteGranted}");
         return Task.FromResult(reply);
     }
 
@@ -72,7 +76,6 @@ public class RequestVoteService : RequestForVoteSvc.RequestForVoteSvcBase, INode
             Term = _stateStore.CurrentTerm,
             VoteGranted = false
         };
-        Log.Information($"Sending vote reply: Term={rejectReply.Term}, VoteGranted={rejectReply.VoteGranted}");
         return Task.FromResult(rejectReply);
     }
 }

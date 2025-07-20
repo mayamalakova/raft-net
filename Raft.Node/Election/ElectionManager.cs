@@ -57,6 +57,9 @@ public class ElectionManager : IElectionManager
         var yesVotes = 0;
         var noVotes = 0;
         var votesNeeded = (totalNodes / 2) + 1; // Majority
+        Log.Information("Election started ({NodeName}, term={term}, votesNeeded: {votesNeeded})", 
+            _nodeName, termAtElectionStart, votesNeeded);
+        
         var votesLock = new object();
 
         var taskCompletionSource = new TaskCompletionSource<ElectionResult>();
@@ -109,7 +112,7 @@ public class ElectionManager : IElectionManager
         }
         else
         {
-            Log.Information("{NodeName} lost election due to election timeout", _nodeName);
+            Log.Information("Election result: ({NodeName}, term={term}) TIMEOUT", _nodeName, termAtElectionStart);
             _resultsReceiver.OnElectionLost(termAtElectionStart);
         }
     }
@@ -123,15 +126,15 @@ public class ElectionManager : IElectionManager
         }
         if (electionResult.WonElection)
         {
-            Log.Information("{NodeName} won election with {YesVotes}/{TotalNodes} votes granted, becoming leader",
-                _nodeName, electionResult.YesVotes, totalNodes);
+            Log.Information("Election result: ({NodeName}, term={term}) WON election with {YesVotes}/{TotalNodes} votes granted, becoming leader",
+                _nodeName, termAtElectionStart, electionResult.YesVotes, totalNodes);
             _resultsReceiver.OnElectionWon(termAtElectionStart);
         }
         else
         {
             Log.Information(
-                "{NodeName} lost election with {NoVotes}/{TotalNodes} votes refused, becoming follower",
-                _nodeName, electionResult.NoVotes, totalNodes);
+                "Election result: ({NodeName}, term={term}) LOST election with {NoVotes}/{TotalNodes} votes refused, becoming follower",
+                _nodeName, termAtElectionStart, electionResult.NoVotes, totalNodes);
             _resultsReceiver.OnElectionLost(termAtElectionStart);
         }
     }
