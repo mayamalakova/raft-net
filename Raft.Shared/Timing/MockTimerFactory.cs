@@ -1,8 +1,7 @@
-﻿using NSubstitute;
-using Raft.Node.Timing;
+﻿using Raft.Node.Timing;
 using ITimer = Raft.Node.Timing.ITimer;
 
-namespace Raft.Node.Tests.MockHelpers;
+namespace Raft.IntegrationTests;
 
 public class MockTimerFactory(ITimer timer) : ITimerFactory
 {

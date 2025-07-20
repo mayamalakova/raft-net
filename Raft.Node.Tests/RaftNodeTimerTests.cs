@@ -1,5 +1,6 @@
 ﻿using NSubstitute;
 using NUnit.Framework;
+using Raft.IntegrationTests;
 using Raft.Node.Election;
 using Raft.Node.Tests.MockHelpers;
 using Raft.Store.Domain;

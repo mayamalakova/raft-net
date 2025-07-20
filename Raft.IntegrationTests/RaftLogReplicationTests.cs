@@ -11,7 +11,7 @@ namespace Raft.IntegrationTests;
 public class RaftLogReplicationTests
 {
     private readonly ICollection<RaftNode> _nodes = new List<RaftNode>();
-    private readonly SystemTimerFactory _systemTimerFactory = new();
+    private readonly ITimerFactory _systemTimerFactory = new MockTimerFactory(new MockTimer());
 
     [SetUp]
     public void SetUp()
