@@ -9,10 +9,12 @@ namespace Raft.Node.Communication.Services.Cluster;
 public class RequestVoteService : RequestForVoteSvc.RequestForVoteSvcBase, INodeService
 {
     private readonly INodeStateStore _stateStore;
+    private readonly IRaftNode _node;
 
-    public RequestVoteService(INodeStateStore stateStore)
+    public RequestVoteService(INodeStateStore stateStore, IRaftNode node)
     {
         _stateStore = stateStore;
+        _node = node;
     }
 
     public ServerServiceDefinition GetServiceDefinition()
@@ -32,11 +34,17 @@ public class RequestVoteService : RequestForVoteSvc.RequestForVoteSvcBase, INode
             return SendRejected();
         }
 
-        // 2. If term > currentTerm, update term (vote state will be set below)
+        // 2. If term > currentTerm, update term, become follower and grant vote 
         if (request.Term > _stateStore.CurrentTerm)
         {
-            Log.Information($"Received vote request with higher term {request.Term} > {_stateStore.CurrentTerm}, updating term");
-            _stateStore.CurrentTerm = request.Term;
+            Log.Information("Vote request (from: {candidateId}, term: {requestTerm}) - result: Granting vote, as request term is higher than current term {currentTerm}",
+                request.CandidateId, request.Term, _stateStore.CurrentTerm);
+            _stateStore.VotedFor = request.CandidateId;
+            _stateStore.LastVoteTerm = _stateStore.CurrentTerm;
+            
+            _node.BecomeFollower(null, _stateStore.CurrentTerm);
+            
+            return SendGranted();       
         }
         
         // 3. Reply false if already voted for this term

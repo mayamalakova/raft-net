@@ -18,7 +18,7 @@ public class RequestVoteServiceTests
     public void SetUp()
     {
         _stateStore = new NodeStateStore();
-        _service = new RequestVoteService(_stateStore);
+        _service = new RequestVoteService(_stateStore, Substitute.For<IRaftNode>());
     }
 
     [TestCase(NodeType.Follower)]

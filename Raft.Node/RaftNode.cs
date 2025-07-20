@@ -20,6 +20,8 @@ public interface IRaftNode
     string GetNodeState();
     void BecomeLeader(int term);
     void BecomeFollowerOfLeaderWithId(string leaderId, int term);
+
+    void BecomeFollower(NodeInfo? leaderInfo, int term);
     void BecomeCandidate();
 
     string GetName();
@@ -79,7 +81,7 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
             new RegisterNodeService(StateStore, _clusterStore, _clientPool),
             new CommandProcessingService(StateStore, _clientPool, _leaderService, _heartBeatRunner),
             new AppendEntriesService(StateStore, this, _leaderPresenceTracker, _nodeName),
-            new RequestVoteService(StateStore)
+            new RequestVoteService(StateStore, this)
         ];
     }
 
@@ -189,14 +191,13 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
 
     public void BecomeFollower(NodeInfo? leaderInfo, int term)
     {
-        Log.Information("({nodeName}, term={term}) becoming follower", _nodeName, term);
+        Log.Information("({nodeName}, term={term}) becoming follower of {leaderNode}", 
+            _nodeName, term, leaderInfo?.NodeName ?? "unknown leader");
         StateStore.Role = NodeType.Follower;
         _heartBeatRunner.StopBeating();
         StateStore.CurrentTerm = term;
         StateStore.LeaderInfo = leaderInfo;
-        // Reset vote state when becoming follower
-        StateStore.VotedFor = null;
-        StateStore.LastVoteTerm = -1;
+        
         _leaderPresenceTracker.Start();
     }
 
@@ -248,6 +249,9 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
         {
             // Become follower with no leader info (will be set when AppendEntries received)
             BecomeFollower(null, newTerm);
+            // Reset vote state when becoming follower
+            StateStore.VotedFor = null;
+            StateStore.LastVoteTerm = -1;
         }, () => Log.Information($"{_nodeName} out of sync"));
     }
 }
