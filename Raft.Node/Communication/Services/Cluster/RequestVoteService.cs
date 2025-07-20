@@ -40,11 +40,11 @@ public class RequestVoteService : RequestForVoteSvc.RequestForVoteSvcBase, INode
             Log.Information("Vote request (from: {candidateId}, term: {requestTerm}) - result: Granting vote, as request term is higher than current term {currentTerm}",
                 request.CandidateId, request.Term, _stateStore.CurrentTerm);
             _stateStore.VotedFor = request.CandidateId;
-            _stateStore.LastVoteTerm = _stateStore.CurrentTerm;
+            _stateStore.LastVoteTerm = request.Term;
             
-            _node.BecomeFollower(null, _stateStore.CurrentTerm);
+            _node.BecomeFollower(null, request.Term);
             
-            return SendGranted();       
+            return SendGranted(request.Term);       
         }
         
         // 3. Reply false if already voted for this term
@@ -63,14 +63,14 @@ public class RequestVoteService : RequestForVoteSvc.RequestForVoteSvcBase, INode
         _stateStore.VotedFor = request.CandidateId;
         _stateStore.LastVoteTerm = _stateStore.CurrentTerm;
 
-        return SendGranted();
+        return SendGranted(request.Term);
     }
 
-    private Task<RequestForVoteReply> SendGranted()
+    private Task<RequestForVoteReply> SendGranted(int term)
     {
         var reply = new RequestForVoteReply
         {
-            Term = _stateStore.CurrentTerm,
+            Term = term,
             VoteGranted = true
         };
 

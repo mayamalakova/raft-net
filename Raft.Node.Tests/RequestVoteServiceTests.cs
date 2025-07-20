@@ -13,12 +13,14 @@ public class RequestVoteServiceTests
 {
     private INodeStateStore _stateStore;
     private RequestVoteService _service;
+    private IRaftNode _node;
 
     [SetUp]
     public void SetUp()
     {
         _stateStore = new NodeStateStore();
-        _service = new RequestVoteService(_stateStore, Substitute.For<IRaftNode>());
+        _node = Substitute.For<IRaftNode>();
+        _service = new RequestVoteService(_stateStore, _node);
     }
 
     [TestCase(NodeType.Follower)]
@@ -38,10 +40,9 @@ public class RequestVoteServiceTests
 
         reply.VoteGranted.ShouldBeTrue();
         reply.Term.ShouldBe(2);
-        _stateStore.CurrentTerm.ShouldBe(2);
         _stateStore.VotedFor.ShouldBe("candidate1");
         _stateStore.LastVoteTerm.ShouldBe(2);
-        _stateStore.Role.ShouldBe(role); //role should remain unchanged  
+        _node.Received(1).BecomeFollower(null, 2);
     }
 
     [Test]
