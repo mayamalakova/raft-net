@@ -25,6 +25,7 @@ public interface IRaftNode
     void BecomeCandidate();
 
     string GetName();
+    void UpdateLeader(string leaderId);
 }
 
 /// <summary>
@@ -64,7 +65,7 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
             new LogReplicator(StateStore, _clientPool, _clusterStore, _nodeName, replicationTimeoutSeconds);
         _leaderService = new RaftLeaderService(logReplicator, replicationStateManager, StateStore, _clusterStore);
         _heartBeatRunner = new HeartBeatRunner(heartBeatIntervalSeconds * 1000, StateStore,
-            () => { _leaderService.ReconcileCluster(); });
+            () => { _leaderService.ReconcileCluster(); }, nodeName);
         _leaderPresenceTracker = new LeaderPresenceTracker(this, timerFactory);
 
         _clusterMessageReceiver = new ClusterMessageReceiver(port, GetClusterServices());
@@ -221,6 +222,10 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
     }
 
     public string GetName() => _nodeName;
+    public void UpdateLeader(string leaderId)
+    {
+        StateStore.LeaderInfo = _clusterStore.GetNodes().First(x => x.NodeName == leaderId);
+    }
 
     public void OnElectionWon(int termAtElectionStart)
     {

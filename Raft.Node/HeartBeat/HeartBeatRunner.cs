@@ -10,6 +10,7 @@ public class HeartBeatRunner
 {
     private readonly INodeStateStore _stateStore;
     private readonly Action _action;
+    private readonly string _nodeName;
     private readonly Timer _timer;
 
     /// <summary>
@@ -18,9 +19,11 @@ public class HeartBeatRunner
     /// <param name="interval">in milliseconds</param>
     /// <param name="stateStore"></param>
     /// <param name="action">action to execute</param>
-    public HeartBeatRunner(int interval, INodeStateStore stateStore, Action action)
+    /// <param name="nodeName"></param>
+    public HeartBeatRunner(int interval, INodeStateStore stateStore, Action action, string nodeName)
     {
         _action = action;
+        _nodeName = nodeName;
         _stateStore = stateStore;
         _timer = new Timer(interval); 
         _timer.AutoReset = true; 
@@ -29,6 +32,7 @@ public class HeartBeatRunner
 
     public void StartBeating()
     {
+        Log.Information("{node} Starting heartbeat", _nodeName);
         SendBeat();
         _timer.Start();
     }
@@ -46,6 +50,7 @@ public class HeartBeatRunner
 
     public void StopBeating()
     {
+        Log.Information("{node} Stopping heartbeat", _nodeName);
         _timer.Stop();
     }
     

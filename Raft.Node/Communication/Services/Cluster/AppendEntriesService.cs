@@ -28,6 +28,12 @@ public class AppendEntriesService(INodeStateStore stateStore, IRaftNode node, IL
             return Fail();
         }
 
+        if (stateStore.LeaderInfo == null)
+        {
+            Log.Information("Updated leader at {node} to {leaderId}", nodeName, request.LeaderId);
+            node.UpdateLeader(request.LeaderId);
+        }
+        
         // 3. if there are entries already on the places where the new ones should be appended - remove them
         RemoveConflictingEntries(request);
         // 4. append all new entries
