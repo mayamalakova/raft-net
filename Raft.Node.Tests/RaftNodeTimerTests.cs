@@ -1,5 +1,7 @@
-﻿using NUnit.Framework;
-using Raft.Node.Tests.MockHelpers;
+﻿using NSubstitute;
+using NUnit.Framework;
+using Raft.Node.Election;
+using Raft.Shared.Timing;
 using Raft.Store.Domain;
 using Shouldly;
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
@@ -28,7 +30,10 @@ public class RaftNodeTimerTests
             replicationTimeoutSeconds: 5,
             heartBeatIntervalSeconds: 1,
             timerFactory: _mockTimerFactory
-        );
+        )
+        {
+            ElectionManager = Substitute.For<IElectionManager>()
+        };
     }
 
     [Test]

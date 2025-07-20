@@ -1,6 +1,7 @@
-﻿
-using System.Timers;
-using ITimer = Raft.Node.Timing.ITimer;
+﻿using System.Timers;
+using ITimer = Raft.Shared.Timing.ITimer;
+
+namespace Raft.Shared.Timing;
 
 public class MockTimer : ITimer
 {
@@ -36,7 +37,6 @@ public class MockTimer : ITimer
         _enabled = false;
     }
 
-    // Method to simulate timer expiration
     public void SimulateElapsed()
     {
         if (_enabled && _elapsed != null)

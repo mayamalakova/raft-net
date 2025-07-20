@@ -8,4 +8,6 @@ public interface IClientPool
     LeaderDiscoverySvc.LeaderDiscoverySvcClient GetLeaderDiscoveryClient(NodeAddress targetAddress);
     RegisterNodeSvc.RegisterNodeSvcClient GetRegisterNodeClient(NodeAddress targetAddress);
     AppendEntriesSvc.AppendEntriesSvcClient GetAppendEntriesClient(NodeAddress targetAddress);
+    
+    RequestForVoteSvc.RequestForVoteSvcClient GetRequestForVoteClient(NodeAddress targetAddress);
 }

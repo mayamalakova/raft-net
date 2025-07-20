@@ -4,7 +4,7 @@ using Raft.Node.Communication.Services.Admin;
 using Raft.Node.Communication.Services.Cluster;
 using Raft.Node.Election;
 using Raft.Node.HeartBeat;
-using Raft.Node.Timing;
+using Raft.Shared.Timing;
 using Raft.Store;
 using Raft.Store.Domain;
 using Raft.Store.Memory;
@@ -19,15 +19,24 @@ public interface IRaftNode
     string GetClusterState();
     string GetNodeState();
     void BecomeLeader(int term);
-    void BecomeFollower(string leaderId, int term);
+    void BecomeFollowerOfLeaderWithId(string leaderId, int term);
+
+    void BecomeFollower(NodeInfo? leaderInfo, int term);
     void BecomeCandidate();
+
+    string GetName();
+
+    NodeType GetRole();
+    
+    void UpdateLeader(string leaderId);
+    string GetLeaderId();
 }
 
 /// <summary>
 /// A node in a Raft cluster.
 /// Listens for messages from other nodes in the cluster and from admin clients.
 /// </summary>
-public class RaftNode : IRaftNode
+public class RaftNode : IRaftNode, IElectionResultsReceiver
 {
     private readonly IClusterMessageReceiver _clusterMessageReceiver;
     private readonly IMessageReceiver _adminMessageReceiver;
@@ -41,6 +50,7 @@ public class RaftNode : IRaftNode
     private readonly NodeAddress _peerAddress;
     private readonly RaftLeaderService _leaderService;
     private readonly ILeaderPresenceTracker _leaderPresenceTracker;
+    public IElectionManager ElectionManager { get; set; }
 
     public INodeStateStore StateStore { get; }
 
@@ -59,11 +69,13 @@ public class RaftNode : IRaftNode
             new LogReplicator(StateStore, _clientPool, _clusterStore, _nodeName, replicationTimeoutSeconds);
         _leaderService = new RaftLeaderService(logReplicator, replicationStateManager, StateStore, _clusterStore);
         _heartBeatRunner = new HeartBeatRunner(heartBeatIntervalSeconds * 1000, StateStore,
-            () => { _leaderService.ReconcileCluster(); });
+            () => { _leaderService.ReconcileCluster(); }, nodeName);
         _leaderPresenceTracker = new LeaderPresenceTracker(this, timerFactory);
 
         _clusterMessageReceiver = new ClusterMessageReceiver(port, GetClusterServices());
         _adminMessageReceiver = new AdminMessageReceiver(port + 1000, GetAdminServices());
+
+        ElectionManager = new ElectionManager(_nodeName, _clusterStore, _clientPool, this);
     }
 
     private IEnumerable<INodeService> GetClusterServices()
@@ -74,6 +86,7 @@ public class RaftNode : IRaftNode
             new RegisterNodeService(StateStore, _clusterStore, _clientPool),
             new CommandProcessingService(StateStore, _clientPool, _leaderService, _heartBeatRunner),
             new AppendEntriesService(StateStore, this, _leaderPresenceTracker, _nodeName),
+            new RequestVoteService(StateStore, this)
         ];
     }
 
@@ -150,6 +163,8 @@ public class RaftNode : IRaftNode
     {
         _clusterMessageReceiver.Stop();
         _adminMessageReceiver.Stop();
+        _heartBeatRunner.StopBeating();
+        _leaderPresenceTracker.Stop();
     }
 
     public string GetClusterState()
@@ -168,25 +183,30 @@ public class RaftNode : IRaftNode
 
     public void BecomeLeader(int term)
     {
-        Log.Information($"{_nodeName} becoming leader");
+        Log.Information("({nodeName}, term={term}) becoming leader", _nodeName, term);
         _leaderPresenceTracker.Stop();
         StateStore.Role = NodeType.Leader;
         StateStore.LeaderInfo = new NodeInfo(_nodeName, new NodeAddress(_nodeHost, _nodePort));
         StateStore.CurrentTerm = term;
+        // Reset vote state when becoming leader
+        StateStore.VotedFor = null;
+        StateStore.LastVoteTerm = -1;
         _heartBeatRunner.StartBeating();
     }
 
-    public void BecomeFollower(NodeInfo leaderInfo, int term)
+    public void BecomeFollower(NodeInfo? leaderInfo, int term)
     {
-        Log.Information($"{_nodeName} becoming follower");
+        Log.Information("({nodeName}, term={term}) becoming follower of {leaderNode}", 
+            _nodeName, term, leaderInfo?.NodeName ?? "unknown leader");
         StateStore.Role = NodeType.Follower;
         _heartBeatRunner.StopBeating();
         StateStore.CurrentTerm = term;
         StateStore.LeaderInfo = leaderInfo;
+        
         _leaderPresenceTracker.Start();
     }
 
-    public void BecomeFollower(string leaderId, int term)
+    public void BecomeFollowerOfLeaderWithId(string leaderId, int term)
     {
         var newLeader = _clusterStore.GetNodes().First(x => x.NodeName == leaderId);
         BecomeFollower(newLeader, term);
@@ -194,9 +214,57 @@ public class RaftNode : IRaftNode
 
     public void BecomeCandidate()
     {
-        Log.Information($"{_nodeName} becoming candidate");
+        Log.Information("({nodeName}, term={term}) becoming candidate", 
+            _nodeName, StateStore.CurrentTerm + 1);
         StateStore.Role = NodeType.Candidate;
-        // StateStore.CurrentTerm++;
         _leaderPresenceTracker.Stop();
+        
+        StateStore.CurrentTerm++;
+        StateStore.VotedFor = _nodeName;
+        StateStore.LastVoteTerm = StateStore.CurrentTerm;
+        ElectionManager.StartElectionAsync(StateStore.CurrentTerm);
+    }
+
+    public string GetName() => _nodeName;
+    public NodeType GetRole() => StateStore.Role;
+
+    public void UpdateLeader(string leaderId)
+    {
+        StateStore.LeaderInfo = _clusterStore.GetNodes().First(x => x.NodeName == leaderId);
+    }
+
+    public string GetLeaderId() => StateStore.LeaderInfo?.NodeName ?? "unknown leader";
+
+    public void OnElectionWon(int termAtElectionStart)
+    {
+        StateStore.CheckTermAndRoleAndDo(termAtElectionStart, NodeType.Candidate, () =>
+        {
+            BecomeLeader(StateStore.CurrentTerm);
+        }, () => Log.Information($"{_nodeName} out of sync"));
+    }
+
+    public void OnElectionLost(int termAtElectionStart)
+    {
+        StateStore.CheckTermAndRoleAndDo(termAtElectionStart, NodeType.Candidate, () =>
+        {
+            StateStore.CurrentTerm++;
+            StateStore.VotedFor = _nodeName;
+            StateStore.LastVoteTerm = StateStore.CurrentTerm;
+            ElectionManager.StartElectionAsync(StateStore.CurrentTerm);
+        }, () => Log.Information($"{_nodeName} out of sync"));
+    }
+
+    public void OnHigherTermReceivedWithVoteReply(int oldTerm, int newTerm)
+    {
+        Log.Information("Election result: {nodeName} received higher term ({newTerm} > {oldTerm}) in vote reply, stepping down to follower", 
+            _nodeName, newTerm, oldTerm);
+        StateStore.CheckTermAndRoleAndDo(oldTerm, NodeType.Candidate, () =>
+        {
+            // Become follower with no leader info (will be set when AppendEntries received)
+            BecomeFollower(null, newTerm);
+            // Reset vote state when becoming follower
+            StateStore.VotedFor = null;
+            StateStore.LastVoteTerm = -1;
+        }, () => Log.Information($"{_nodeName} out of sync"));
     }
 }

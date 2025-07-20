@@ -8,8 +8,9 @@ namespace Raft.Node.HeartBeat;
 
 public class HeartBeatRunner
 {
-    private INodeStateStore _stateStore;
+    private readonly INodeStateStore _stateStore;
     private readonly Action _action;
+    private readonly string _nodeName;
     private readonly Timer _timer;
 
     /// <summary>
@@ -18,26 +19,25 @@ public class HeartBeatRunner
     /// <param name="interval">in milliseconds</param>
     /// <param name="stateStore"></param>
     /// <param name="action">action to execute</param>
-    public HeartBeatRunner(int interval, INodeStateStore stateStore, Action action)
+    /// <param name="nodeName"></param>
+    public HeartBeatRunner(int interval, INodeStateStore stateStore, Action action, string nodeName)
     {
         _action = action;
+        _nodeName = nodeName;
         _stateStore = stateStore;
         _timer = new Timer(interval); 
         _timer.AutoReset = true; 
-        _timer.Elapsed += PerformAction;
+        _timer.Elapsed += OnInterval;
     }
 
     public void StartBeating()
     {
+        Log.Information("{node} Starting heartbeat", _nodeName);
+        SendBeat();
         _timer.Start();
     }
 
-    public void StopBeating()
-    {
-        _timer.Stop();
-    }
-    
-    private void PerformAction(object? sender, ElapsedEventArgs e)
+    private void SendBeat()
     {
         if (_stateStore.Role != NodeType.Leader)
         {
@@ -46,6 +46,17 @@ public class HeartBeatRunner
         }
         Log.Debug($"HeartBeat at {DateTime.Now:HH:mm:ss.fff}");
         _action();
+    }
+
+    public void StopBeating()
+    {
+        Log.Information("{node} Stopping heartbeat", _nodeName);
+        _timer.Stop();
+    }
+    
+    private void OnInterval(object? sender, ElapsedEventArgs e)
+    {
+        SendBeat();
     }
 
     public void ResetTimer()

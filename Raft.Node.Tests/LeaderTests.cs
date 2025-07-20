@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using Raft.Node.Tests.MockHelpers;
+using Raft.Shared.Timing;
 using Raft.Store.Domain;
 using Shouldly;
 

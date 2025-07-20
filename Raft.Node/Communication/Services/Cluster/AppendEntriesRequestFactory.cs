@@ -1,7 +1,6 @@
-﻿using Raft.Node.Communication.Services.Cluster;
-using Raft.Store;
+﻿using Raft.Store;
 
-namespace Raft.Node.Communication.Services;
+namespace Raft.Node.Communication.Services.Cluster;
 
 public class AppendEntriesRequestFactory(IClusterNodeStore nodeStore, INodeStateStore stateStore, string leaderName)
     : IAppendEntriesRequestFactory

@@ -141,3 +141,17 @@ message GetStateReply {
 service GetStateSvc {
   rpc GetState(GetStateMassage) returns (GetStateReply);
 }
+
+message RequestForVoteMessage{
+  int32 term = 1;
+  string candidateId = 2; 
+}
+
+message RequestForVoteReply {
+  int32 term = 1;
+  bool voteGranted = 2;
+}
+
+service RequestForVoteSvc {
+  rpc RequestVote(RequestForVoteMessage) returns (RequestForVoteReply);
+}

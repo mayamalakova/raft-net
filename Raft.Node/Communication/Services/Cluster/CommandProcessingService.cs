@@ -55,9 +55,10 @@ public class CommandProcessingService(
     {
         if (stateStore.LeaderInfo == null)
         {
+            Log.Warning("Unable to forward command, as leader is unknown");
             return Task.FromResult(new CommandReply()
             {
-                Result = "Failed to forward to leader"
+                Result = "Failed to forward to leader, as leader is unknown"
             });
         }
 

@@ -166,7 +166,7 @@ public class AppendEntriesServiceTests
 
         _service.AppendEntries(appendEntriesRequest, Substitute.For<ServerCallContext>());
 
-        _raftNode.Received().BecomeFollower("newLeader", 2);
+        _raftNode.Received().BecomeFollowerOfLeaderWithId("newLeader", 2);
     }
 
     [Test]
@@ -202,6 +202,25 @@ public class AppendEntriesServiceTests
 
         reply.Result.Success.ShouldBeFalse();
         _nodeStateStore.LogLength.ShouldBe(0);
+    }
+
+    [Test]
+    public void ShouldUpdateLeaderInfoIfNull()
+    {
+        _nodeStateStore.LeaderInfo = null;
+        var appendEntriesRequest = new AppendEntriesRequest()
+        {
+            Term = 0,
+            PrevLogIndex = -1,
+            PrevLogTerm = -1,
+            Entries = { Array.Empty<LogEntryMessage>() },
+            LeaderId = "someLeader"
+        };
+
+        var reply = _service.AppendEntries(appendEntriesRequest, Substitute.For<ServerCallContext>());
+
+        reply.Result.Success.ShouldBeTrue();
+        _raftNode.Received(1).UpdateLeader("someLeader");
     }
 
     private static LogEntryMessage CreateLogEntryMessage(string variable, string operation, int literal, int term)

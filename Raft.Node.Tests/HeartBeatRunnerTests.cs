@@ -25,7 +25,7 @@ public class HeartBeatRunnerTests
     public void SetUp()
     {
         _beatSink = new BeatSink();
-        _heartBeatRunner = new HeartBeatRunner(50, Substitute.For<INodeStateStore>(), _beatSink.SendBeat);
+        _heartBeatRunner = new HeartBeatRunner(50, Substitute.For<INodeStateStore>(), _beatSink.SendBeat, "someNode");
     }
 
     [Test]

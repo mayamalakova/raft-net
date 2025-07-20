@@ -1,8 +1,8 @@
 ﻿using NUnit.Framework;
 using Raft.Cli;
 using Raft.Node;
-using Raft.Node.Timing;
 using Raft.Shared;
+using Raft.Shared.Timing;
 using Raft.Store.Domain;
 using Shouldly;
 
@@ -11,7 +11,7 @@ namespace Raft.IntegrationTests;
 public class RaftLogReplicationTests
 {
     private readonly ICollection<RaftNode> _nodes = new List<RaftNode>();
-    private SystemTimerFactory _systemTimerFactory;
+    private readonly ITimerFactory _systemTimerFactory = new MockTimerFactory(new MockTimer());
 
     [SetUp]
     public void SetUp()
@@ -96,12 +96,11 @@ public class RaftLogReplicationTests
         }
 
         leader.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
-        // TODO - figure out why follower1 stops responding at times
-        // follower1.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
+        follower1.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
         follower2.GetNodeState().ShouldBe("commitIndex=1, term=0, lastApplied=1");
         leaderClient.GetState().ShouldBe("value: 2, errors: [ ]");
         followerClient2.GetState().ShouldBe("value: 2, errors: [ ]");
-        // followerClient1.GetState().ShouldBe("value: 2, errors: [ ]");
+        followerClient1.GetState().ShouldBe("value: 2, errors: [ ]");
     }
 
     [Test]
@@ -147,7 +146,6 @@ public class RaftLogReplicationTests
 
     private RaftNode CreateLeader(string name, int port)
     {
-        _systemTimerFactory = new SystemTimerFactory();
         var leader = new RaftNode(NodeType.Leader, name, port, "localhost", port, 1, 3, _systemTimerFactory);
         leader.Start();
         _nodes.Add(leader);

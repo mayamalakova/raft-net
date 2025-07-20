@@ -1,4 +1,6 @@
-﻿namespace Raft.Node.Timing;
+﻿using ITimer = Raft.Shared.Timing.ITimer;
+
+namespace Raft.Shared.Timing;
 
 public class SystemTimerFactory : ITimerFactory
 {
