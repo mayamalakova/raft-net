@@ -1,6 +1,7 @@
-﻿
-using System.Timers;
-using ITimer = Raft.Node.Timing.ITimer;
+﻿using System.Timers;
+using ITimer = Raft.Shared.Timing.ITimer;
+
+namespace Raft.Shared.Timing;
 
 public class MockTimer : ITimer
 {

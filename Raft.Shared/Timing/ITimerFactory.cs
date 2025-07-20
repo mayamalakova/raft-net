@@ -1,4 +1,4 @@
-﻿namespace Raft.Node.Timing;
+﻿namespace Raft.Shared.Timing;
 
 public interface ITimerFactory
 {

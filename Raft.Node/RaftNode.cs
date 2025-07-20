@@ -4,7 +4,7 @@ using Raft.Node.Communication.Services.Admin;
 using Raft.Node.Communication.Services.Cluster;
 using Raft.Node.Election;
 using Raft.Node.HeartBeat;
-using Raft.Node.Timing;
+using Raft.Shared.Timing;
 using Raft.Store;
 using Raft.Store.Domain;
 using Raft.Store.Memory;

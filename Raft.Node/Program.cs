@@ -1,6 +1,6 @@
 ﻿using CommandLine;
-using Raft.Node.Timing;
 using Raft.Shared;
+using Raft.Shared.Timing;
 using Raft.Store.Domain;
 using Serilog;
 

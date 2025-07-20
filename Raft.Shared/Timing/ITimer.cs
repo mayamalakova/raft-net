@@ -1,6 +1,6 @@
 ﻿using System.Timers;
 
-namespace Raft.Node.Timing;
+namespace Raft.Shared.Timing;
 
 public interface ITimer
 {

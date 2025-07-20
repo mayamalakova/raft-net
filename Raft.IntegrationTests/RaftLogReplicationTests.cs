@@ -1,8 +1,8 @@
 ﻿using NUnit.Framework;
 using Raft.Cli;
 using Raft.Node;
-using Raft.Node.Timing;
 using Raft.Shared;
+using Raft.Shared.Timing;
 using Raft.Store.Domain;
 using Shouldly;
 

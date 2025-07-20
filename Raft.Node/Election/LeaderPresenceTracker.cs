@@ -1,7 +1,7 @@
 ﻿using System.Timers;
-using Raft.Node.Timing;
+using Raft.Shared.Timing;
 using Serilog;
-using ITimer = Raft.Node.Timing.ITimer;
+using ITimer = Raft.Shared.Timing.ITimer;
 
 namespace Raft.Node.Election;
 

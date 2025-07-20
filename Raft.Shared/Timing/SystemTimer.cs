@@ -1,7 +1,8 @@
 ﻿using System.Timers;
+using ITimer = Raft.Shared.Timing.ITimer;
 using Timer = System.Timers.Timer;
 
-namespace Raft.Node.Timing;
+namespace Raft.Shared.Timing;
 
 public class SystemTimer : ITimer
 {
