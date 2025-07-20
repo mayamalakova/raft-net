@@ -233,6 +233,9 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
     {
         StateStore.CheckTermAndRoleAndDo(termAtElectionStart, NodeType.Candidate, () =>
         {
+            StateStore.CurrentTerm++;
+            StateStore.VotedFor = _nodeName;
+            StateStore.LastVoteTerm = StateStore.CurrentTerm;
             ElectionManager.StartElectionAsync(StateStore.CurrentTerm);
         }, () => Log.Information($"{_nodeName} out of sync"));
     }

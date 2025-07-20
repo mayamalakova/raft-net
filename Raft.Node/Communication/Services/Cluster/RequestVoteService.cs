@@ -32,8 +32,15 @@ public class RequestVoteService : RequestForVoteSvc.RequestForVoteSvcBase, INode
             return SendRejected();
         }
 
-        // 2. Reply false if already voted for this term
-        if (_stateStore.LastVoteTerm == _stateStore.CurrentTerm && _stateStore.VotedFor != null)
+        // 2. If term > currentTerm, update term (vote state will be set below)
+        if (request.Term > _stateStore.CurrentTerm)
+        {
+            Log.Information($"Received vote request with higher term {request.Term} > {_stateStore.CurrentTerm}, updating term");
+            _stateStore.CurrentTerm = request.Term;
+        }
+        
+        // 3. Reply false if already voted for this term
+        if (_stateStore.LastVoteTerm == request.Term && _stateStore.VotedFor != null)
         {
             Log.Information("Vote request (from: {candidateId}, term: {requestTerm}) - result: Rejecting as already voted for {votedFor} in term {lastVotedTerm}", 
                 request.CandidateId, 
@@ -41,13 +48,6 @@ public class RequestVoteService : RequestForVoteSvc.RequestForVoteSvcBase, INode
                 _stateStore.VotedFor, 
                 _stateStore.LastVoteTerm);
             return SendRejected();       
-        }
-
-        // 3. If term > currentTerm, update term (vote state will be set below)
-        if (request.Term > _stateStore.CurrentTerm)
-        {
-            Log.Information($"Received vote request with higher term {request.Term} > {_stateStore.CurrentTerm}, updating term");
-            _stateStore.CurrentTerm = request.Term;
         }
 
         // 4. Grant vote and update vote state
