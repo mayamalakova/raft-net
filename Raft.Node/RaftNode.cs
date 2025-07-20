@@ -25,7 +25,11 @@ public interface IRaftNode
     void BecomeCandidate();
 
     string GetName();
+
+    NodeType GetRole();
+    
     void UpdateLeader(string leaderId);
+    string GetLeaderId();
 }
 
 /// <summary>
@@ -222,10 +226,14 @@ public class RaftNode : IRaftNode, IElectionResultsReceiver
     }
 
     public string GetName() => _nodeName;
+    public NodeType GetRole() => StateStore.Role;
+
     public void UpdateLeader(string leaderId)
     {
         StateStore.LeaderInfo = _clusterStore.GetNodes().First(x => x.NodeName == leaderId);
     }
+
+    public string GetLeaderId() => StateStore.LeaderInfo?.NodeName ?? "unknown leader";
 
     public void OnElectionWon(int termAtElectionStart)
     {

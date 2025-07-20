@@ -142,6 +142,37 @@ public class RaftNodeTests
         oldLeader.GetNodeState().ShouldContain($"term={newTerm}");
     }
 
+    [Test]
+    public void ShouldElectNewLeaderAndUpdateFollowersLeaderInfoAfterOldLeaderReconnects()
+    {
+        // Arrange
+        var leader = CreateLeader("leader1", 5011);
+        var follower1 = CreateFollower("follower1", 5012, 5011);
+        var follower2 = CreateFollower("follower2", 5013, 5012);
+
+        var leaderClient = new RaftClient("localhost", 5011);
+
+        // Disconnect the leader
+        DisconnectNode(leaderClient, leader);
+
+        // Give time for followers to start election
+        Task.Delay(6000).Wait();
+        
+        ReconnectNode(leaderClient, leader);
+        
+        Task.Delay(2000).Wait();
+
+        var newLeader = new[] { leader, follower1, follower2 }.Where(n => n.GetRole() == NodeType.Leader).ToArray();
+        var newFollowers = new[] { leader, follower1, follower2 }.Where(n => n.GetRole() == NodeType.Follower).ToArray();
+        newLeader.ShouldHaveSingleItem();
+        newFollowers.Length.ShouldBe(2);
+        newFollowers.ShouldNotContain(newLeader[0]);
+        
+        newFollowers[0].GetLeaderId().ShouldBe(newLeader[0].GetName());
+        newFollowers[1].GetLeaderId().ShouldBe(newLeader[0].GetName());
+        newLeader[0].GetLeaderId().ShouldBe(newLeader[0].GetName());
+    }
+
     private IRaftNode CreateLeader(string name, int port)
     {
         _systemTimerFactory = new SystemTimerFactory();
@@ -157,5 +188,17 @@ public class RaftNodeTests
         node.Start();
         _nodes.Add(node);
         return node;
+    }
+
+    private void DisconnectNode(RaftClient client, IRaftNode node)
+    {
+        client.Disconnect();
+        _nodes.Remove(node);
+    }
+
+    private void ReconnectNode(RaftClient client, IRaftNode node)
+    {
+        client.Reconnect();
+        _nodes.Add(node);
     }
 }
