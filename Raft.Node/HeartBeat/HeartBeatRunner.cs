@@ -8,7 +8,7 @@ namespace Raft.Node.HeartBeat;
 
 public class HeartBeatRunner
 {
-    private INodeStateStore _stateStore;
+    private readonly INodeStateStore _stateStore;
     private readonly Action _action;
     private readonly Timer _timer;
 
@@ -24,20 +24,16 @@ public class HeartBeatRunner
         _stateStore = stateStore;
         _timer = new Timer(interval); 
         _timer.AutoReset = true; 
-        _timer.Elapsed += PerformAction;
+        _timer.Elapsed += OnInterval;
     }
 
     public void StartBeating()
     {
+        SendBeat();
         _timer.Start();
     }
 
-    public void StopBeating()
-    {
-        _timer.Stop();
-    }
-    
-    private void PerformAction(object? sender, ElapsedEventArgs e)
+    private void SendBeat()
     {
         if (_stateStore.Role != NodeType.Leader)
         {
@@ -46,6 +42,16 @@ public class HeartBeatRunner
         }
         Log.Debug($"HeartBeat at {DateTime.Now:HH:mm:ss.fff}");
         _action();
+    }
+
+    public void StopBeating()
+    {
+        _timer.Stop();
+    }
+    
+    private void OnInterval(object? sender, ElapsedEventArgs e)
+    {
+        SendBeat();
     }
 
     public void ResetTimer()
