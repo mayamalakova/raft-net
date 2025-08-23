@@ -58,6 +58,17 @@ public class RaftNodeTests
     }
 
     [Test]
+    public void ShouldPopulateTermInInfo()
+    {
+        CreateLeader("leader1", 5001);
+        var adminClient = new RaftClient("localhost", 5001);
+
+        var info = adminClient.Info();
+        
+        info.ShouldContain("\"term\": \"0\"");
+    }
+
+    [Test]
     public void ShouldUpdateKnownNodesOfAllExistingFollowersWhenNewNodeIsRegistered()
     {
         CreateLeader("leader1", 5001);

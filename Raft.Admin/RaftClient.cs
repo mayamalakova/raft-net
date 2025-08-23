@@ -76,4 +76,10 @@ public class RaftClient
         var state = _getStateClient.GetState(new GetStateMassage());
         return $"value: {state.Value}, errors: {state.Errors}";
     }
+
+    public string LeaderInfo()
+    {
+        var leaderInfo = _infoClient.GetLeader(new LeaderInfoRequest());
+        return leaderInfo.ToString();
+    }
 }

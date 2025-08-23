@@ -36,10 +36,20 @@ message NodeInfoReply{
   string leaderAddress = 4;
   string knownNodes = 5;
   string commitIndex = 6;
+  string term = 7;
+}
+
+message LeaderInfoRequest{
+}
+message LeaderInfoReply{
+  string name = 1;
+  string address = 2;
+  string term = 3;
 }
 
 service NodeInfoSvc{
   rpc GetInfo (NodeInfoRequest) returns (NodeInfoReply);
+  rpc GetLeader (LeaderInfoRequest) returns (LeaderInfoReply);
 }
 
 message CommandRequest{

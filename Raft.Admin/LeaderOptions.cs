@@ -4,5 +4,5 @@
 namespace Raft.Cli;
 
 #pragma warning disable CS8618
-[Verb("info", HelpText = "Get information about the current node.")]
-public class InfoOptions;
+[Verb("leader", HelpText = "Get information about the cluster leader.")]
+public class LeaderOptions;
