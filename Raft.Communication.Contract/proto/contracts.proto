@@ -44,6 +44,7 @@ message LeaderInfoRequest{
 message LeaderInfoReply{
   string name = 1;
   string address = 2;
+  string term = 3;
 }
 
 service NodeInfoSvc{

@@ -30,6 +30,7 @@ public class NodeInfoService(string name, NodeAddress nodeAddress, INodeStateSto
         {
             Name = stateStore.LeaderInfo?.NodeName,
             Address = stateStore.LeaderInfo?.NodeAddress.ToString(),
+            Term = stateStore.CurrentTerm.ToString()
         });
     }
 
