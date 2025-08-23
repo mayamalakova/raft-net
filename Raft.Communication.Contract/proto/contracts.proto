@@ -39,8 +39,16 @@ message NodeInfoReply{
   string term = 7;
 }
 
+message LeaderInfoRequest{
+}
+message LeaderInfoReply{
+  string name = 1;
+  string address = 2;
+}
+
 service NodeInfoSvc{
   rpc GetInfo (NodeInfoRequest) returns (NodeInfoReply);
+  rpc GetLeader (LeaderInfoRequest) returns (LeaderInfoReply);
 }
 
 message CommandRequest{

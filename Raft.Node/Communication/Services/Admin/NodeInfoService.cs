@@ -22,7 +22,17 @@ public class NodeInfoService(string name, NodeAddress nodeAddress, INodeStateSto
             Term = stateStore.CurrentTerm.ToString(),
         });
     }
-    
+
+    public override Task<LeaderInfoReply> GetLeader(LeaderInfoRequest request, ServerCallContext context)
+    {
+        Log.Information("Got leader info request");
+        return Task.FromResult(new LeaderInfoReply()
+        {
+            Name = stateStore.LeaderInfo?.NodeName,
+            Address = stateStore.LeaderInfo?.NodeAddress.ToString(),
+        });
+    }
+
     public ServerServiceDefinition GetServiceDefinition()
     {
         return NodeInfoSvc.BindService(this);
