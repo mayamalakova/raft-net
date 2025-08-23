@@ -36,6 +36,7 @@ message NodeInfoReply{
   string leaderAddress = 4;
   string knownNodes = 5;
   string commitIndex = 6;
+  string term = 7;
 }
 
 service NodeInfoSvc{
